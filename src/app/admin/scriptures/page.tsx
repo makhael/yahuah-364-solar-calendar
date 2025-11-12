@@ -46,6 +46,7 @@ export default function ScriptureManagement() {
 
   useEffect(() => {
     if (!firestore || areUsersLoading || !users) {
+      if (!areUsersLoading) setIsLoading(false);
       return;
     }
 
@@ -57,11 +58,10 @@ export default function ScriptureManagement() {
         return;
       }
       
-      const scripturesPromises = users.map(user =>
-        getDocs(query(collection(firestore, 'users', user.id, 'scriptureReadings'), orderBy('date', 'desc')))
-      );
-
       try {
+        const scripturesPromises = users.map(user =>
+          getDocs(query(collection(firestore, 'users', user.id, 'scriptureReadings'), orderBy('date', 'desc')))
+        );
         const usersScripturesSnapshots = await Promise.all(scripturesPromises);
         const fetchedScriptures: ScriptureReading[] = [];
         
