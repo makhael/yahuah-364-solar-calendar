@@ -9,13 +9,11 @@ import { CalendarControls } from './CalendarControls';
 import { Card, CardContent } from '@/components/ui/card';
 import { Month } from './Month';
 import { useTheme } from '@/context/ThemeContext';
-import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { PodcastSection } from '@/components/podcast/PodcastSection';
 import { IntroSection } from '@/components/calendar/IntroSection';
 import { useUI } from '@/context/UIContext';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { InsightsTimeline } from '../insights/InsightsTimeline';
-import { get364DateFromGregorian, getGregorianDate } from '@/lib/calendar-utils';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { add, getDay, isBefore, isEqual, startOfDay, isAfter } from 'date-fns';
 import { hebrewDays } from '@/lib/calendar-data';
@@ -39,36 +37,18 @@ export default function YahuahCalendar() {
         handleDeletePreset,
         visibleSections,
         toggleSection,
-        openChatModal,
         navigationTarget,
         clearNavigationTarget,
-        handleGoToDate,
-        getAppointmentsForDate,
     } = useUI();
     const { user, isUserLoading } = useUser();
     const { theme } = useTheme();
 
     const [today, setToday] = useState<Date | null>(null);
-    const [today364, setToday364] = useState<{month: number, day: number} | null>(null);
-    const [currentGregorianYear, setCurrentGregorianYear] = useState(new Date().getFullYear());
-
 
     useEffect(() => {
         const now = new Date();
         setToday(now);
-        if (startDate && !isNaN(startDate.getTime())) {
-            setToday364(get364DateFromGregorian(now, startDate));
-        }
-    }, [gregorianStart, startDate]);
-
-    useEffect(() => {
-        if (gregorianStart) {
-            const date = new Date(gregorianStart);
-            if (!isNaN(date.getTime())) {
-                setCurrentGregorianYear(date.getFullYear());
-            }
-        }
-    }, [gregorianStart]);
+    }, []);
     
     useEffect(() => {
         if (navigationTarget) {
@@ -121,13 +101,7 @@ export default function YahuahCalendar() {
     return (
         <div className="bg-background min-h-screen font-body text-foreground">
             <main className="container mx-auto p-4 sm:p-6 md:p-8">
-                <CalendarHeader 
-                    today364={today364}
-                    setSearchModalOpen={() => openModal('search')}
-                    handleOpenChat={openChatModal}
-                    setInstructionsModalOpen={() => openModal('instructions')}
-                    currentGregorianYear={currentGregorianYear}
-                />
+                
                 <div className="space-y-8">
                     <Card className="border shadow-lg">
                         <CardContent className="p-4 sm:p-6 space-y-6">
@@ -141,7 +115,7 @@ export default function YahuahCalendar() {
                     <Card className="border shadow-lg">
                          <CardContent className="p-4 sm:p-6">
                             <CalendarControls
-                                currentGregorianYear={currentGregorianYear}
+                                currentGregorianYear={startDate.getFullYear()}
                                 user={user}
                                 gregorianStart={gregorianStart}
                                 setGregorianStart={setGregorianStart}

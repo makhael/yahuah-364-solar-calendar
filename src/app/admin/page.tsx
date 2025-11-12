@@ -2,21 +2,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { LoaderCircle, ArrowLeft, Shield, Users, CalendarClock, MessageSquare, BookOpen, ScrollText, BookText } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { UserProfile } from '@/components/auth/UserProfile';
+import { LoaderCircle, Shield, Users, CalendarClock, MessageSquare, BookOpen, ScrollText } from 'lucide-react';
+import Image from 'next/image';
 import { UserManagement } from '@/components/admin/UserManagement';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
 import ForumManagement from './forums/page';
 import GlossaryManagement from './glossary/page';
 import ScriptureManagement from './scriptures/page';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface UserProfileData {
   role?: string;
@@ -97,22 +94,13 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-6 flex justify-between items-start">
-            <div className="flex flex-col items-start gap-3">
-                <Link href="/">
-                  <Button variant="outline" size="sm" className="items-center">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Calendar
-                  </Button>
-                </Link>
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2 text-left flex items-center gap-3">
-                    <Shield className="w-6 h-6 text-destructive"/>
-                    <div>
-                        <h1 className="text-base font-bold text-destructive tracking-wide">Admin Dashboard</h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">Manage users, events, and content.</p>
-                    </div>
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2 text-left flex items-center gap-3">
+                <Shield className="w-6 h-6 text-destructive"/>
+                <div>
+                    <h1 className="text-base font-bold text-destructive tracking-wide">Admin Dashboard</h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">Manage users, events, and content.</p>
                 </div>
             </div>
-            <UserProfile onOpenInstructions={() => { /* Handled by UIContext in main layout */ }} />
         </header>
 
         <div className="w-full">

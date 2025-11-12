@@ -98,6 +98,9 @@ interface UIContextType {
   
   allAppointments: any[];
   appointmentThemesByDate: Record<string, string | undefined>;
+
+  today364: { month: number; day: number } | null;
+  currentGregorianYear: number;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -220,6 +223,17 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   }, [user, activePresetId, presets, preferenceData, initialGregorianStart]);
 
   const startDate = useMemo(() => new Date(gregorianStart + 'T00:00:00'), [gregorianStart]);
+  
+  const [today364, setToday364] = useState<{month: number, day: number} | null>(null);
+  const [currentGregorianYear, setCurrentGregorianYear] = useState(new Date().getFullYear());
+  
+  useEffect(() => {
+      const now = new Date();
+      if (startDate && !isNaN(startDate.getTime())) {
+          setToday364(get364DateFromGregorian(now, startDate));
+          setCurrentGregorianYear(startDate.getFullYear());
+      }
+  }, [gregorianStart, startDate]);
 
   const appointmentThemesByDate = useMemo(() => {
     const map: Record<string, string | undefined> = {};
@@ -513,6 +527,8 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     clearNavigationTarget,
     allAppointments,
     appointmentThemesByDate,
+    today364,
+    currentGregorianYear,
   }), [
       modalState, openModal, closeAllModals, isAnyModalOpen,
       startDate, gregorianStart, setGregorianStart, presets, arePresetsLoading,
@@ -520,7 +536,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
       handleSavePreset, handleDeletePreset, handleSaveAppointment, handleSaveGlossaryProposal,
       openChatModal, handleGoToDate, handleGoToGlossaryTerm, scrollToSection,
       visibleSections, toggleSection, navigationTarget, clearNavigationTarget,
-      allAppointments, appointmentThemesByDate
+      allAppointments, appointmentThemesByDate, today364, currentGregorianYear
   ]);
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

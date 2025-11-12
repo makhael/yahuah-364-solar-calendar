@@ -9,22 +9,17 @@ import { ThemeSwitcher } from '@/components/common/ThemeSwitcher';
 import { Button } from '@/components/ui/button';
 import { Search, MessageSquare, Glasses } from 'lucide-react';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { useUI } from '@/context/UIContext';
+import Link from 'next/link';
 
-interface CalendarHeaderProps {
-    today364: { month: number; day: number } | null;
-    setSearchModalOpen: (isOpen: boolean) => void;
-    handleOpenChat: () => void;
-    setInstructionsModalOpen: (isOpen: boolean) => void;
-    currentGregorianYear: number;
-}
+export const CalendarHeader = () => {
+    const { 
+        today364,
+        openModal,
+        openChatModal,
+        currentGregorianYear,
+    } = useUI();
 
-export const CalendarHeader = ({
-    today364,
-    setSearchModalOpen,
-    handleOpenChat,
-    setInstructionsModalOpen,
-    currentGregorianYear,
-}: CalendarHeaderProps) => {
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
     return (
@@ -33,14 +28,16 @@ export const CalendarHeader = ({
                 <div className="grid md:grid-cols-3 items-center gap-y-4">
                     
                     <div className="flex flex-col md:flex-row items-center gap-3 sm:gap-4 md:col-span-1 justify-center md:justify-start order-1">
-                        {logo && <Image src={logo.imageUrl} alt={logo.description} width={64} height={64} data-ai-hint={logo.imageHint} className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover border-2" />}
-                        <div className="text-center md:text-left">
-                            <h2 className="text-sm font-bold tracking-widest text-primary uppercase">Yahuah's</h2>
-                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground -mt-1">
-                                364-Day Calendar
-                            </h1>
-                            <p className="text-xs sm:text-sm text-muted-foreground">The Restoration of True Time</p>
-                        </div>
+                        <Link href="/" className="flex items-center gap-3 sm:gap-4">
+                            {logo && <Image src={logo.imageUrl} alt={logo.description} width={64} height={64} data-ai-hint={logo.imageHint} className="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover border-2" />}
+                            <div className="text-center md:text-left">
+                                <h2 className="text-sm font-bold tracking-widest text-primary uppercase">Yahuah's</h2>
+                                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground -mt-1">
+                                    364-Day Calendar
+                                </h1>
+                                <p className="text-xs sm:text-sm text-muted-foreground">The Restoration of True Time</p>
+                            </div>
+                        </Link>
                     </div>
 
                     <div className="flex flex-col justify-center items-center md:col-span-1 text-center order-2 w-full">
@@ -67,7 +64,7 @@ export const CalendarHeader = ({
                         <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" onClick={() => setSearchModalOpen(true)}>
+                            <Button variant="outline" size="icon" onClick={() => openModal('search')}>
                                 <Search className="h-4 w-4" />
                                 <span className="sr-only">Search & Navigate</span>
                             </Button>
@@ -78,7 +75,7 @@ export const CalendarHeader = ({
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" onClick={() => handleOpenChat()}>
+                            <Button variant="outline" size="icon" onClick={() => openChatModal()}>
                                 <MessageSquare className="h-4 w-4" />
                                 <span className="sr-only">Open Chat</span>
                             </Button>
@@ -89,7 +86,7 @@ export const CalendarHeader = ({
                         </Tooltip>
                         </TooltipProvider>
                         <ThemeSwitcher />
-                        <UserProfile onOpenInstructions={() => setInstructionsModalOpen(true)} />
+                        <UserProfile onOpenInstructions={() => openModal('instructions')} />
                     </div>
                 </div>
                  <div className="mt-4 text-center md:hidden">
