@@ -25,10 +25,6 @@ interface ScriptureReading {
   createdAt: { seconds: number };
 }
 
-interface User {
-  id: string;
-}
-
 export default function ScriptureManagement() {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -36,34 +32,13 @@ export default function ScriptureManagement() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
-  const [scriptures, setScriptures] = useState<ScriptureReading[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
-
-  useEffect(() => {
-    if (!firestore || areUsersLoading) return;
-
-    const fetchAllReadings = async () => {
-        setIsLoading(true);
-        const allReadings: ScriptureReading[] = [];
-        if (users && users.length > 0) {
-            for (const user of users) {
-                const readingsQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`));
-                const snapshot = await getDocs(readingsQuery);
-                snapshot.forEach(doc => {
-                    allReadings.push({ id: doc.id, ...doc.data() } as ScriptureReading);
-                });
-            }
-        }
-        allReadings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setScriptures(allReadings);
-        setIsLoading(false);
-    };
-
-    fetchAllReadings();
-  }, [firestore, users, areUsersLoading]);
+  
+  const scripturesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'scriptureReadings'), orderBy('date', 'desc'));
+  }, [firestore]);
+  
+  const { data: scriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
   const groupedScriptures = React.useMemo(() => {
     if (!scriptures) return {};
@@ -80,16 +55,9 @@ export default function ScriptureManagement() {
   const handleDelete = async (scripture: ScriptureReading) => {
     if (!firestore) return;
     try {
-      const batch = writeBatch(firestore);
-      const userReadingRef = doc(firestore, `users/${scripture.userId}/scriptureReadings`, scripture.id);
-      const centralReadingRef = doc(firestore, 'scriptureReadings', scripture.id);
-      
-      batch.delete(userReadingRef);
-      batch.delete(centralReadingRef);
-      
-      await batch.commit();
-
-      setScriptures(prev => prev.filter(s => s.id !== scripture.id));
+      // For admin, we only need to delete from the central collection.
+      // The user-specific collection is for their view only.
+      await deleteDoc(doc(firestore, 'scriptureReadings', scripture.id));
       toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
@@ -109,24 +77,16 @@ export default function ScriptureManagement() {
   const handleSaveEdit = (scripture: ScriptureReading) => {
     if (!firestore || !editingId) return;
 
-    const centralDocRef = doc(firestore, 'scriptureReadings', editingId);
-    const userDocRef = doc(firestore, `users/${scripture.userId}/scriptureReadings`, editingId);
-
-    const batch = writeBatch(firestore);
-    batch.update(centralDocRef, { scripture: editText });
-    batch.update(userDocRef, { scripture: editText });
+    const docRef = doc(firestore, 'scriptureReadings', editingId);
     
-    batch.commit().then(() => {
-        setScriptures(prev => prev.map(s => s.id === editingId ? { ...s, scripture: editText } : s));
-        toast({ title: 'Submission Updated' });
-        handleCancelEdit();
-    }).catch((error: any) => {
-        toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
-    });
+    updateDocumentNonBlocking(docRef, { scripture: editText });
+    
+    toast({ title: 'Submission Updated' });
+    handleCancelEdit();
   }
 
 
-  if (isLoading || areUsersLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="relative flex h-24 w-24 items-center justify-center">
@@ -233,5 +193,3 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
-
-    

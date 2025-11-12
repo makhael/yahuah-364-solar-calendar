@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { GLOSSARY_SECTIONS } from "@/lib/glossary-data";
@@ -122,30 +121,17 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
             return;
         }
 
+        const scriptureCol = collection(firestore, 'scriptureReadings');
+        
         try {
-            const batch = writeBatch(firestore);
-            
-            // Create a reference for a new document in the central collection
-            const centralDocRef = doc(collection(firestore, 'scriptureReadings'));
-
-            // Create a reference for a document in the user's subcollection with the SAME ID
-            const userDocRef = doc(firestore, 'users', user.uid, 'scriptureReadings', centralDocRef.id);
-            
-            const payload = {
+            await addDocumentNonBlocking(scriptureCol, {
                 scripture: data.scripture,
                 date: dateId,
                 userId: user.uid,
                 userDisplayName: user.displayName || user.email?.split('@')[0],
                 upvoters: [user.uid],
                 createdAt: serverTimestamp()
-            };
-
-            // Set the data for both documents in the batch
-            batch.set(centralDocRef, payload);
-            batch.set(userDocRef, payload);
-
-            // Commit the batch
-            await batch.commit();
+            });
 
             toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution.' });
             reset();
@@ -382,5 +368,3 @@ export const IntroSection = ({ openGlossaryModal }: IntroSectionProps) => {
     </div>
   );
 };
-
-    
