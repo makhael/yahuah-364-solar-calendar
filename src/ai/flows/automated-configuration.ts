@@ -13,7 +13,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const AutoConfigurationInputSchema = z.object({
   projectRequirements: z
