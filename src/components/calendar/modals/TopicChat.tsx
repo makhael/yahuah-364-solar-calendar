@@ -2,14 +2,25 @@
 'use client';
 
 import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { LoaderCircle, MessageSquare, Trash2 } from 'lucide-react';
+import { collection, query, orderBy, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { LoaderCircle, MessageSquare, Trash2, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
+const chatSchema = z.object({
+  text: z.string().min(1, { message: "Message cannot be empty." }).max(500, { message: "Message is too long." }),
+});
+
+type ChatFormData = z.infer<typeof chatSchema>;
 
 
 interface CommunityTopic {
@@ -51,6 +62,7 @@ export const TopicChat = ({ topic }: TopicChatProps) => {
   }, [user, firestore]);
   
   const { data: userProfile } = useDoc<UserProfileData>(userProfileRef);
+  const isAdmin = userProfile?.role === 'admin';
 
 
   const chatQuery = useMemoFirebase(() => {
@@ -62,6 +74,33 @@ export const TopicChat = ({ topic }: TopicChatProps) => {
   }, [firestore, topic]);
 
   const { data: messages, isLoading } = useCollection<ChatMessage>(chatQuery);
+  
+  const chatForm = useForm<ChatFormData>({
+    resolver: zodResolver(chatSchema),
+    defaultValues: { text: '' },
+  });
+
+  const handleSendMessage = async (data: ChatFormData) => {
+    if (!user || !firestore || !user.displayName) {
+      toast({ variant: 'destructive', title: "You must be signed in with a display name to chat." });
+      return;
+    }
+    
+    const messagesCol = collection(firestore, 'communityTopics', topic.id, 'messages');
+    
+    addDocumentNonBlocking(messagesCol, {
+      ...data,
+      userId: user.uid,
+      displayName: user.displayName,
+      photoURL: user.photoURL || null,
+      createdAt: serverTimestamp(),
+    });
+
+    const topicRef = doc(firestore, 'communityTopics', topic.id);
+    updateDoc(topicRef, { lastActivity: serverTimestamp() }).catch(err => console.error("Failed to update lastActivity", err));
+
+    chatForm.reset();
+  };
 
   const handleDeleteMessage = async (messageId: string) => {
     if (!firestore) return;
@@ -107,7 +146,7 @@ export const TopicChat = ({ topic }: TopicChatProps) => {
             )}
             {!isLoading && messages && messages.length > 0 && (
               messages.map((msg) => {
-                const canDelete = true; // Any user can delete for debugging
+                const canDelete = isAdmin || msg.userId === user.uid;
                 return (
                     <div key={msg.id} className={`flex items-start gap-2.5 ${msg.userId === user.uid ? 'justify-end' : ''}`}>
                     {msg.userId !== user.uid && (
@@ -165,11 +204,26 @@ export const TopicChat = ({ topic }: TopicChatProps) => {
               })
             )}
             {!isLoading && (!messages || messages.length === 0) && (
-              <p className="text-sm text-muted-foreground text-center pt-8">No messages in this topic yet.</p>
+              <p className="text-sm text-muted-foreground text-center pt-8">No messages in this topic yet. Be the first to write!</p>
             )}
           </div>
         </ScrollArea>
       </div>
+
+       <form onSubmit={chatForm.handleSubmit(handleSendMessage)} className="flex items-center gap-2 mt-4 flex-shrink-0">
+        <Input 
+          {...chatForm.register('text')}
+          placeholder="Write a message..."
+          className="bg-background"
+          autoComplete="off"
+        />
+        <Button type="submit" size="icon" disabled={chatForm.formState.isSubmitting}>
+          {chatForm.formState.isSubmitting ? <LoaderCircle className="animate-spin" /> : <Send />}
+        </Button>
+      </form>
+      {chatForm.formState.errors.text && (
+        <p className="text-xs text-destructive mt-1">{chatForm.formState.errors.text.message}</p>
+      )}
     </div>
   );
 };
