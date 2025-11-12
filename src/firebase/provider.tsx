@@ -70,6 +70,30 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   });
 
   useEffect(() => {
+    // DEVELOPMENT OVERRIDE: Simulate a specific admin user login
+    const mockAdminUser = {
+      uid: 'mock-admin-uid-sheldon',
+      email: 'sheldonharding@gmail.com',
+      displayName: 'Sheldon Harding',
+      photoURL: null,
+      emailVerified: true,
+      isAnonymous: false,
+      // Add other necessary properties from the User type with dummy values
+      providerData: [],
+      metadata: {},
+      tenantId: null,
+      providerId: 'password',
+      delete: async () => {},
+      getIdToken: async () => 'mock-token',
+      getIdTokenResult: async () => ({ token: 'mock-token', claims: {}, authTime: '', expirationTime: '', issuedAtTime: '', signInProvider: null, signInSecondFactor: null }),
+      reload: async () => {},
+      toJSON: () => ({}),
+    } as User;
+    
+    setUserAuthState({ user: mockAdminUser, isUserLoading: false, userError: null });
+
+    // Original auth logic is commented out to enable the mock user
+    /*
     if (!auth) return;
 
     const unsubscribe = onAuthStateChanged(
@@ -90,6 +114,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     );
 
     return () => unsubscribe();
+    */
   }, [auth]);
 
   // Memoize the context value
