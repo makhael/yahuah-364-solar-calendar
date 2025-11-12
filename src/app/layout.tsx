@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     siteName: "Yahuah's 364-Day Solar Calendar",
     images: [
       {
-        url: '/og-image.png', // Must be an absolute URL
+        url: 'https://yahuahscalendar.org/og-image.png', // Must be an absolute URL
         width: 1200,
         height: 630,
       },
