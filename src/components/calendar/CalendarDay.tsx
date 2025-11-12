@@ -123,14 +123,14 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
       title={special?.label || weekdayLabel}
     >
       <div className="flex justify-between items-start">
-        <div className={`font-bold text-2xl ${dayNumberColor}`}>{day}</div>
+        <div className={cn('font-bold text-2xl', dayNumberColor)}>{day}</div>
         <div className="flex flex-col items-end">
           {isToday && (
             <span className="bg-yellow-400 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow">
               Today
             </span>
           )}
-          <div className={`text-xs font-normal pt-1 ${currentDateText}`}>
+          <div className={cn('text-xs font-normal pt-1', currentDateText)}>
             {gregorianDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </div>
         </div>
@@ -143,7 +143,7 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className={`text-xs font-normal underline-offset-4 hover:underline cursor-pointer ${dayNameColor}`}
+              className={cn('text-xs font-normal underline-offset-4 hover:underline cursor-pointer', dayNameColor)}
             >
               {weekdayLabel}
             </div>
@@ -177,7 +177,7 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
               </div>
             )}
             {special && (
-              <div className={`text-[10px] font-bold leading-none px-2 py-0.5 rounded-full ${badgeTextColor} flex items-center gap-1`}>
+              <div className={cn('text-[10px] font-bold leading-none px-2 py-0.5 rounded-full flex items-center gap-1', badgeTextColor)}>
                 <span>{special.shortLabel || special.label}</span>
                 {special.hebrewName && (
                   <span title={`Hebrew: ${special.hebrewName}`} />
@@ -185,12 +185,12 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
               </div>
             )}
             {!special && isTekufahDay && (
-              <div className={`text-[10px] font-bold leading-none px-2 py-0.5 rounded-full ${badgeTextColor}`}>
+              <div className={cn('text-[10px] font-bold leading-none px-2 py-0.5 rounded-full', badgeTextColor)}>
                 Tekufah
               </div>
             )}
             {!special && (day >= 29 && day <= 30) && !isTekufahDay && (
-              <div className={`text-[10px] font-bold leading-none px-2 py-0.5 rounded-full ${badgeTextColor}`}>
+              <div className={cn('text-[10px] font-bold leading-none px-2 py-0.5 rounded-full', badgeTextColor)}>
                 Transitional
               </div>
             )}
