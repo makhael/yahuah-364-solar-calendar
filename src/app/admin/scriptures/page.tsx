@@ -46,7 +46,7 @@ export default function ScriptureManagement() {
 
   useEffect(() => {
     if (!firestore || areUsersLoading || !users) {
-      // Don't start fetching scriptures until users are loaded
+      if (!areUsersLoading) setIsLoading(false); // If users are loaded but empty, stop loading
       return;
     }
 
@@ -238,3 +238,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    
