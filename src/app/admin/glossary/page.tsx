@@ -150,32 +150,37 @@ export default function GlossaryManagement() {
     const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
     useEffect(() => {
-        if (!firestore || areUsersLoading) return;
+        if (!firestore || areUsersLoading || !users) return;
 
-        const fetchProposals = async () => {
+        const fetchAllProposals = async () => {
             setIsLoading(true);
-            const proposals: Proposal[] = [];
-            if (users && users.length > 0) {
-              for (const user of users) {
-                  const proposalsQuery = query(collection(firestore, `users/${user.id}/glossaryProposals`));
-                  const snapshot = await getDocs(proposalsQuery);
-                  snapshot.forEach(doc => {
-                      proposals.push({
-                          id: doc.id,
-                          path: doc.ref.path,
-                          ...doc.data()
-                      } as Proposal);
-                  });
-              }
+            const proposalPromises = users.map(user => {
+                const proposalsQuery = query(collection(firestore, `users/${user.id}/glossaryProposals`));
+                return getDocs(proposalsQuery).then(snapshot => 
+                    snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        path: doc.ref.path,
+                        ...doc.data()
+                    } as Proposal))
+                );
+            });
+
+            try {
+                const results = await Promise.all(proposalPromises);
+                const flattenedProposals = results.flat();
+                flattenedProposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                setAllProposals(flattenedProposals);
+            } catch (error) {
+                console.error("Error fetching all proposals:", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load glossary proposals.' });
+            } finally {
+                setIsLoading(false);
             }
-            proposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-            setAllProposals(proposals);
-            setIsLoading(false);
         };
 
-        fetchProposals();
+        fetchAllProposals();
+    }, [firestore, users, areUsersLoading, toast]);
 
-    }, [firestore, users, areUsersLoading]);
 
     const handleUpdateStatus = (proposal: Proposal, status: Proposal['status']) => {
         if (!firestore || !proposal.path) return;

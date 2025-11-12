@@ -44,34 +44,39 @@ export default function ScriptureManagement() {
   const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
-    useEffect(() => {
-        if (!firestore || areUsersLoading) return;
+  useEffect(() => {
+    if (!firestore || areUsersLoading || !users) return;
 
-        const fetchProposals = async () => {
-            setIsLoading(true);
-            const scriptures: ScriptureReading[] = [];
-            if (users && users.length > 0) {
-              for (const user of users) {
-                  const scripturesQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`));
-                  const snapshot = await getDocs(scripturesQuery);
-                  snapshot.forEach(doc => {
-                      scriptures.push({
-                          id: doc.id,
-                          path: doc.ref.path,
-                          userDisplayName: user.displayName,
-                          ...doc.data()
-                      } as ScriptureReading);
-                  });
-              }
-            }
-            scriptures.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            setAllScriptures(scriptures);
-            setIsLoading(false);
-        };
+    const fetchAllScriptures = async () => {
+      setIsLoading(true);
+      
+      const scripturePromises = users.map(user => {
+        const scripturesQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`));
+        return getDocs(scripturesQuery).then(snapshot => 
+          snapshot.docs.map(doc => ({
+            id: doc.id,
+            path: doc.ref.path,
+            userDisplayName: user.displayName,
+            ...doc.data()
+          } as ScriptureReading))
+        );
+      });
 
-        fetchProposals();
+      try {
+        const results = await Promise.all(scripturePromises);
+        const flattenedScriptures = results.flat();
+        flattenedScriptures.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setAllScriptures(flattenedScriptures);
+      } catch (error) {
+        console.error("Error fetching all scriptures:", error);
+        toast({ variant: 'destructive', title: "Error", description: "Could not load scripture submissions." });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    }, [firestore, users, areUsersLoading]);
+    fetchAllScriptures();
+  }, [firestore, users, areUsersLoading, toast]);
 
 
   const groupedByDate = React.useMemo(() => {
