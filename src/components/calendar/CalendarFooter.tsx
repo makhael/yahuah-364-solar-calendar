@@ -10,12 +10,12 @@ export const CalendarFooter = () => {
     const { openModal } = useUI();
 
     return (
-        <footer className="fixed bottom-0 left-0 right-0 p-4 sm:p-6 z-10 no-print">
-            <div className="container mx-auto">
+        <footer className="mt-8 no-print">
+            <div className="container mx-auto p-4 sm:p-6 md:p-8">
                 <div className="bg-card p-4 rounded-xl border shadow-2xl intro-bg-pattern">
                     <div className="flex flex-col items-center gap-4">
                         <div className="w-full flex flex-col justify-between items-center gap-4">
-                            <p className="text-muted-foreground text-sm font-medium text-center sm:text-left">
+                            <p className="text-muted-foreground text-sm font-medium text-center">
                                 364-Day Calendar | Restoration of True Time
                             </p>
                         </div>
