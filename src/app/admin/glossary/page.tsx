@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, where, collectionGroup, deleteDoc } from 'firebase/firestore';
+import { collection, doc, query, orderBy, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { LoaderCircle, Check, X, Hourglass, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +16,10 @@ import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
+interface User {
+  id: string;
+}
+
 interface Proposal {
     id: string;
     term: string;
@@ -24,7 +28,7 @@ interface Proposal {
     userId: string;
     userDisplayName: string;
     createdAt?: { seconds: number };
-    path?: string; 
+    path: string; 
 }
 
 const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void }) => {
@@ -102,25 +106,42 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
 const ProposalsList = ({ status, onUpdate, onDelete, setProposalCount }: { status: Proposal['status'], onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void, setProposalCount: (count: number) => void }) => {
     const firestore = useFirestore();
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
+    
+    const [proposals, setProposals] = useState<Proposal[] | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const proposalsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(
-            collectionGroup(firestore, 'glossaryProposals'),
-            where('status', '==', status),
-            orderBy('createdAt', 'desc')
-        );
-    }, [firestore, status]);
+    const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+    const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
-    const { data, isLoading, error } = useCollection<Omit<Proposal, 'id'>>(proposalsQuery);
+    useEffect(() => {
+        if (!firestore || areUsersLoading) return;
 
-    const proposals = useMemoFirebase(() => {
-        if (!data) return null;
-        return data.map(p => {
-          return { ...p, path: `users/${p.userId}/glossaryProposals/${p.id}` } as Proposal;
-        });
+        const fetchAllProposals = async () => {
+            setIsLoading(true);
+            const allProposals: Proposal[] = [];
+            if (users && users.length > 0) {
+                for (const user of users) {
+                    const proposalsQuery = query(
+                        collection(firestore, 'users', user.id, 'glossaryProposals'),
+                        where('status', '==', status)
+                    );
+                    const querySnapshot = await getDocs(proposalsQuery);
+                    querySnapshot.forEach((doc) => {
+                        allProposals.push({
+                            id: doc.id,
+                            path: doc.ref.path,
+                            ...doc.data()
+                        } as Proposal);
+                    });
+                }
+            }
+            allProposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            setProposals(allProposals);
+            setIsLoading(false);
+        };
 
-    }, [data]);
+        fetchAllProposals();
+    }, [firestore, users, areUsersLoading, status]);
 
     useEffect(() => {
         if (proposals) {
@@ -130,7 +151,7 @@ const ProposalsList = ({ status, onUpdate, onDelete, setProposalCount }: { statu
         }
     }, [proposals, setProposalCount]);
 
-    if (isLoading) {
+    if (isLoading || areUsersLoading) {
         return (
             <div className="flex justify-center items-center p-12">
                 <div className="relative flex h-24 w-24 items-center justify-center">
@@ -151,8 +172,7 @@ const ProposalsList = ({ status, onUpdate, onDelete, setProposalCount }: { statu
         );
     }
     
-    // If there's an error and no data, it's likely the collection doesn't exist.
-    if (!proposals || (error && !data)) {
+    if (!proposals || proposals.length === 0) {
         return <p className="text-center text-muted-foreground py-8">No proposals in this category.</p>;
     }
 
@@ -229,9 +249,3 @@ export default function GlossaryManagement() {
       </Card>
     );
 }
-
-    
-
-    
-
-    

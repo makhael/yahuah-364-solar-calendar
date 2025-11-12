@@ -1,10 +1,10 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collectionGroup, doc, query, orderBy, deleteDoc } from 'firebase/firestore';
+import { collection, doc, query, orderBy, deleteDoc, getDocs } from 'firebase/firestore';
 import { LoaderCircle, BookText, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -18,9 +18,14 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { get364DateFromGregorian, getSacredMonthName } from '@/lib/calendar-utils';
 
+interface User {
+  id: string;
+  displayName?: string;
+}
+
 interface Note {
-  id: string; // The ID is the YYYY-MM-DD date
-  path: string; // Full path to the document
+  id: string; 
+  path: string; 
   content: string;
   isRevelation: boolean;
   date: string;
@@ -37,24 +42,43 @@ export default function JournalManagement() {
   const m1d1StartDate = useMemo(() => new Date(new Date().getFullYear(), 2, 25), []);
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
-  const notesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(
-      collectionGroup(firestore, 'notes'),
-      orderBy('date', 'desc')
-    );
-  }, [firestore]);
+  const [notes, setNotes] = useState<Note[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data, isLoading, error } = useCollection<Omit<Note, 'id'>>(notesQuery);
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
-  const notes: Note[] | null = useMemo(() => {
-    if (!data) return null;
-    return data.map(d => ({
-        ...d,
-        id: `${d.userId}-${d.date}`,
-        path: `users/${d.userId}/notes/${d.date}`
-    } as Note));
-  }, [data]);
+  useEffect(() => {
+    if (!firestore || areUsersLoading) return;
+
+    const fetchAllNotes = async () => {
+      setIsLoading(true);
+      const allNotes: Note[] = [];
+      if (users && users.length > 0) {
+        for (const user of users) {
+          const notesQuery = query(
+            collection(firestore, 'users', user.id, 'notes'),
+            orderBy('date', 'desc')
+          );
+          const querySnapshot = await getDocs(notesQuery);
+          querySnapshot.forEach((doc) => {
+            allNotes.push({
+              id: `${user.id}-${doc.id}`,
+              path: doc.ref.path,
+              userDisplayName: user.displayName,
+              userId: user.id,
+              ...doc.data()
+            } as Note);
+          });
+        }
+      }
+      allNotes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setNotes(allNotes);
+      setIsLoading(false);
+    };
+
+    fetchAllNotes();
+  }, [firestore, users, areUsersLoading]);
 
   const groupedNotes = useMemo(() => {
     if (!notes) return {};
@@ -77,13 +101,14 @@ export default function JournalManagement() {
     if (!firestore || !note.path) return;
     try {
         await deleteDoc(doc(firestore, note.path));
+        setNotes(prevNotes => prevNotes ? prevNotes.filter(n => n.id !== note.id) : null);
         toast({ title: 'Note Deleted', description: "The user's journal entry has been removed." });
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
     }
   };
 
-  if (isLoading) {
+  if (isLoading || areUsersLoading) {
     return (
         <div className="flex items-center justify-center p-8">
             <div className="relative flex h-24 w-24 items-center justify-center">
@@ -104,7 +129,7 @@ export default function JournalManagement() {
     );
   }
 
-  if (!notes || notes.length === 0 || (error && !data)) {
+  if (!notes || notes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center bg-background/50 rounded-md border">
         <BookText className="w-12 h-12 text-muted-foreground mb-4" />
@@ -212,5 +237,3 @@ export default function JournalManagement() {
     </Card>
   );
 }
-
-    
