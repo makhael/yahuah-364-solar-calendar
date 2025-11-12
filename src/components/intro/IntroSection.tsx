@@ -7,7 +7,7 @@ import { APPOINTMENTS, TEKUFAH_DETAILS } from "@/lib/calendar-data";
 import { InfoIcon } from "./icons";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, where, orderBy, doc, addDoc, serverTimestamp, arrayUnion, arrayRemove, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, addDoc, serverTimestamp, arrayUnion, arrayRemove, getDocs } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -82,44 +82,36 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
         resolver: zodResolver(scriptureSchema),
     });
 
-    // Note: To show community scriptures for a day, we'd need a different query.
-    // This component now focuses on submission, not display of all community scriptures.
-    // For simplicity, we are removing the display part from this component.
-
-    const onSubmit = async (data: ScriptureFormData) => {
-        if (!user || user.isAnonymous || !firestore) {
-            toast({ variant: 'destructive', title: 'Please sign in to submit scripture.' });
+    // This component will now only handle submission. Display will be in DayDetailModal.
+    const onSubmit = (data: ScriptureFormData) => {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be signed in to submit scripture.' });
             return;
         }
-
-        const userScriptureCollection = collection(firestore, `users/${user.uid}/scriptureReadings`);
         
-        const newScripture = {
+        // Save to the user-specific subcollection
+        const userScriptureCol = collection(firestore, `users/${user.uid}/scriptureReadings`);
+        
+        addDocumentNonBlocking(userScriptureCol, {
             scripture: data.scripture,
             date: dateId,
             userId: user.uid,
             userDisplayName: user.displayName || user.email?.split('@')[0] || 'Anonymous',
-            upvoters: [], // upvoters might be a feature for a global list, not user-specific
+            upvoters: [], // Initialize upvoters
             createdAt: serverTimestamp()
-        };
-
-        try {
-            await addDoc(userScriptureCollection, newScripture);
-            toast({ title: 'Scripture Submitted!', description: 'It has been added to your personal list.' });
-            reset();
-        } catch (error) {
-            console.error("Error submitting scripture:", error);
-            toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not save scripture. Please try again.' });
-        }
+        }).then(() => {
+           toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution. It is now visible on your "Personal" page.' });
+           reset();
+        });
     };
     
     return (
         <div className="bg-secondary/50 p-4 rounded-lg border">
             <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5"/> Submit a Scripture for this Day</h3>
             
-            <p className="text-sm text-center text-muted-foreground mb-4">Your submission will be added to your personal collection.</p>
+            <p className="text-sm text-center text-muted-foreground mb-4">Your submission will be added to your personal collection, which you can view on your "Personal" page.</p>
 
-            {user && !user.isAnonymous ? (
+            {user ? (
                 <form onSubmit={handleSubmit(onSubmit)} className="flex items-start gap-2">
                     <div className="flex-grow">
                         <Input 
