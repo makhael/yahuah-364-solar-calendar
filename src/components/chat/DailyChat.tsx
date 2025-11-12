@@ -1,19 +1,20 @@
 
 "use client";
 
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, LoaderCircle, MessageSquare } from 'lucide-react';
+import { Send, LoaderCircle, MessageSquare, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const chatSchema = z.object({
   text: z.string().min(1, { message: "Message cannot be empty." }).max(500, { message: "Message is too long." }),
@@ -34,13 +35,28 @@ interface DailyChatProps {
   dateId: string; // YYYY-MM-DD or topic ID
 }
 
+interface UserProfileData {
+  role?: string;
+}
+
+
 export const DailyChat = ({ dateId }: DailyChatProps) => {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
 
   const isDailyChat = useMemo(() => /^\d{4}-\d{2}-\d{2}$/.test(dateId), [dateId]);
+  
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+  
+  const { data: userProfile } = useDoc<UserProfileData>(userProfileRef);
+  const isAdmin = userProfile?.role === 'admin';
+
 
   const chatQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -84,6 +100,21 @@ export const DailyChat = ({ dateId }: DailyChatProps) => {
     chatForm.reset();
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!firestore) return;
+    const path = isDailyChat ? `dailyContent/${dateId}/chatMessages` : `communityTopics/${dateId}/messages`;
+
+    setDeletingMessageId(messageId);
+    try {
+        await deleteDoc(doc(firestore, path, messageId));
+        toast({ title: 'Message Deleted' });
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+        setDeletingMessageId(null);
+    }
+  }
+
   useEffect(() => {
     if (scrollAreaRef.current) {
         const scrollableView = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
@@ -121,33 +152,63 @@ export const DailyChat = ({ dateId }: DailyChatProps) => {
               </div>
             )}
             {!isLoading && messages && messages.length > 0 && (
-              messages.map((msg) => (
-                <div key={msg.id} className={`flex items-start gap-2.5 ${msg.userId === user.uid ? 'justify-end' : ''}`}>
-                  {msg.userId !== user.uid && (
-                    <Avatar className="w-8 h-8 border">
-                        <AvatarImage src={msg.photoURL} alt={msg.displayName}/>
-                        <AvatarFallback>{msg.displayName.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div className={`flex flex-col gap-1 w-full max-w-[320px] ${msg.userId === user.uid ? 'items-end' : ''}`}>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <span className="text-xs font-semibold text-foreground">{msg.displayName}</span>
-                      <span className="text-xs font-normal text-muted-foreground">
-                        {msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                      </span>
+              messages.map((msg) => {
+                const canDelete = isAdmin || msg.userId === user.uid;
+                return (
+                  <div key={msg.id} className={`flex items-start gap-2.5 ${msg.userId === user.uid ? 'justify-end' : ''}`}>
+                    {msg.userId !== user.uid && (
+                      <Avatar className="w-8 h-8 border">
+                          <AvatarImage src={msg.photoURL} alt={msg.displayName}/>
+                          <AvatarFallback>{msg.displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className={`flex flex-col gap-1 w-full max-w-[320px] ${msg.userId === user.uid ? 'items-end' : ''}`}>
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <span className="text-xs font-semibold text-foreground">{msg.displayName}</span>
+                        <span className="text-xs font-normal text-muted-foreground">
+                          {msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                      <div className={`p-3 rounded-lg relative group ${msg.userId === user.uid ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-background rounded-bl-none border'}`}>
+                        <p className="text-sm font-normal">{msg.text}</p>
+                        {canDelete && (
+                            <div className="absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {deletingMessageId === msg.id ? (
+                                    <LoaderCircle className="animate-spin h-5 w-5" />
+                                ) : (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" size="icon" className="h-7 w-7">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Delete this message?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                This will permanently delete the message: "{msg.text}". This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteMessage(msg.id)}>Delete Message</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                )}
+                            </div>
+                        )}
+                      </div>
                     </div>
-                    <div className={`p-3 rounded-lg ${msg.userId === user.uid ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-background rounded-bl-none border'}`}>
-                      <p className="text-sm font-normal">{msg.text}</p>
-                    </div>
+                    {msg.userId === user.uid && (
+                      <Avatar className="w-8 h-8 border">
+                          <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'U'}/>
+                          <AvatarFallback>{(user.displayName || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    )}
                   </div>
-                  {msg.userId === user.uid && (
-                    <Avatar className="w-8 h-8 border">
-                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'U'}/>
-                        <AvatarFallback>{(user.displayName || 'U').charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
             {!isLoading && (!messages || messages.length === 0) && (
               <p className="text-sm text-muted-foreground text-center pt-8">No messages yet. Start the conversation!</p>
