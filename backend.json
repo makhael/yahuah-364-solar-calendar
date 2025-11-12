@@ -1,0 +1,188 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's public profile information.",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture."
+        },
+        "role": {
+            "type": "string",
+            "enum": ["admin", "leader", "member", "contributor", "moderator"],
+            "description": "The user's role in the application."
+        }
+      }
+    },
+    "CommunityTopic": {
+      "title": "Community Topic",
+      "description": "A topic for community discussion.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the chat topic."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the topic."
+        },
+        "creatorId": {
+            "type": "string",
+            "description": "The UID of the user who created the topic."
+        },
+        "creatorDisplayName": {
+            "type": "string",
+            "description": "The display name of the user who created the topic."
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the topic was created."
+        },
+        "lastActivity": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last message in this topic."
+        }
+      },
+      "required": ["title", "description", "creatorId", "creatorDisplayName", "createdAt", "lastActivity"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A single message within a community topic chat.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who sent the message."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The display name of the user at the time of sending."
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The server timestamp when the message was created."
+        }
+      },
+      "required": ["userId", "displayName", "text", "createdAt"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "A scheduled event on the calendar.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "inviteScope": { "enum": ["all", "community", "private"] },
+        "creatorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "recurrence": {
+          "type": "object",
+          "properties": {
+            "frequency": { "enum": ["none", "weekly", "bi-weekly"] },
+            "dayOfWeek": { "type": "string" }
+          }
+        },
+        "rsvps": {
+          "type": "object",
+          "properties": {
+            "going": { "type": "array", "items": { "type": "string" } },
+            "notGoing": { "type": "array", "items": { "type": "string" } },
+            "maybe": { "type": "array", "items": { "type": "string" } },
+            "pending": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      "required": ["title", "startDate", "startTime", "inviteScope", "creatorId"]
+    },
+    "AppointmentSummary": {
+      "title": "Appointment Summary",
+      "description": "A summary of dates that have appointments for a given year.",
+      "type": "object",
+      "properties": {
+        "appointmentDates": {
+          "type": "array",
+          "items": { "type": "string", "format": "date" },
+          "description": "An array of YYYY-MM-DD strings for which appointments exist."
+        }
+      }
+    },
+    "GlossaryProposal": {
+      "title": "Glossary Proposal",
+      "description": "A user's proposal for a new or updated glossary term.",
+      "type": "object",
+      "properties": {
+        "term": { "type": "string" },
+        "definition": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "userId": { "type": "string" },
+        "userDisplayName": { "type": "string" },
+        "status": { "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["term", "definition", "userId", "userDisplayName", "status", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": ["anonymous", "google.com"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores public profile information for each user."
+    },
+    "/users/{userId}/glossaryProposals/{proposalId}": {
+      "schema": {
+        "$ref": "#/entities/GlossaryProposal"
+      },
+      "description": "User-specific collection of their glossary proposals."
+    },
+    "/communityTopics/{topicId}": {
+        "schema": {
+            "$ref": "#/entities/CommunityTopic"
+        },
+        "description": "Collection of all community chat topics."
+    },
+    "/communityTopics/{topicId}/messages/{messageId}": {
+        "schema": {
+            "$ref": "#/entities/ChatMessage"
+        },
+        "description": "Sub-collection of messages for a specific community topic."
+    },
+    "/appointments/{appointmentId}": {
+      "schema": {
+        "$ref": "#/entities/Appointment"
+      },
+      "description": "Collection of all calendar appointments."
+    },
+    "/appointmentSummaries/{year}": {
+      "schema": {
+        "$ref": "#/entities/AppointmentSummary"
+      },
+      "description": "Summary of appointment dates for quick lookups."
+    }
+  }
+}

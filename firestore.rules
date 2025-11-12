@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // WARNING: Insecure rules. Allows all reads and writes to all data.
+      // This is for debugging purposes only.
+      allow read, write: if true;
+    }
+  }
+}
