@@ -124,15 +124,15 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="context">Context</Label>
-                    <Controller name="context" control={control} render={({ field }) => <Textarea id="context" {...field} rows={2} className="bg-background/50" />} />
+                    <Controller name="context" control={control} render={({ field }) => <Textarea id="context" {...field} rows={2} className="bg-background/50" placeholder="Why is this term important? Where does it fit?" />} />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="scripturalWitness">Scriptural Witness</Label>
-                    <Controller name="scripturalWitness" control={control} render={({ field }) => <Textarea id="scripturalWitness" {...field} rows={2} className="bg-background/50" />} />
+                    <Controller name="scripturalWitness" control={control} render={({ field }) => <Textarea id="scripturalWitness" {...field} rows={2} className="bg-background/50" placeholder="e.g., Exodus 3:15, John 1:1" />} />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="restorationNote">Restoration Note</Label>
-                    <Controller name="restorationNote" control={control} render={({ field }) => <Textarea id="restorationNote" {...field} rows={2} className="bg-background/50" />} />
+                    <Controller name="restorationNote" control={control} render={({ field }) => <Textarea id="restorationNote" {...field} rows={2} className="bg-background/50" placeholder="Why is this term being restored?" />} />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="tags">Tags (comma-separated)</Label>
@@ -150,3 +150,5 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
     </div>
   );
 };
+
+    
