@@ -20,6 +20,7 @@ interface Proposal {
   id: string;
   term: string;
   definition: string;
+  tags?: string[];
   status: 'pending' | 'approved' | 'rejected';
   createdAt: { seconds: number };
 }
@@ -105,6 +106,13 @@ export const MyProposals = ({ userId }: { userId: string }) => {
                     <Badge className={cn("text-white", statusInfo.className)}>{statusInfo.text}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{proposal.definition}</p>
+                 {proposal.tags && proposal.tags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {proposal.tags.map(tag => (
+                      <Badge key={tag} variant="secondary">#{tag}</Badge>
+                    ))}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground/80 mt-2">
                   Submitted: {new Date(proposal.createdAt.seconds * 1000).toLocaleDateString()}
                 </p>

@@ -385,7 +385,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   }, [user, firestore, toast, closeAllModals, startDate]);
   
   const handleSaveGlossaryProposal = useCallback(async (proposalData: any, id?: string) => {
-    if (!user || !firestore) {
+    if (!user || user.isAnonymous || !firestore) {
       toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be signed in to submit a proposal.' });
       return;
     }
@@ -393,31 +393,27 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     const { term, definition, tags } = proposalData;
     const tagsArray = tags ? tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : [];
 
-    if (id) {
-      // Editing existing proposal
-      const proposalRef = doc(firestore, 'users', user.uid, 'glossaryProposals', id);
-      const payload = {
+    const payload = {
         term,
         definition,
         tags: tagsArray,
-        status: 'pending', // Reset status to pending on edit
+        status: 'pending',
+        userId: user.uid,
+        userDisplayName: user.displayName || user.email,
         updatedAt: serverTimestamp(),
-      };
+    };
+
+    if (id) {
+      const proposalRef = doc(firestore, 'users', user.uid, 'glossaryProposals', id);
       updateDocumentNonBlocking(proposalRef, payload);
       toast({
         title: 'Proposal Updated!',
         description: 'Your changes have been submitted for review.',
       });
     } else {
-      // Creating new proposal
       const proposalCol = collection(firestore, 'users', user.uid, 'glossaryProposals');
       const newProposal = {
-        term,
-        definition,
-        tags: tagsArray,
-        userId: user.uid,
-        userDisplayName: user.displayName || user.email,
-        status: 'pending',
+        ...payload,
         createdAt: serverTimestamp(),
       };
       addDocumentNonBlocking(proposalCol, newProposal);
