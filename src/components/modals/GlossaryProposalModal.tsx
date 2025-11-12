@@ -150,3 +150,5 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
     </div>
   );
 };
+
+    
