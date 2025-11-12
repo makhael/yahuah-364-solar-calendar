@@ -3,22 +3,26 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow admins to perform collection group queries for moderation
+    // Allow admins to perform collection group queries for moderation.
+    // In a real app, you'd restrict this to authenticated admins, e.g.:
+    // allow list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     match /{path=**}/notes/{noteId} {
-      allow read, list: if true; // In a real app, you'd check for an admin role: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read, write, list, delete: if true; 
     }
     match /{path=**}/glossaryProposals/{proposalId} {
-      allow read, list: if true; // Same as above, restrict to admins in a real app.
+      allow read, write, list, delete: if true; 
     }
 
+    // Allow users to manage their own data.
     match /users/{userId}/{document=**} {
-      // WARNING: Insecure rules for general user data.
-      allow read, write: if true;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-
-    // Default catch-all is still open for now during development.
+    
+    // Allow any authenticated user to read public data.
+    // Writes are currently open for development but should be restricted.
     match /{document=**} {
-      allow read, write: if true;
+      allow read: if request.auth != null;
+      allow write: if true; // Should be restricted in production
     }
   }
 }
