@@ -1,5 +1,4 @@
 
-
 {
   "entities": {
     "MonthInfo": {
@@ -388,14 +387,15 @@
         }
       },
       {
-        "path": "/scriptureReadings/{readingId}",
+        "path": "/users/{userId}/scriptureReadings/{readingId}",
         "definition": {
-            "entityName": "ScriptureReading",
-            "schema": { "$ref": "#/entities/ScriptureReading" },
-            "description": "Global collection of all user scripture readings.",
-            "params": [
-                { "name": "readingId", "description": "The unique ID for the scripture reading." }
-            ]
+          "entityName": "ScriptureReading",
+          "schema": { "$ref": "#/entities/ScriptureReading" },
+          "description": "User-specific collection of their scripture readings.",
+          "params": [
+            { "name": "userId", "description": "The user's unique ID." },
+            { "name": "readingId", "description": "The unique ID for the scripture reading." }
+          ]
         }
       },
       {
@@ -414,5 +414,3 @@
     "reasoning": "The Firestore data structure is designed to store information related to the Yahuah 364-day solar calendar. It includes collections for month information, appointed times (Moedim), Tekufot (seasonal turning points), weekday origins, glossary terms, and podcast series. User-submitted content like scripture readings and glossary proposals are stored in subcollections under the user's document to allow for efficient querying and user-specific views, which is a secure and scalable approach."
   }
 }
-
-    
