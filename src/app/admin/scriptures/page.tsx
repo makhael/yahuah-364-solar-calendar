@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, deleteDoc, doc, where, getDocs, writeBatch } from 'firebase/firestore';
-import { LoaderCircle, BookOpen, Trash2, Edit, Check, X } from 'lucide-react';
+import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,14 +15,22 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { cn } from '@/lib/utils';
 
 interface ScriptureReading {
   id: string;
+  path: string;
   scripture: string;
   userId: string;
   userDisplayName?: string;
   date: string;
   createdAt: { seconds: number };
+}
+
+interface User {
+  id: string;
+  displayName?: string;
 }
 
 export default function ScriptureManagement() {
@@ -32,16 +40,42 @@ export default function ScriptureManagement() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
-  
-  const scripturesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'scriptureReadings'), orderBy('date', 'desc'));
-  }, [firestore]);
-  
-  const { data: scriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
+  const [scriptures, setScriptures] = useState<ScriptureReading[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const groupedScriptures = React.useMemo(() => {
-    if (!scriptures) return {};
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
+
+  useEffect(() => {
+    if (!firestore || areUsersLoading) return;
+
+    const fetchAllScriptures = async () => {
+      setIsLoading(true);
+      const allScriptures: ScriptureReading[] = [];
+      if (users && users.length > 0) {
+        for (const user of users) {
+          const scripturesQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`), orderBy('date', 'desc'));
+          const snapshot = await getDocs(scripturesQuery);
+          snapshot.forEach(doc => {
+            allScriptures.push({
+              id: doc.id,
+              path: doc.ref.path,
+              userDisplayName: user.displayName,
+              ...doc.data()
+            } as ScriptureReading);
+          });
+        }
+      }
+      // Sort all scriptures by date after fetching
+      allScriptures.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setScriptures(allScriptures);
+      setIsLoading(false);
+    };
+
+    fetchAllScriptures();
+  }, [firestore, users, areUsersLoading]);
+
+  const groupedByDate = React.useMemo(() => {
     return scriptures.reduce((acc, scripture) => {
       const date = scripture.date;
       if (!acc[date]) {
@@ -52,10 +86,11 @@ export default function ScriptureManagement() {
     }, {} as Record<string, ScriptureReading[]>);
   }, [scriptures]);
 
-  const handleDelete = async (scriptureId: string) => {
+  const handleDelete = async (scripture: ScriptureReading) => {
     if (!firestore) return;
     try {
-      await deleteDoc(doc(firestore, 'scriptureReadings', scriptureId));
+      await deleteDoc(doc(firestore, scripture.path));
+      setScriptures(prev => prev.filter(s => s.path !== scripture.path));
       toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
@@ -75,16 +110,16 @@ export default function ScriptureManagement() {
   const handleSaveEdit = (scripture: ScriptureReading) => {
     if (!firestore || !editingId) return;
 
-    const docRef = doc(firestore, 'scriptureReadings', editingId);
+    const docRef = doc(firestore, scripture.path);
     
     updateDocumentNonBlocking(docRef, { scripture: editText });
+    setScriptures(prev => prev.map(s => s.id === editingId ? { ...s, scripture: editText } : s));
     
     toast({ title: 'Submission Updated' });
     handleCancelEdit();
   }
 
-
-  if (isLoading) {
+  if (isLoading || areUsersLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="relative flex h-24 w-24 items-center justify-center">
@@ -112,7 +147,7 @@ export default function ScriptureManagement() {
         <CardDescription>Review, edit, and moderate all community scripture submissions.</CardDescription>
       </CardHeader>
       <CardContent>
-        {Object.keys(groupedScriptures).length === 0 ? (
+        {scriptures.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center bg-background/50 rounded-md border">
             <BookOpen className="w-12 h-12 text-muted-foreground mb-4" />
             <h3 className="font-semibold text-foreground">No Scripture Submissions</h3>
@@ -123,14 +158,14 @@ export default function ScriptureManagement() {
         ) : (
           <ScrollArea className="h-[70vh] pr-4">
             <div className="space-y-6">
-              {Object.entries(groupedScriptures).map(([date, submissions]) => (
+              {Object.entries(groupedByDate).map(([date, submissions]) => (
                 <div key={date}>
                   <h3 className="font-semibold text-primary mb-2 border-b pb-1">
                     {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                   </h3>
                   <div className="space-y-3">
                     {submissions.map(submission => (
-                      <div key={submission.id} className="p-3 border rounded-lg bg-background/50 flex justify-between items-start gap-4">
+                      <div key={submission.path} className="p-3 border rounded-lg bg-background/50 flex justify-between items-start gap-4">
                         <div className="flex-grow">
                            {editingId === submission.id ? (
                                <Input value={editText} onChange={(e) => setEditText(e.target.value)} className="text-lg" />
@@ -138,7 +173,8 @@ export default function ScriptureManagement() {
                                <p className="font-semibold text-lg text-foreground">{submission.scripture}</p>
                            )}
                           <Badge variant="secondary" className="mt-1">
-                            Submitted by: {submission.userDisplayName || submission.userId}
+                            <User className="w-3 h-3 mr-1.5" />
+                            {submission.userDisplayName || submission.userId}
                           </Badge>
                         </div>
 
@@ -172,7 +208,7 @@ export default function ScriptureManagement() {
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(submission.id)}>Yes, Delete</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(submission)}>Yes, Delete</AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
@@ -191,3 +227,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    
