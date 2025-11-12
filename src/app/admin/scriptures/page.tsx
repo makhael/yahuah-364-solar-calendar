@@ -64,11 +64,11 @@ export default function ScriptureManagement() {
                 id: docSnap.id,
                 path: docSnap.ref.path,
                 ...(docSnap.data() as Omit<ScriptureReading, 'id' | 'path'>)
-            } as ScriptureReading))
+            }))
         );
         
         flattenedScriptures.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setAllScriptures(flattenedScriptures);
+        setAllScriptures(flattenedScriptures as ScriptureReading[]);
 
       } catch (error) {
         console.error("Error fetching all scriptures:", error);
