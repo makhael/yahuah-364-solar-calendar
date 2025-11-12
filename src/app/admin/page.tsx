@@ -93,7 +93,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-8 flex justify-between items-start">
+        <header className="mb-12 flex justify-between items-start">
             <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2 text-left flex items-center gap-3">
                 <Shield className="w-6 h-6 text-destructive"/>
                 <div>
