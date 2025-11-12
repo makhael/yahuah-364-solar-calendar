@@ -1,12 +1,77 @@
 
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to all documents
-    // This is for development purposes and should be secured before production
+    
+    // Default deny all
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
+    }
+
+    // Allow public read on some collections
+    match /monthInfos/{monthId} {
+      allow get: if true;
+    }
+    match /appointments/{appId} {
+      allow get: if true;
+    }
+    match /tekufot/{tekufahId} {
+      allow get: if true;
+    }
+    match /weekdayOrigins/{weekdayId} {
+      allow get: if true;
+    }
+    match /glossaryTerms/{termId} {
+      allow get: if true;
+    }
+    match /podcastSeries/{seriesId} {
+      allow get: if true;
+    }
+    match /appointmentSummaries/{year} {
+      allow get: if true;
+    }
+    
+    // Users can read/write their own profile & preferences
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Admins can read/write anything
+    match /{document=**} {
+      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Rules for scriptureReadings
+    match /scriptureReadings/{readingId} {
+      // Any authenticated user can create a scripture reading
+      allow create: if request.auth != null;
+      
+      // Only the user who created it can delete it
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Any authenticated user can upvote (update)
+      allow update: if request.auth != null;
+
+      // Allow reads if the query is filtered by the user's ID
+      allow list: if request.auth != null && request.query.where.size() > 0 && request.query.where[0][0] == "userId" && request.query.where[0][2] == request.auth.uid;
+
+      // Allow anyone to read individual documents (for community view)
+      allow get: if true;
+    }
+
+    // Rules for community topics & messages
+    match /communityTopics/{topicId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+      allow delete: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+
+      match /messages/{messageId} {
+        allow read: if true;
+        allow create: if request.auth != null;
+        allow delete: if request.auth != null && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      }
     }
   }
 }
+
+    

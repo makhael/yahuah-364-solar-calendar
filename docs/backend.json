@@ -1,4 +1,5 @@
 
+
 {
   "entities": {
     "MonthInfo": {
@@ -387,15 +388,14 @@
         }
       },
       {
-        "path": "/users/{userId}/scriptureReadings/{readingId}",
+        "path": "/scriptureReadings/{readingId}",
         "definition": {
-          "entityName": "ScriptureReading",
-          "schema": { "$ref": "#/entities/ScriptureReading" },
-          "description": "User-specific collection of their scripture readings.",
-          "params": [
-            { "name": "userId", "description": "The user's unique ID." },
-            { "name": "readingId", "description": "The unique ID for the scripture reading." }
-          ]
+            "entityName": "ScriptureReading",
+            "schema": { "$ref": "#/entities/ScriptureReading" },
+            "description": "Global collection of all user scripture readings.",
+            "params": [
+                { "name": "readingId", "description": "The unique ID for the scripture reading." }
+            ]
         }
       },
       {

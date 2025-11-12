@@ -26,11 +26,6 @@ interface ScriptureReading {
   createdAt: { seconds: number };
 }
 
-interface User {
-  id: string;
-  displayName?: string;
-}
-
 export default function ScriptureManagement() {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -38,43 +33,16 @@ export default function ScriptureManagement() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
-  const [scriptures, setScriptures] = useState<ScriptureReading[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
+  const scripturesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'scriptureReadings'), orderBy('date', 'desc'));
+  }, [firestore]);
 
-  useEffect(() => {
-    if (!firestore || !users) {
-      setIsLoading(false);
-      return;
-    };
-
-    const fetchAllScriptures = async () => {
-      setIsLoading(true);
-      const allScriptures: ScriptureReading[] = [];
-      for (const user of users) {
-        const scripturesQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`), orderBy('date', 'desc'));
-        const snapshot = await getDocs(scripturesQuery);
-        snapshot.forEach(doc => {
-          allScriptures.push({
-            id: doc.id,
-            path: doc.ref.path,
-            userDisplayName: user.displayName || user.id, // Fallback to user ID
-            ...doc.data()
-          } as ScriptureReading);
-        });
-      }
-      // Sort all scriptures by date after fetching
-      allScriptures.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setScriptures(allScriptures);
-      setIsLoading(false);
-    };
-
-    fetchAllScriptures();
-  }, [firestore, JSON.stringify(users)]); // Use JSON.stringify to depend on the content of the users array
+  const { data: scriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
   const groupedByDate = React.useMemo(() => {
+    if (!scriptures) return {};
     return scriptures.reduce((acc, scripture) => {
       const date = scripture.date;
       if (!acc[date]) {
@@ -88,8 +56,7 @@ export default function ScriptureManagement() {
   const handleDelete = async (scripture: ScriptureReading) => {
     if (!firestore) return;
     try {
-      await deleteDoc(doc(firestore, scripture.path));
-      setScriptures(prev => prev.filter(s => s.path !== scripture.path));
+      await deleteDoc(doc(firestore, 'scriptureReadings', scripture.id));
       toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
@@ -109,16 +76,15 @@ export default function ScriptureManagement() {
   const handleSaveEdit = (scripture: ScriptureReading) => {
     if (!firestore || !editingId) return;
 
-    const docRef = doc(firestore, scripture.path);
+    const docRef = doc(firestore, 'scriptureReadings', scripture.id);
     
     updateDocumentNonBlocking(docRef, { scripture: editText });
-    setScriptures(prev => prev.map(s => s.id === editingId ? { ...s, scripture: editText } : s));
     
     toast({ title: 'Submission Updated' });
     handleCancelEdit();
   }
 
-  if (isLoading || areUsersLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="relative flex h-24 w-24 items-center justify-center">
@@ -146,7 +112,7 @@ export default function ScriptureManagement() {
         <CardDescription>Review, edit, and moderate all community scripture submissions.</CardDescription>
       </CardHeader>
       <CardContent>
-        {scriptures.length === 0 ? (
+        {!scriptures || scriptures.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center bg-background/50 rounded-md border">
             <BookOpen className="w-12 h-12 text-muted-foreground mb-4" />
             <h3 className="font-semibold text-foreground">No Scripture Submissions</h3>
@@ -164,7 +130,7 @@ export default function ScriptureManagement() {
                   </h3>
                   <div className="space-y-3">
                     {submissions.map(submission => (
-                      <div key={submission.path} className="p-3 border rounded-lg bg-background/50 flex justify-between items-start gap-4">
+                      <div key={submission.id} className="p-3 border rounded-lg bg-background/50 flex justify-between items-start gap-4">
                         <div className="flex-grow">
                            {editingId === submission.id ? (
                                <Input value={editText} onChange={(e) => setEditText(e.target.value)} className="text-lg" />
@@ -226,3 +192,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    
