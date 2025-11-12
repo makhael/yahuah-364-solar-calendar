@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, where, getDocs, deleteDoc, setDoc } from 'firebase/firestore';
@@ -126,8 +126,8 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
     );
 }
 
-const ProposalsList = ({ proposals, onUpdate, onDelete }: { proposals: Proposal[] | null, onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void }) => {
-    if (!proposals || proposals.length === 0) {
+const ProposalsList = ({ proposals, onUpdate, onDelete }: { proposals: Proposal[], onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void }) => {
+    if (proposals.length === 0) {
         return <p className="text-center text-muted-foreground py-8">No proposals in this category.</p>;
     }
 
