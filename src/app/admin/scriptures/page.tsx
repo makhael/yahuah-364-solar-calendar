@@ -49,14 +49,15 @@ export default function ScriptureManagement() {
 
     const fetchAllScriptures = async () => {
       setIsLoading(true);
-      const scripturePromises = users.map(user => {
-        const scripturesQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`));
-        return getDocs(scripturesQuery);
-      });
+      
+      const scripturePromises = users.map(user => 
+        getDocs(query(collection(firestore, `users/${user.id}/scriptureReadings`)))
+      );
 
       try {
-        const snapshotResults = await Promise.all(scripturePromises);
-        const flattenedScriptures = snapshotResults.flatMap((snapshot, index) => {
+        const userScriptureSnapshots = await Promise.all(scripturePromises);
+        
+        const flattenedScriptures = userScriptureSnapshots.flatMap((snapshot, index) => {
             const user = users[index];
             return snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -235,5 +236,3 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
-
-    
