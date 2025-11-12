@@ -169,7 +169,7 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
       <div className="h-6 flex items-end justify-between w-full">
          <div className="flex items-center justify-start min-w-[24px]">
             {hasAppointment && (
-              <CalendarDays className={cn("w-4 h-4", dayType !== 'work' ? "text-white/80" : (appointmentTheme && appointmentTheme !== 'default' ? 'text-white' : "text-primary"))} />
+              <CalendarDays className={cn("w-4 h-4", (dayType !== 'work' || (appointmentTheme && appointmentTheme !== 'default')) ? "text-white/80" : "text-primary")} />
             )}
         </div>
         <div className="flex items-center justify-center gap-1.5">
