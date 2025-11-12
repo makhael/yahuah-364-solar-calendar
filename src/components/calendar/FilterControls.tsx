@@ -47,16 +47,6 @@ export const FilterControls = ({
                         <span>Intro</span>
                     </div>
                 </Button>
-                <Button
-                    variant={visibleSections.podcast ? 'default' : 'outline'}
-                    onClick={() => toggleSection('podcast')}
-                    className="w-full justify-center transition-all duration-200"
-                >
-                    <div className="flex items-center gap-2">
-                        {visibleSections.podcast ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                        <span>Podcast Hub</span>
-                    </div>
-                </Button>
                  <Button
                     variant={visibleSections.scripture ? 'default' : 'outline'}
                     onClick={() => toggleSection('scripture')}
@@ -65,6 +55,16 @@ export const FilterControls = ({
                     <div className="flex items-center gap-2">
                         {visibleSections.scripture ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         <span>Submit Scripture</span>
+                    </div>
+                </Button>
+                <Button
+                    variant={visibleSections.podcast ? 'default' : 'outline'}
+                    onClick={() => toggleSection('podcast')}
+                    className="w-full justify-center transition-all duration-200"
+                >
+                    <div className="flex items-center gap-2">
+                        {visibleSections.podcast ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        <span>Podcast Hub</span>
                     </div>
                 </Button>
                 <Button
