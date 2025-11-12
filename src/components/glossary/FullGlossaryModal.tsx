@@ -165,6 +165,74 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
             <div className="flex-grow overflow-y-auto">
                 <ScrollArea className="h-full">
                     <div className="p-6">
+                        <div className="mb-8">
+                            <h2 className="text-xl font-bold text-foreground mb-4">Glossary Entries</h2>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                                <Input 
+                                    type="text"
+                                    placeholder="Search terms, definitions, or Hebrew..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10 bg-background/50"
+                                />
+                            </div>
+                        </div>
+
+                        {areTermsLoading ? (
+                            <div className="flex justify-center p-8">
+                                <LoaderCircle className="animate-spin" />
+                            </div>
+                        ) : (
+                        <div className="space-y-6 mb-8">
+                            {filteredTerms.map(term => (
+                                <div 
+                                    key={term.id} 
+                                    id={`glossary-term-${term.id}`} 
+                                    className={cn(
+                                        "border-b border-border pb-4 transition-all duration-500 rounded-lg",
+                                        !term.isCustom && "cursor-pointer",
+                                        highlightedTerm === term.id ? 'bg-primary/20 border-4 border-primary p-2' : ''
+                                    )} 
+                                    onClick={() => !term.isCustom && onOpenGlossary(term.id)}
+                                >
+                                    <div className="p-2">
+                                        <h4 className="text-lg font-bold text-primary">{term.term} <span className="font-normal" lang="he" dir="rtl">{term.hebrew}</span></h4>
+                                        <dl className="mt-2 text-sm space-y-2">
+                                            <div>
+                                                <dt className="font-semibold text-foreground">Definition:</dt>
+                                                <dd>{term.definition}</dd>
+                                            </div>
+                                            {term.context && (
+                                                <div>
+                                                    <dt className="font-semibold text-foreground">Context:</dt>
+                                                    <dd>{term.context}</dd>
+                                                </div>
+                                            )}
+                                            {term.scripturalWitness && (
+                                                <div>
+                                                    <dt className="font-semibold text-foreground">Scriptural Witness:</dt>
+                                                    <dd>{term.scripturalWitness}</dd>
+                                                </div>
+                                            )}
+                                            {term.restorationNote && (
+                                                <div>
+                                                    <dt className="font-semibold text-foreground">Restoration Note:</dt>
+                                                    <dd className="italic">{term.restorationNote}</dd>
+                                                </div>
+                                            )}
+                                        </dl>
+                                    </div>
+                                </div>
+                            ))}
+                            {filteredTerms.length === 0 && (
+                                <p className="text-center text-muted-foreground py-8">No terms found matching your search.</p>
+                            )}
+                        </div>
+                        )}
+
+                         <hr className="my-8 border-border" />
+                        
                         <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
                             <h3 className="font-bold text-primary">{GLOSSARY_PREFACE.title}</h3>
                             <p>{GLOSSARY_PREFACE.body}</p>
@@ -197,74 +265,6 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
                                     ))}
                                 </ul>
                                 <p className="mt-4 text-sm italic">{GLOSSARY_SECTIONS.FUNCTION_OF_THE_GLOSSARY.footer}</p>
-                            </div>
-
-                            <hr className="my-8 border-border" />
-                            
-                            <div>
-                                <h2 className="text-xl font-bold text-foreground mb-4">Glossary Entries</h2>
-                                <div className="relative mb-6">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                                    <Input 
-                                        type="text"
-                                        placeholder="Search terms, definitions, or Hebrew..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10 bg-background/50"
-                                    />
-                                </div>
-
-                                {areTermsLoading ? (
-                                    <div className="flex justify-center p-8">
-                                        <LoaderCircle className="animate-spin" />
-                                    </div>
-                                ) : (
-                                <div className="space-y-6">
-                                    {filteredTerms.map(term => (
-                                        <div 
-                                            key={term.id} 
-                                            id={`glossary-term-${term.id}`} 
-                                            className={cn(
-                                                "border-b border-border pb-4 transition-all duration-500 rounded-lg",
-                                                !term.isCustom && "cursor-pointer",
-                                                highlightedTerm === term.id ? 'bg-primary/20 border-4 border-primary p-2' : ''
-                                            )} 
-                                            onClick={() => !term.isCustom && onOpenGlossary(term.id)}
-                                        >
-                                            <div className="p-2">
-                                                <h4 className="text-lg font-bold text-primary">{term.term} <span className="font-normal" lang="he" dir="rtl">{term.hebrew}</span></h4>
-                                                <dl className="mt-2 text-sm space-y-2">
-                                                    <div>
-                                                        <dt className="font-semibold text-foreground">Definition:</dt>
-                                                        <dd>{term.definition}</dd>
-                                                    </div>
-                                                    {term.context && (
-                                                        <div>
-                                                            <dt className="font-semibold text-foreground">Context:</dt>
-                                                            <dd>{term.context}</dd>
-                                                        </div>
-                                                    )}
-                                                    {term.scripturalWitness && (
-                                                        <div>
-                                                            <dt className="font-semibold text-foreground">Scriptural Witness:</dt>
-                                                            <dd>{term.scripturalWitness}</dd>
-                                                        </div>
-                                                    )}
-                                                    {term.restorationNote && (
-                                                        <div>
-                                                            <dt className="font-semibold text-foreground">Restoration Note:</dt>
-                                                            <dd className="italic">{term.restorationNote}</dd>
-                                                        </div>
-                                                    )}
-                                                </dl>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {filteredTerms.length === 0 && (
-                                        <p className="text-center text-muted-foreground py-8">No terms found matching your search.</p>
-                                    )}
-                                </div>
-                                )}
                             </div>
                         </div>
                     </div>
