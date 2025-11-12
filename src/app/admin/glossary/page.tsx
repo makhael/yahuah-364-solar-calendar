@@ -105,7 +105,7 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
     );
 }
 
-const ProposalsList = ({ status, onUpdate, onDelete, setProposalCount }: { status: Proposal['status'], onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void, setProposalCount: (count: number) => void }) => {
+const ProposalsList = ({ status, onUpdate, onDelete, onCountChange }: { status: Proposal['status'], onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void, onCountChange: (count: number) => void }) => {
     const firestore = useFirestore();
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
     
@@ -116,37 +116,42 @@ const ProposalsList = ({ status, onUpdate, onDelete, setProposalCount }: { statu
     const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
     useEffect(() => {
-        if (!firestore || areUsersLoading) return;
+        if (!firestore || areUsersLoading || !users) {
+            setIsLoading(areUsersLoading);
+            return;
+        }
 
         const fetchAllProposals = async () => {
             setIsLoading(true);
             const allProposals: Proposal[] = [];
-            if (users && users.length > 0) {
-                for (const user of users) {
-                    const proposalsQuery = query(
-                        collection(firestore, 'users', user.id, 'glossaryProposals'),
-                        where('status', '==', status)
-                    );
-                    const querySnapshot = await getDocs(proposalsQuery);
-                    querySnapshot.forEach((doc) => {
-                        allProposals.push({
-                            id: doc.id,
-                            path: doc.ref.path,
-                            ...doc.data()
-                        } as Proposal);
-                    });
-                }
+            
+            for (const user of users) {
+                const proposalsQuery = query(
+                    collection(firestore, 'users', user.id, 'glossaryProposals'),
+                    where('status', '==', status),
+                    orderBy('createdAt', 'desc')
+                );
+                const querySnapshot = await getDocs(proposalsQuery);
+                querySnapshot.forEach((doc) => {
+                    allProposals.push({
+                        id: doc.id,
+                        path: doc.ref.path,
+                        ...doc.data()
+                    } as Proposal);
+                });
             }
+            
+            // Sort once after all fetches are complete
             allProposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
             setProposals(allProposals);
-            setProposalCount(allProposals.length);
+            onCountChange(allProposals.length);
             setIsLoading(false);
         };
 
         fetchAllProposals();
-    }, [firestore, users, areUsersLoading, status, setProposalCount]);
+    }, [firestore, users, areUsersLoading, status]); // Removed onCountChange from dependencies
 
-    if (isLoading || areUsersLoading) {
+    if (isLoading) {
         return (
             <div className="flex justify-center items-center p-12">
                 <div className="relative flex h-24 w-24 items-center justify-center">
@@ -186,6 +191,15 @@ export default function GlossaryManagement() {
 
     const handleUpdateStatus = (proposal: Proposal, status: Proposal['status']) => {
         if (!firestore || !proposal.path) return;
+        
+        // Optimistically update UI
+        setCounts(c => {
+            const newCounts = { ...c };
+            (newCounts[proposal.status] as number)--;
+            (newCounts[status] as number)++;
+            return newCounts;
+        });
+
         const proposalRef = doc(firestore, proposal.path);
         updateDocumentNonBlocking(proposalRef, { status });
 
@@ -197,7 +211,6 @@ export default function GlossaryManagement() {
                 tags: proposal.tags || [],
                 style: 'custom' // Or some other default
             };
-            // Use setDoc non-blockingly to create or overwrite the term in the main glossary
             setDoc(glossaryTermRef, newTermData).then(() => {
                 toast({
                     title: 'Proposal Approved & Published',
@@ -223,15 +236,17 @@ export default function GlossaryManagement() {
         if (!firestore || !proposal.path) return;
         try {
             await deleteDoc(doc(firestore, proposal.path));
+            setCounts(c => ({...c, [proposal.status]: c[proposal.status as keyof typeof c] - 1 }));
             toast({ title: 'Proposal Deleted', description: 'The proposal has been permanently removed.' });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
         }
     };
     
-    const setPendingCount = (count: number) => setCounts(c => ({ ...c, pending: count }));
-    const setApprovedCount = (count: number) => setCounts(c => ({ ...c, approved: count }));
-    const setRejectedCount = (count: number) => setCounts(c => ({ ...c, rejected: count }));
+    // Using useCallback to stabilize the function reference
+    const setPendingCount = useCallback((count: number) => setCounts(c => ({ ...c, pending: count })), []);
+    const setApprovedCount = useCallback((count: number) => setCounts(c => ({ ...c, approved: count })), []);
+    const setRejectedCount = useCallback((count: number) => setCounts(c => ({ ...c, rejected: count })), []);
 
 
     return (
@@ -255,13 +270,13 @@ export default function GlossaryManagement() {
                   </TabsList>
                   <div className="pt-6">
                       <TabsContent value="pending">
-                          <ProposalsList status="pending" onUpdate={handleUpdateStatus} onDelete={handleDelete} setProposalCount={setPendingCount} />
+                          <ProposalsList status="pending" onUpdate={handleUpdateStatus} onDelete={handleDelete} onCountChange={setPendingCount} />
                       </TabsContent>
                       <TabsContent value="approved">
-                          <ProposalsList status="approved" onUpdate={handleUpdateStatus} onDelete={handleDelete} setProposalCount={setApprovedCount} />
+                          <ProposalsList status="approved" onUpdate={handleUpdateStatus} onDelete={handleDelete} onCountChange={setApprovedCount} />
                       </TabsContent>
                       <TabsContent value="rejected">
-                          <ProposalsList status="rejected" onUpdate={handleUpdateStatus} onDelete={handleDelete} setProposalCount={setRejectedCount} />
+                          <ProposalsList status="rejected" onUpdate={handleUpdateStatus} onDelete={handleDelete} onCountChange={setRejectedCount} />
                       </TabsContent>
                   </div>
               </Tabs>
@@ -269,3 +284,5 @@ export default function GlossaryManagement() {
       </Card>
     );
 }
+
+    
