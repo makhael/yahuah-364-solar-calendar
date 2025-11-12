@@ -94,7 +94,8 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
         dynamicTerms.forEach(dynamicTerm => {
             const index = combined.findIndex(staticTerm => staticTerm.term.toLowerCase() === dynamicTerm.term.toLowerCase());
             if (index > -1) {
-                // combined[index] = dynamicTerm; // To overwrite static with dynamic
+                // To overwrite static with dynamic if needed in future
+                // combined[index] = dynamicTerm; 
             } else {
                 combined.push(dynamicTerm);
             }
@@ -105,7 +106,7 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
     }, [firestoreTerms]);
 
 
-    const filteredTermKeys = useMemo(() => {
+    const filteredTerms = useMemo(() => {
         if (!searchTerm) {
             return allGlossaryTerms;
         }
@@ -219,7 +220,7 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
                                     </div>
                                 ) : (
                                 <div className="space-y-6">
-                                    {filteredTermKeys.map(term => (
+                                    {filteredTerms.map(term => (
                                         <div 
                                             key={term.id} 
                                             id={`glossary-term-${term.id}`} 
@@ -259,7 +260,7 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
                                             </div>
                                         </div>
                                     ))}
-                                    {filteredTermKeys.length === 0 && (
+                                    {filteredTerms.length === 0 && (
                                         <p className="text-center text-muted-foreground py-8">No terms found matching your search.</p>
                                     )}
                                 </div>
@@ -279,5 +280,3 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
     </div>
   );
 };
-
-    
