@@ -2,6 +2,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import { XCircle, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -9,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { GLOSSARY_PREFACE, GLOSSARY_SECTIONS, GLOSSARY_TERM_KEYS } from '@/lib/glossary-data';
 import type { User } from 'firebase/auth';
 import { cn } from '@/lib/utils';
+import { LoaderCircle } from 'lucide-react';
 
 interface FullGlossaryModalProps {
   isOpen: boolean;
@@ -18,10 +21,20 @@ interface FullGlossaryModalProps {
   targetTerm?: string;
 }
 
+interface FirestoreGlossaryTerm {
+    id: string;
+    term: string;
+    definition: string;
+    tags?: string[];
+    style?: string;
+    hebrew?: string;
+    context?: string;
+    scripturalWitness?: string;
+    restorationNote?: string;
+}
+
 const markdownToHtml = (text: string) => {
-    // Convert **bold** to <strong>bold</strong>
     let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Convert *italic* to <em>italic</em>
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
     return html;
 };
@@ -56,23 +69,55 @@ const PhaseTable = ({ title, terms }: { title: string, terms: { original: string
 export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targetTerm }: FullGlossaryModalProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [highlightedTerm, setHighlightedTerm] = useState<string | undefined>(targetTerm);
+    const firestore = useFirestore();
+
+    const glossaryTermsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return collection(firestore, 'glossaryTerms');
+    }, [firestore]);
+    const { data: firestoreTerms, isLoading: areTermsLoading } = useCollection<FirestoreGlossaryTerm>(glossaryTermsQuery);
+
+    const allGlossaryTerms = useMemo(() => {
+        const staticTerms = Object.entries(GLOSSARY_SECTIONS.TERMS).map(([key, value]) => ({
+            id: key,
+            term: key,
+            ...value,
+            isCustom: false
+        }));
+        
+        const dynamicTerms = (firestoreTerms || []).map(term => ({
+            ...term,
+            isCustom: true
+        }));
+        
+        const combined = [...staticTerms];
+        dynamicTerms.forEach(dynamicTerm => {
+            const index = combined.findIndex(staticTerm => staticTerm.term.toLowerCase() === dynamicTerm.term.toLowerCase());
+            if (index > -1) {
+                // combined[index] = dynamicTerm; // To overwrite static with dynamic
+            } else {
+                combined.push(dynamicTerm);
+            }
+        });
+        
+        return combined.sort((a, b) => a.term.localeCompare(b.term));
+
+    }, [firestoreTerms]);
+
 
     const filteredTermKeys = useMemo(() => {
         if (!searchTerm) {
-            return GLOSSARY_TERM_KEYS;
+            return allGlossaryTerms;
         }
-        return GLOSSARY_TERM_KEYS.filter(key => {
-            const termData = GLOSSARY_SECTIONS.TERMS[key as keyof typeof GLOSSARY_SECTIONS.TERMS];
-            if (!termData) return false;
-            
-            const term = key.toLowerCase();
+        return allGlossaryTerms.filter(termData => {
+            const term = termData.term.toLowerCase();
             const definition = termData.definition.toLowerCase();
             const hebrew = (termData.hebrew || '').toLowerCase();
             const search = searchTerm.toLowerCase();
 
             return term.includes(search) || definition.includes(search) || hebrew.includes(search);
         });
-    }, [searchTerm]);
+    }, [searchTerm, allGlossaryTerms]);
     
     useEffect(() => {
         if (isOpen && targetTerm) {
@@ -81,7 +126,7 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
             if (element) {
                 setTimeout(() => {
                     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100); // Small delay to ensure modal is rendered
+                }, 100);
             }
         } else {
             setHighlightedTerm(undefined);
@@ -89,8 +134,6 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
     }, [isOpen, targetTerm]);
 
     useEffect(() => {
-        // This effect is now just for managing the initial highlight state.
-        // The persistent highlight is controlled by the component's state.
         if (targetTerm) {
             setHighlightedTerm(targetTerm);
         }
@@ -122,7 +165,6 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
                 <ScrollArea className="h-full">
                     <div className="p-6">
                         <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
-                            {/* ... [existing content] ... */}
                             <h3 className="font-bold text-primary">{GLOSSARY_PREFACE.title}</h3>
                             <p>{GLOSSARY_PREFACE.body}</p>
 
@@ -158,7 +200,6 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
 
                             <hr className="my-8 border-border" />
                             
-                            {/* Glossary Entries */}
                             <div>
                                 <h2 className="text-xl font-bold text-foreground mb-4">Glossary Entries</h2>
                                 <div className="relative mb-6">
@@ -172,49 +213,57 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
                                     />
                                 </div>
 
+                                {areTermsLoading ? (
+                                    <div className="flex justify-center p-8">
+                                        <LoaderCircle className="animate-spin" />
+                                    </div>
+                                ) : (
                                 <div className="space-y-6">
-                                    {filteredTermKeys.map(key => {
-                                        const term = GLOSSARY_SECTIONS.TERMS[key as keyof typeof GLOSSARY_SECTIONS.TERMS];
-                                        if (!term) return null;
-                                        return (
-                                            <div 
-                                                key={key} 
-                                                id={`glossary-term-${key}`} 
-                                                className={cn(
-                                                    "border-b border-border pb-4 transition-all duration-500 rounded-lg",
-                                                     "cursor-pointer",
-                                                    highlightedTerm === key ? 'bg-primary/20 border-4 border-primary p-2' : ''
-                                                )} 
-                                                onClick={() => onOpenGlossary(key)}
-                                            >
-                                                <div className="p-2">
-                                                    <h4 className="text-lg font-bold text-primary">{key} <span className="font-normal" lang="he" dir="rtl">{term.hebrew}</span></h4>
-                                                    <dl className="mt-2 text-sm space-y-2">
-                                                        <div>
-                                                            <dt className="font-semibold text-foreground">Definition:</dt>
-                                                            <dd>{term.definition}</dd>
-                                                        </div>
+                                    {filteredTermKeys.map(term => (
+                                        <div 
+                                            key={term.id} 
+                                            id={`glossary-term-${term.id}`} 
+                                            className={cn(
+                                                "border-b border-border pb-4 transition-all duration-500 rounded-lg",
+                                                !term.isCustom && "cursor-pointer",
+                                                highlightedTerm === term.id ? 'bg-primary/20 border-4 border-primary p-2' : ''
+                                            )} 
+                                            onClick={() => !term.isCustom && onOpenGlossary(term.id)}
+                                        >
+                                            <div className="p-2">
+                                                <h4 className="text-lg font-bold text-primary">{term.term} <span className="font-normal" lang="he" dir="rtl">{term.hebrew}</span></h4>
+                                                <dl className="mt-2 text-sm space-y-2">
+                                                    <div>
+                                                        <dt className="font-semibold text-foreground">Definition:</dt>
+                                                        <dd>{term.definition}</dd>
+                                                    </div>
+                                                    {term.context && (
                                                         <div>
                                                             <dt className="font-semibold text-foreground">Context:</dt>
                                                             <dd>{term.context}</dd>
                                                         </div>
+                                                    )}
+                                                    {term.scripturalWitness && (
                                                         <div>
                                                             <dt className="font-semibold text-foreground">Scriptural Witness:</dt>
                                                             <dd>{term.scripturalWitness}</dd>
                                                         </div>
+                                                    )}
+                                                    {term.restorationNote && (
                                                         <div>
                                                             <dt className="font-semibold text-foreground">Restoration Note:</dt>
                                                             <dd className="italic">{term.restorationNote}</dd>
                                                         </div>
-                                                    </dl>
-                                                </div>
+                                                    )}
+                                                </dl>
                                             </div>
-                                        )
-                                    })}
+                                        </div>
+                                    ))}
                                     {filteredTermKeys.length === 0 && (
                                         <p className="text-center text-muted-foreground py-8">No terms found matching your search.</p>
                                     )}
                                 </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -230,3 +279,5 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
     </div>
   );
 };
+
+    
