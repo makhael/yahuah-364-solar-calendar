@@ -1,7 +1,9 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, 'use client';
+
+import { useState, useEffect, useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User } from 'lucide-react';
@@ -41,20 +43,17 @@ export default function ScriptureManagement() {
   const [allScriptures, setAllScriptures] = useState<ScriptureReading[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { data: users, isLoading: areUsersLoading } = useCollection<User>(
-    useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore])
-  );
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
   useEffect(() => {
-    if (!firestore || areUsersLoading) {
-      // Don't start fetching scriptures if users are still loading.
-      if (!areUsersLoading) setIsLoading(false);
+    if (!firestore || areUsersLoading || !users) {
       return;
     }
 
     const fetchAllScriptures = async () => {
       setIsLoading(true);
-      if (!users || users.length === 0) {
+      if (users.length === 0) {
         setAllScriptures([]);
         setIsLoading(false);
         return;
