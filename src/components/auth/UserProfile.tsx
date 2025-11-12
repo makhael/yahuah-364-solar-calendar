@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import Link from "next/link";
-import { LoaderCircle, Edit, BookOpen, ShieldCheck, BookText } from "lucide-react";
+import { LoaderCircle, Edit, BookOpen, ShieldCheck, BookText, Terminal } from "lucide-react";
 import { useUI } from "@/context/UIContext";
 import { doc } from 'firebase/firestore';
 
@@ -62,6 +62,13 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
             <Link href="/admin">
             <ShieldCheck className="mr-2 h-4 w-4" />
             <span>Admin Dashboard</span>
+            </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+            <Link href="/tools">
+            <Terminal className="mr-2 h-4 w-4" />
+            <span>Developer Tools</span>
             </Link>
         </DropdownMenuItem>
 
