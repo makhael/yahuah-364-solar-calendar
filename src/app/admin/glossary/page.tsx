@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, where, getDocs, deleteDoc, setDoc } from 'firebase/firestore';
@@ -149,7 +149,7 @@ const ProposalsList = ({ status, onUpdate, onDelete, onCountChange }: { status: 
         };
 
         fetchAllProposals();
-    }, [firestore, users, areUsersLoading, status]); // Removed onCountChange from dependencies
+    }, [firestore, users, areUsersLoading, status, onCountChange]);
 
     if (isLoading) {
         return (
@@ -195,8 +195,8 @@ export default function GlossaryManagement() {
         // Optimistically update UI
         setCounts(c => {
             const newCounts = { ...c };
-            (newCounts[proposal.status] as number)--;
-            (newCounts[status] as number)++;
+            (newCounts[proposal.status as keyof typeof c] as number)--;
+            (newCounts[status as keyof typeof c] as number)++;
             return newCounts;
         });
 
