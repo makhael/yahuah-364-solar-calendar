@@ -139,19 +139,12 @@ const ProposalsList = ({ status, onUpdate, onDelete, setProposalCount }: { statu
             }
             allProposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
             setProposals(allProposals);
+            setProposalCount(allProposals.length);
             setIsLoading(false);
         };
 
         fetchAllProposals();
-    }, [firestore, users, areUsersLoading, status]);
-
-    useEffect(() => {
-        if (proposals) {
-          setProposalCount(proposals.length);
-        } else {
-          setProposalCount(0);
-        }
-    }, [proposals, setProposalCount]);
+    }, [firestore, users, areUsersLoading, status, setProposalCount]);
 
     if (isLoading || areUsersLoading) {
         return (
