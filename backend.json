@@ -135,6 +135,9 @@
       "properties": {
         "term": { "type": "string" },
         "definition": { "type": "string" },
+        "context": { "type": "string" },
+        "scripturalWitness": { "type": "string" },
+        "restorationNote": { "type": "string" },
         "tags": { "type": "array", "items": { "type": "string" } },
         "userId": { "type": "string" },
         "userDisplayName": { "type": "string" },
