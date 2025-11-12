@@ -156,18 +156,18 @@ export default function YahuahCalendar() {
                         </CardContent>
                     </Card>
 
-                    {visibleSections.intro && (
-                       <IntroSection openGlossaryModal={(termKey) => openModal('glossary', { termKey })} />
+                    {visibleSections.insights && (
+                        <InsightsTimeline />
                     )}
-                    
+
                     {visibleSections.scripture && (
                         <Card id="scripture-submission-section" className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
                            <ScriptureSubmission dateId={todayDateId} />
                         </Card>
                     )}
 
-                    {visibleSections.insights && (
-                        <InsightsTimeline />
+                    {visibleSections.intro && (
+                       <IntroSection openGlossaryModal={(termKey) => openModal('glossary', { termKey })} />
                     )}
 
                     {visibleSections.podcast && (
