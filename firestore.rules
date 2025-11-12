@@ -53,7 +53,7 @@ service cloud.firestore {
       allow update: if request.auth != null;
 
       // Allow reads if the query is filtered by the user's ID
-      allow list: if request.auth != null && request.query.where.size() > 0 && request.query.where[0][0] == "userId" && request.query.where[0][2] == request.auth.uid;
+      allow list: if request.auth != null && request.query.where[0][2] == request.auth.uid && request.query.orderBy.path == "date";
 
       // Allow anyone to read individual documents (for community view)
       allow get: if true;
@@ -73,5 +73,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
