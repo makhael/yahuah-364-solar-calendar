@@ -13,7 +13,6 @@ export const metadata: Metadata = {
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
     ],
     apple: '/apple-touch-icon.png',
@@ -25,7 +24,7 @@ export const metadata: Metadata = {
     siteName: "Yahuah's 364-Day Solar Calendar",
     images: [
       {
-        url: 'https://yahuahscalendar.org/og-image.png', // Must be an absolute URL
+        url: '/og-image.png', // Must be an absolute URL
         width: 1200,
         height: 630,
       },
