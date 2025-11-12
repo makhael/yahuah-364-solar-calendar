@@ -14,7 +14,6 @@ import { UserManagement } from '@/components/admin/UserManagement';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
 import ForumManagement from './forums/page';
 import GlossaryManagement from './glossary/page';
-import JournalManagement from './journals/page';
 import ScriptureManagement from './scriptures/page';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
@@ -23,14 +22,13 @@ interface UserProfileData {
   role?: string;
 }
 
-type AdminView = 'users' | 'appointments' | 'forums' | 'glossary' | 'journals' | 'scriptures';
+type AdminView = 'users' | 'appointments' | 'forums' | 'glossary' | 'scriptures';
 
 const menuItems: { id: AdminView; label: string; icon: React.ReactNode }[] = [
     { id: 'users', label: 'User Management', icon: <Users className="w-5 h-5" /> },
     { id: 'appointments', label: 'Appointments', icon: <CalendarClock className="w-5 h-5" /> },
     { id: 'forums', label: 'Forums', icon: <MessageSquare className="w-5 h-5" /> },
     { id: 'glossary', label: 'Glossary', icon: <ScrollText className="w-5 h-5" /> },
-    { id: 'journals', label: 'Journals', icon: <BookText className="w-5 h-5" /> },
     { id: 'scriptures', label: 'Scriptures', icon: <BookOpen className="w-5 h-5" /> },
 ];
 
@@ -87,8 +85,6 @@ export default function AdminDashboardPage() {
         return <ForumManagement />;
       case 'glossary':
         return <GlossaryManagement />;
-      case 'journals':
-        return <JournalManagement />;
       case 'scriptures':
         return <ScriptureManagement />;
       default:
@@ -120,7 +116,7 @@ export default function AdminDashboardPage() {
         </header>
 
         <div className="w-full">
-            <div className="mb-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div className="mb-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                  {menuItems.map(item => (
                     <Button
                         key={item.id}
@@ -145,7 +141,6 @@ export default function AdminDashboardPage() {
                                     src={logo.imageUrl}
                                     alt={logo.description}
                                     width={64}
-                                    height={64}
                                     data-ai-hint={logo.imageHint}
                                     className="h-16 w-16 rounded-full object-cover"
                                     priority
