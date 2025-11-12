@@ -1,9 +1,9 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, deleteDoc, doc, updateDoc, getDocs, writeBatch } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, Trash2, Edit, Check, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,10 @@ interface ScriptureReading {
   createdAt: { seconds: number };
 }
 
+interface User {
+  id: string;
+}
+
 export default function ScriptureManagement() {
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -32,13 +36,34 @@ export default function ScriptureManagement() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [scriptures, setScriptures] = useState<ScriptureReading[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const scripturesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'scriptureReadings'), orderBy('date', 'desc'));
-  }, [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
-  const { data: scriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
+  useEffect(() => {
+    if (!firestore || areUsersLoading) return;
+
+    const fetchAllReadings = async () => {
+        setIsLoading(true);
+        const allReadings: ScriptureReading[] = [];
+        if (users && users.length > 0) {
+            for (const user of users) {
+                const readingsQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`));
+                const snapshot = await getDocs(readingsQuery);
+                snapshot.forEach(doc => {
+                    allReadings.push({ id: doc.id, ...doc.data() } as ScriptureReading);
+                });
+            }
+        }
+        allReadings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setScriptures(allReadings);
+        setIsLoading(false);
+    };
+
+    fetchAllReadings();
+  }, [firestore, users, areUsersLoading]);
 
   const groupedScriptures = React.useMemo(() => {
     if (!scriptures) return {};
@@ -52,10 +77,19 @@ export default function ScriptureManagement() {
     }, {} as Record<string, ScriptureReading[]>);
   }, [scriptures]);
 
-  const handleDelete = async (scriptureId: string) => {
+  const handleDelete = async (scripture: ScriptureReading) => {
     if (!firestore) return;
     try {
-      await deleteDoc(doc(firestore, 'scriptureReadings', scriptureId));
+      const batch = writeBatch(firestore);
+      const userReadingRef = doc(firestore, `users/${scripture.userId}/scriptureReadings`, scripture.id);
+      const centralReadingRef = doc(firestore, 'scriptureReadings', scripture.id);
+      
+      batch.delete(userReadingRef);
+      batch.delete(centralReadingRef);
+      
+      await batch.commit();
+
+      setScriptures(prev => prev.filter(s => s.id !== scripture.id));
       toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
@@ -72,18 +106,27 @@ export default function ScriptureManagement() {
     setEditText('');
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = (scripture: ScriptureReading) => {
     if (!firestore || !editingId) return;
 
-    const docRef = doc(firestore, 'scriptureReadings', editingId);
-    updateDocumentNonBlocking(docRef, { scripture: editText });
+    const centralDocRef = doc(firestore, 'scriptureReadings', editingId);
+    const userDocRef = doc(firestore, `users/${scripture.userId}/scriptureReadings`, editingId);
+
+    const batch = writeBatch(firestore);
+    batch.update(centralDocRef, { scripture: editText });
+    batch.update(userDocRef, { scripture: editText });
     
-    toast({ title: 'Submission Updated' });
-    handleCancelEdit();
+    batch.commit().then(() => {
+        setScriptures(prev => prev.map(s => s.id === editingId ? { ...s, scripture: editText } : s));
+        toast({ title: 'Submission Updated' });
+        handleCancelEdit();
+    }).catch((error: any) => {
+        toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
+    });
   }
 
 
-  if (isLoading) {
+  if (isLoading || areUsersLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="relative flex h-24 w-24 items-center justify-center">
@@ -144,7 +187,7 @@ export default function ScriptureManagement() {
                         <div className="flex items-center gap-1">
                           {editingId === submission.id ? (
                             <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={handleSaveEdit}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={() => handleSaveEdit(submission)}>
                                 <Check className="h-4 w-4" />
                               </Button>
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleCancelEdit}>
@@ -171,7 +214,7 @@ export default function ScriptureManagement() {
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(submission.id)}>Yes, Delete</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(submission)}>Yes, Delete</AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
@@ -190,3 +233,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    

@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { BookOpen, LoaderCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -27,8 +27,7 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
   const myScripturesQuery = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
     return query(
-      collection(firestore, 'scriptureReadings'),
-      where('userId', '==', userId),
+      collection(firestore, `users/${userId}/scriptureReadings`),
       orderBy('date', 'desc')
     );
   }, [firestore, userId]);
@@ -36,9 +35,18 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
   const { data: scriptures, isLoading } = useCollection<ScriptureReading>(myScripturesQuery);
 
   const handleDelete = async (id: string) => {
-    if (!firestore) return;
+    if (!firestore || !userId) return;
     try {
-      await deleteDoc(doc(firestore, 'scriptureReadings', id));
+      const batch = writeBatch(firestore);
+      
+      const userReadingRef = doc(firestore, `users/${userId}/scriptureReadings`, id);
+      const centralReadingRef = doc(firestore, 'scriptureReadings', id);
+
+      batch.delete(userReadingRef);
+      batch.delete(centralReadingRef);
+
+      await batch.commit();
+
       toast({ title: 'Submission Deleted' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error deleting submission', description: error.message });
@@ -99,7 +107,7 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete your submission of "{scripture.scripture}"?
+                    Are you sure you want to delete your submission of "{scripture.scripture}"? This will remove it from both your personal list and the community view.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -114,3 +122,5 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
     </ScrollArea>
   );
 };
+
+    
