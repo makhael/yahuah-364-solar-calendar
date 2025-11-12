@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, where } from 'firebase/firestore';
 import { BookOpen, LoaderCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -26,9 +26,10 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
 
   const myScripturesQuery = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
-    // Query the user-specific subcollection
+    // Query the new root-level collection, filtering by userId
     return query(
-      collection(firestore, 'users', userId, 'scriptureReadings'),
+      collection(firestore, 'scriptureReadings'),
+      where('userId', '==', userId),
       orderBy('date', 'desc')
     );
   }, [firestore, userId]);
@@ -38,8 +39,8 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
   const handleDelete = async (id: string) => {
     if (!firestore || !userId) return;
     try {
-      // Delete from the user-specific subcollection
-      await deleteDoc(doc(firestore, 'users', userId, 'scriptureReadings', id));
+      // Delete from the root-level collection
+      await deleteDoc(doc(firestore, 'scriptureReadings', id));
       toast({ title: 'Submission Deleted' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error deleting submission', description: error.message });
@@ -115,3 +116,5 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
     </ScrollArea>
   );
 };
+
+    

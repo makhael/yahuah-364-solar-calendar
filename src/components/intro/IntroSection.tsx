@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -19,15 +20,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useDoc } from '@/firebase/firestore/use-doc';
 
-interface ScriptureReading {
-  id: string;
-  scripture: string;
-  userId: string;
-  userDisplayName?: string;
-  upvoters: string[];
-  createdAt: { seconds: number };
-}
-
 interface UserProfile {
     displayName: string;
     email: string;
@@ -39,41 +31,6 @@ const scriptureSchema = z.object({
 
 type ScriptureFormData = z.infer<typeof scriptureSchema>;
 
-const ScriptureAuthor = ({ userId }: { userId: string }) => {
-    const firestore = useFirestore();
-    const userProfileRef = useMemoFirebase(() => {
-        if (!firestore || !userId) return null;
-        return doc(firestore, 'users', userId);
-    }, [firestore, userId]);
-
-    const { data: userProfile, isLoading } = useDoc<UserProfile>(userProfileRef);
-
-    if (isLoading) {
-        return <span className="text-xs text-muted-foreground italic">Loading author...</span>;
-    }
-
-    if (!userProfile) {
-        return <span className="text-xs text-muted-foreground italic">Unknown author</span>;
-    }
-    
-    const displayName = userProfile.displayName || (userProfile.email ? userProfile.email.split('@')[0] : 'Unknown');
-
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <span className="text-xs text-muted-foreground italic cursor-pointer">
-                        by {displayName}
-                    </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>{userProfile.email || 'No email available'}</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
-};
-
 export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
     const firestore = useFirestore();
     const { user } = useUser();
@@ -81,25 +38,14 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ScriptureFormData>({
         resolver: zodResolver(scriptureSchema),
     });
-
-    const scripturesQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        // This component is for public display, so we will query all users' submissions for a specific date.
-        // This requires an index. For now, we will fetch all and filter client-side, which is not ideal for production.
-        // A better approach would be a root collection for scriptures if this view needs to be performant.
-        // Let's assume for now we don't display community scriptures publicly, only user's own.
-        return null;
-    }, [firestore, dateId]);
-    
-    // For now, this component will only handle submission. Display will be in user's personal area.
     
     const onSubmit = (data: ScriptureFormData) => {
         if (!user || user.isAnonymous) {
             toast({ variant: 'destructive', title: 'Please sign in to submit scripture.' });
             return;
         }
-        // Save to the user's specific subcollection
-        const scriptureCol = collection(firestore, 'users', user.uid, 'scriptureReadings');
+        // Save to the new root-level 'scriptureReadings' collection
+        const scriptureCol = collection(firestore, 'scriptureReadings');
         addDocumentNonBlocking(scriptureCol, {
             scripture: data.scripture,
             date: dateId,
@@ -315,3 +261,5 @@ export const IntroSection = ({ openGlossaryModal }: IntroSectionProps) => {
     </div>
   );
 };
+
+    
