@@ -156,18 +156,19 @@ export default function GlossaryManagement() {
             setIsLoading(true);
             const proposalPromises = users.map(user => {
                 const proposalsQuery = query(collection(firestore, `users/${user.id}/glossaryProposals`));
-                return getDocs(proposalsQuery).then(snapshot => 
+                return getDocs(proposalsQuery);
+            });
+
+            try {
+                const snapshotResults = await Promise.all(proposalPromises);
+                const flattenedProposals = snapshotResults.flatMap(snapshot => 
                     snapshot.docs.map(doc => ({
                         id: doc.id,
                         path: doc.ref.path,
                         ...doc.data()
                     } as Proposal))
                 );
-            });
-
-            try {
-                const results = await Promise.all(proposalPromises);
-                const flattenedProposals = results.flat();
+                
                 flattenedProposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
                 setAllProposals(flattenedProposals);
             } catch (error) {

@@ -49,24 +49,26 @@ export default function ScriptureManagement() {
 
     const fetchAllScriptures = async () => {
       setIsLoading(true);
-      
       const scripturePromises = users.map(user => {
         const scripturesQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`));
-        return getDocs(scripturesQuery).then(snapshot => 
-          snapshot.docs.map(doc => ({
-            id: doc.id,
-            path: doc.ref.path,
-            userDisplayName: user.displayName,
-            ...doc.data()
-          } as ScriptureReading))
-        );
+        return getDocs(scripturesQuery);
       });
 
       try {
-        const results = await Promise.all(scripturePromises);
-        const flattenedScriptures = results.flat();
+        const snapshotResults = await Promise.all(scripturePromises);
+        const flattenedScriptures = snapshotResults.flatMap((snapshot, index) => {
+            const user = users[index];
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                path: doc.ref.path,
+                userDisplayName: user?.displayName || doc.data().userDisplayName,
+                ...doc.data()
+            } as ScriptureReading))
+        });
+        
         flattenedScriptures.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setAllScriptures(flattenedScriptures);
+
       } catch (error) {
         console.error("Error fetching all scriptures:", error);
         toast({ variant: 'destructive', title: "Error", description: "Could not load scripture submissions." });
