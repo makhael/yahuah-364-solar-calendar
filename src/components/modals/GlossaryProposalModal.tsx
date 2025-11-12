@@ -10,13 +10,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { LoaderCircle, XCircle, ScrollText } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useFirestore, useUser } from '@/firebase';
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, serverTimestamp, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useUI } from '@/context/UIContext';
 
 const proposalSchema = z.object({
   term: z.string().min(2, { message: "Term must be at least 2 characters." }),
   definition: z.string().min(10, { message: "Definition must be at least 10 characters." }),
+  context: z.string().optional(),
+  scripturalWitness: z.string().optional(),
+  restorationNote: z.string().optional(),
   tags: z.string().optional(),
 });
 
@@ -29,6 +35,9 @@ interface GlossaryProposalModalProps {
     id: string;
     term: string;
     definition: string;
+    context?: string;
+    scripturalWitness?: string;
+    restorationNote?: string;
     tags?: string[];
   } | null;
 }
@@ -39,13 +48,16 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
     defaultValues: {
       term: '',
       definition: '',
+      context: '',
+      scripturalWitness: '',
+      restorationNote: '',
       tags: '',
     }
   });
 
   const { user } = useUser();
   const { toast } = useToast();
-  const { closeAllModals, handleSaveGlossaryProposal } = useUI();
+  const { handleSaveGlossaryProposal } = useUI();
 
   const handleSave = async (data: ProposalFormData) => {
     if (!user || user.isAnonymous) {
@@ -59,9 +71,23 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
   useEffect(() => {
     if (isOpen) {
       if (proposal) {
-        reset({ term: proposal.term, definition: proposal.definition, tags: proposal.tags?.join(', ') || '' });
+        reset({ 
+            term: proposal.term, 
+            definition: proposal.definition,
+            context: proposal.context || '',
+            scripturalWitness: proposal.scripturalWitness || '',
+            restorationNote: proposal.restorationNote || '',
+            tags: proposal.tags?.join(', ') || '' 
+        });
       } else {
-        reset({ term: '', definition: '', tags: '' });
+        reset({ 
+            term: '', 
+            definition: '', 
+            context: '',
+            scripturalWitness: '',
+            restorationNote: '',
+            tags: '' 
+        });
       }
     }
   }, [isOpen, proposal, reset]);
@@ -96,8 +122,20 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="definition">Definition</Label>
-                    <Controller name="definition" control={control} render={({ field }) => <Textarea id="definition" {...field} rows={4} className="bg-background/50" />} />
+                    <Controller name="definition" control={control} render={({ field }) => <Textarea id="definition" {...field} rows={3} className="bg-background/50" />} />
                     {errors.definition && <p className="text-sm text-destructive">{errors.definition.message}</p>}
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="context">Context</Label>
+                    <Controller name="context" control={control} render={({ field }) => <Textarea id="context" {...field} rows={2} className="bg-background/50" />} />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="scripturalWitness">Scriptural Witness</Label>
+                    <Controller name="scripturalWitness" control={control} render={({ field }) => <Textarea id="scripturalWitness" {...field} rows={2} className="bg-background/50" />} />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="restorationNote">Restoration Note</Label>
+                    <Controller name="restorationNote" control={control} render={({ field }) => <Textarea id="restorationNote" {...field} rows={2} className="bg-background/50" />} />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="tags">Tags (comma-separated)</Label>

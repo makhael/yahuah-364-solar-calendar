@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "MonthInfo": {
@@ -261,6 +262,24 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["scripture", "userId", "date", "createdAt"]
+    },
+    "GlossaryProposal": {
+      "title": "Glossary Proposal",
+      "description": "A user's proposal for a new or updated glossary term.",
+      "type": "object",
+      "properties": {
+        "term": { "type": "string" },
+        "definition": { "type": "string" },
+        "context": { "type": "string" },
+        "scripturalWitness": { "type": "string" },
+        "restorationNote": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "userId": { "type": "string" },
+        "userDisplayName": { "type": "string" },
+        "status": { "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["term", "definition", "userId", "userDisplayName", "status", "createdAt"]
     }
   },
   "auth": {

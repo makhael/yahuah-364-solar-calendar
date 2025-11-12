@@ -20,6 +20,9 @@ interface Proposal {
   id: string;
   term: string;
   definition: string;
+  context?: string;
+  scripturalWitness?: string;
+  restorationNote?: string;
   tags?: string[];
   status: 'pending' | 'approved' | 'rejected';
   createdAt: { seconds: number };
@@ -100,20 +103,45 @@ export const MyProposals = ({ userId }: { userId: string }) => {
            const statusInfo = getStatusInfo(proposal.status);
            return (
             <div key={proposal.id} className="p-4 rounded-lg border bg-background/50 flex justify-between items-start gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-3">
                     <h4 className="font-semibold text-lg text-primary">{proposal.term}</h4>
                     <Badge className={cn("text-white", statusInfo.className)}>{statusInfo.text}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{proposal.definition}</p>
+                
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <p className="font-medium text-muted-foreground">Definition:</p>
+                    <p className="text-foreground/90 whitespace-pre-wrap">{proposal.definition}</p>
+                  </div>
+                   {proposal.context && (
+                    <div>
+                      <p className="font-medium text-muted-foreground">Context:</p>
+                      <p className="text-foreground/90 whitespace-pre-wrap">{proposal.context}</p>
+                    </div>
+                  )}
+                   {proposal.scripturalWitness && (
+                    <div>
+                      <p className="font-medium text-muted-foreground">Scriptural Witness:</p>
+                      <p className="text-foreground/90 whitespace-pre-wrap">{proposal.scripturalWitness}</p>
+                    </div>
+                  )}
+                   {proposal.restorationNote && (
+                    <div>
+                      <p className="font-medium text-muted-foreground">Restoration Note:</p>
+                      <p className="text-foreground/90 whitespace-pre-wrap italic">{proposal.restorationNote}</p>
+                    </div>
+                  )}
+                </div>
+
                  {proposal.tags && proposal.tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="pt-2 flex flex-wrap gap-2">
                     {proposal.tags.map(tag => (
                       <Badge key={tag} variant="secondary">#{tag}</Badge>
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-muted-foreground/80 mt-2">
+                <p className="text-xs text-muted-foreground/80 pt-2 border-t">
                   Submitted: {new Date(proposal.createdAt.seconds * 1000).toLocaleDateString()}
                 </p>
               </div>

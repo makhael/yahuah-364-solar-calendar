@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
@@ -390,12 +389,15 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
       return;
     }
 
-    const { term, definition, tags } = proposalData;
+    const { term, definition, context, scripturalWitness, restorationNote, tags } = proposalData;
     const tagsArray = tags ? tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : [];
 
     const payload = {
         term,
         definition,
+        context: context || '',
+        scripturalWitness: scripturalWitness || '',
+        restorationNote: restorationNote || '',
         tags: tagsArray,
         status: 'pending',
         userId: user.uid,

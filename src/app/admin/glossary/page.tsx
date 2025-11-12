@@ -25,6 +25,9 @@ interface Proposal {
     id: string;
     term: string;
     definition: string;
+    context?: string;
+    scripturalWitness?: string;
+    restorationNote?: string;
     status: 'pending' | 'approved' | 'rejected';
     userId: string;
     userDisplayName: string;
@@ -65,8 +68,26 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                 </div>
             </CardHeader>
             <CardContent>
-                <p className="text-sm text-foreground/80 whitespace-pre-wrap mb-4">{proposal.definition}</p>
-                <div className="flex justify-end gap-2 pt-4 border-t">
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="font-semibold text-sm text-foreground/90">Definition</h4>
+                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">{proposal.definition}</p>
+                    </div>
+                    {proposal.context && <div>
+                        <h4 className="font-semibold text-sm text-foreground/90">Context</h4>
+                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">{proposal.context}</p>
+                    </div>}
+                    {proposal.scripturalWitness && <div>
+                        <h4 className="font-semibold text-sm text-foreground/90">Scriptural Witness</h4>
+                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">{proposal.scripturalWitness}</p>
+                    </div>}
+                    {proposal.restorationNote && <div>
+                        <h4 className="font-semibold text-sm text-foreground/90">Restoration Note</h4>
+                        <p className="text-sm text-foreground/80 whitespace-pre-wrap italic">{proposal.restorationNote}</p>
+                    </div>}
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                            <Button variant="destructive" size="sm">
@@ -129,21 +150,23 @@ export default function GlossaryManagement() {
     const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
     useEffect(() => {
-        if (!firestore || !users) return;
+        if (!firestore || areUsersLoading) return;
 
         const fetchProposals = async () => {
             setIsLoading(true);
             const proposals: Proposal[] = [];
-            for (const user of users) {
-                const proposalsQuery = query(collection(firestore, `users/${user.id}/glossaryProposals`));
-                const snapshot = await getDocs(proposalsQuery);
-                snapshot.forEach(doc => {
-                    proposals.push({
-                        id: doc.id,
-                        path: doc.ref.path,
-                        ...doc.data()
-                    } as Proposal);
-                });
+            if (users && users.length > 0) {
+              for (const user of users) {
+                  const proposalsQuery = query(collection(firestore, `users/${user.id}/glossaryProposals`));
+                  const snapshot = await getDocs(proposalsQuery);
+                  snapshot.forEach(doc => {
+                      proposals.push({
+                          id: doc.id,
+                          path: doc.ref.path,
+                          ...doc.data()
+                      } as Proposal);
+                  });
+              }
             }
             proposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
             setAllProposals(proposals);
@@ -152,7 +175,7 @@ export default function GlossaryManagement() {
 
         fetchProposals();
 
-    }, [firestore, users]);
+    }, [firestore, users, areUsersLoading]);
 
     const handleUpdateStatus = (proposal: Proposal, status: Proposal['status']) => {
         if (!firestore || !proposal.path) return;
@@ -167,8 +190,11 @@ export default function GlossaryManagement() {
             const newTermData = {
                 term: proposal.term,
                 definition: proposal.definition,
+                context: proposal.context || '',
+                scripturalWitness: proposal.scripturalWitness || '',
+                restorationNote: proposal.restorationNote || '',
                 tags: proposal.tags || [],
-                style: 'custom' // Or some other default
+                style: 'custom'
             };
             setDoc(glossaryTermRef, newTermData).then(() => {
                 toast({
