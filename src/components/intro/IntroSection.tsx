@@ -1,4 +1,5 @@
-'use client';
+
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { GLOSSARY_SECTIONS } from "@/lib/glossary-data";
@@ -121,18 +122,27 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
             return;
         }
 
-        const scriptureCol = collection(firestore, 'scriptureReadings');
+        const batch = writeBatch(firestore);
+
+        const sharedData = {
+            scripture: data.scripture,
+            date: dateId,
+            userId: user.uid,
+            userDisplayName: user.displayName || user.email?.split('@')[0],
+            upvoters: [user.uid],
+            createdAt: serverTimestamp()
+        };
+
+        // Write to the global collection for community view
+        const globalReadingRef = doc(collection(firestore, 'scriptureReadings'));
+        batch.set(globalReadingRef, sharedData);
+
+        // Write to the user-specific subcollection for their personal view
+        const userReadingRef = doc(collection(firestore, `users/${user.uid}/scriptureReadings`));
+        batch.set(userReadingRef, sharedData);
         
         try {
-            await addDocumentNonBlocking(scriptureCol, {
-                scripture: data.scripture,
-                date: dateId,
-                userId: user.uid,
-                userDisplayName: user.displayName || user.email?.split('@')[0],
-                upvoters: [user.uid],
-                createdAt: serverTimestamp()
-            });
-
+            await batch.commit();
             toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution.' });
             reset();
         } catch (error) {
@@ -368,3 +378,5 @@ export const IntroSection = ({ openGlossaryModal }: IntroSectionProps) => {
     </div>
   );
 };
+
+    

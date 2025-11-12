@@ -55,9 +55,22 @@ export default function ScriptureManagement() {
   const handleDelete = async (scripture: ScriptureReading) => {
     if (!firestore) return;
     try {
-      // For admin, we only need to delete from the central collection.
-      // The user-specific collection is for their view only.
-      await deleteDoc(doc(firestore, 'scriptureReadings', scripture.id));
+      const batch = writeBatch(firestore);
+
+      // Delete from global collection
+      batch.delete(doc(firestore, 'scriptureReadings', scripture.id));
+
+      // Also delete from user's subcollection
+      const userScriptureQuery = query(
+        collection(firestore, `users/${scripture.userId}/scriptureReadings`),
+        where('date', '==', scripture.date),
+        where('scripture', '==', scripture.scripture)
+      );
+      const userScriptureSnap = await getDocs(userScriptureQuery);
+      userScriptureSnap.forEach(doc => batch.delete(doc.ref));
+
+      await batch.commit();
+      
       toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
@@ -193,3 +206,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    

@@ -289,16 +289,6 @@
     ]
   },
   "firestore": {
-    "indexes": [
-      {
-        "collectionGroup": "scriptureReadings",
-        "queryScope": "COLLECTION",
-        "fields": [
-          { "fieldPath": "userId", "order": "ASCENDING" },
-          { "fieldPath": "date", "order": "DESCENDING" }
-        ]
-      }
-    ],
     "structure": [
       {
         "path": "/monthInfos/{monthInfoId}",
@@ -411,6 +401,18 @@
         }
       },
       {
+        "path": "/users/{userId}/scriptureReadings/{readingId}",
+        "definition": {
+          "entityName": "ScriptureReading",
+          "schema": { "$ref": "#/entities/ScriptureReading" },
+          "description": "User-specific subcollection of their scripture reading submissions.",
+          "params": [
+            { "name": "userId", "description": "The user's unique ID." },
+            { "name": "readingId", "description": "The unique ID for the reading." }
+          ]
+        }
+      },
+      {
         "path": "/users/{userId}/glossaryProposals/{proposalId}",
         "definition": {
             "entityName": "GlossaryProposal",
@@ -427,4 +429,4 @@
   }
 }
 
-      
+    

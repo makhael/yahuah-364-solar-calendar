@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc, writeBatch, where } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { BookOpen, LoaderCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -27,8 +27,7 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
   const myScripturesQuery = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
     return query(
-      collection(firestore, `scriptureReadings`),
-      where('userId', '==', userId),
+      collection(firestore, `users/${userId}/scriptureReadings`),
       orderBy('date', 'desc')
     );
   }, [firestore, userId]);
@@ -38,9 +37,7 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
   const handleDelete = async (id: string) => {
     if (!firestore || !userId) return;
     try {
-      // User only needs to delete the central document. 
-      // Security rules should enforce they can only delete their own.
-      await deleteDoc(doc(firestore, 'scriptureReadings', id));
+      await deleteDoc(doc(firestore, 'users', userId, 'scriptureReadings', id));
       toast({ title: 'Submission Deleted' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error deleting submission', description: error.message });
@@ -116,3 +113,5 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
     </ScrollArea>
   );
 };
+
+    
