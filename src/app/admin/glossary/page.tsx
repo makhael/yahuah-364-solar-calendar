@@ -186,7 +186,8 @@ export default function GlossaryManagement() {
         updateDocumentNonBlocking(proposalRef, { status });
 
         if (status === 'approved') {
-            const glossaryTermRef = doc(firestore, 'glossaryTerms', proposal.term.toLowerCase().replace(/ /g, '-'));
+            const safeId = proposal.term.toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-');
+            const glossaryTermRef = doc(firestore, 'glossaryTerms', safeId);
             const newTermData = {
                 term: proposal.term,
                 definition: proposal.definition,
