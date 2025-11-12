@@ -14,10 +14,8 @@ export const metadata: Metadata = {
   description: "A tool to restore and explore the ancient 364-day solar calendar.",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   icons: {
-    icon: [
-      { url: '/logo.png', type: 'image/png', sizes: '32x32' },
-    ],
-    apple: '/logo.png',
+    icon: '/favicon.png',
+    apple: '/apple-touch-icon.png',
   },
   openGraph: {
     title: "Yahuah's 364-Day Solar Calendar",
