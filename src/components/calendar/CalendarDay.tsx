@@ -59,15 +59,13 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
   
   let { bg, border, shadow: currentShadow, text: dayNumberColor, dayName: dayNameColor, date: currentDateText, badge: badgeTextColor } = dayStyles[dayType];
   
+  // Per user request: Only apply appointment theme to normal "work" days.
   if (dayType === 'work' && hasAppointment && appointmentTheme && appointmentTheme !== 'default') {
       bg = `appointment-bg-${appointmentTheme}`;
       dayNumberColor = 'text-white';
       dayNameColor = 'text-white/90';
       currentDateText = 'text-white/70';
       badgeTextColor = 'text-white';
-  } else if (dayType !== 'work' && hasAppointment && appointmentTheme && appointmentTheme !== 'default') {
-      // If it's a special day (like a sabbath) that also has a custom appointment, add a visual indicator
-      border = `border-4 border-${appointmentTheme}-500`;
   }
 
   if (isToday) {
