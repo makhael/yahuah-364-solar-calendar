@@ -23,6 +23,7 @@ import { hebrewDays } from '@/lib/calendar-data';
 import { PODCAST_SERIES_DATA } from '@/lib/calendar-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { LoaderCircle } from 'lucide-react';
+import { ScriptureSubmission } from '../intro/IntroSection';
 
 
 export default function YahuahCalendar() {
@@ -93,6 +94,7 @@ export default function YahuahCalendar() {
     }, [openModal]);
     
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
+    const todayDateId = today ? today.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
     if (isUserLoading || !startDate || isNaN(startDate.getTime())) {
         return (
@@ -161,6 +163,12 @@ export default function YahuahCalendar() {
 
                     {visibleSections.intro && (
                        <IntroSection openGlossaryModal={(termKey) => openModal('glossary', { termKey })} />
+                    )}
+                    
+                    {visibleSections.scripture && (
+                        <Card id="scripture-submission-section" className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
+                           <ScriptureSubmission dateId={todayDateId} />
+                        </Card>
                     )}
 
                     {visibleSections.podcast && (

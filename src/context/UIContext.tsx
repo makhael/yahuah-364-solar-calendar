@@ -63,6 +63,7 @@ type VisibleSections = {
   intro: boolean;
   podcast: boolean;
   calendar: boolean;
+  scripture: boolean;
 };
 
 interface UIContextType {
@@ -106,6 +107,7 @@ const defaultVisibleSections: VisibleSections = {
   intro: true,
   podcast: true,
   calendar: true,
+  scripture: true,
 };
 
 export const UIProvider = ({ children }: { children: ReactNode; }) => {
@@ -531,5 +533,3 @@ export const useUI = (): UIContextType => {
   }
   return context;
 };
-
-

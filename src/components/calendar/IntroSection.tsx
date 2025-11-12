@@ -6,19 +6,7 @@ import { GLOSSARY_SECTIONS } from "@/lib/glossary-data";
 import { APPOINTMENTS, TEKUFAH_DETAILS } from "@/lib/calendar-data";
 import { InfoIcon } from "./icons";
 import { cn } from "@/lib/utils";
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, where, orderBy, doc, addDoc, serverTimestamp, arrayUnion, arrayRemove, getDocs } from 'firebase/firestore';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { LoaderCircle, PlusCircle, BookOpen, ThumbsUp, Send, Edit, Trash2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { useDoc } from '@/firebase/firestore/use-doc';
-import { ScriptureSubmission } from '@/components/intro/IntroSection';
+
 
 const DateChip = ({ dateStr }: { dateStr: string }) => {
   const [month, day] = dateStr.split('-');
@@ -73,14 +61,9 @@ type IntroSectionProps = {
 }
 
 export const IntroSection = ({ openGlossaryModal }: IntroSectionProps) => {
-  const todayDateId = new Date().toISOString().split('T')[0];
 
   return (
     <div id="intro-section" className="space-y-12">
-       <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
-        <ScriptureSubmission dateId={todayDateId} />
-      </div>
-
       <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
         <p className="text-base text-muted-foreground mb-6 leading-relaxed">
           The true restoration of time requires discernment, for the world walks by clocks set according to the shifting shadows of <GlossaryLink termKey="Babylonian" onClick={openGlossaryModal} /> and <GlossaryLink termKey="Roman" onClick={openGlossaryModal} /> reckoning. To <GlossaryLink termKey="Redeem the Days" onClick={openGlossaryModal} /> is to abandon those corrupted systems—<GlossaryLink termKey="lunar cycles" onClick={openGlossaryModal} /> and the flawed 365-day <GlossaryLink termKey="Gregorian model" onClick={openGlossaryModal} />—and return to Yahusha's divine reckoning: the <GlossaryLink termKey="364-Day Calendar" onClick={openGlossaryModal} /> anchored by the light of Creation. This calendar, confirmed by Enoch and Jubilees, restores the precise rhythm of the heavens, ensuring that all <GlossaryLink termKey="Shabbat" onClick={openGlossaryModal} /> and appointed times (<GlossaryLink termKey="Mo'edim" onClick={openGlossaryModal} />) remain fixed and holy, never drifting.
