@@ -13,9 +13,9 @@ export const metadata: Metadata = {
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   icons: {
     icon: [
-      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/logo.png', type: 'image/png', sizes: '32x32' },
     ],
-    apple: '/apple-touch-icon.png',
+    apple: '/logo.png',
   },
   openGraph: {
     title: "Yahuah's 364-Day Solar Calendar",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: "Yahuah's 364-Day Solar Calendar",
     images: [
       {
-        url: '/og-image.png', // Must be an absolute URL
+        url: '/logo.png', // Must be an absolute URL
         width: 1200,
         height: 630,
       },
