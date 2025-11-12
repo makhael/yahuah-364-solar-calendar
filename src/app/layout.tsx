@@ -12,7 +12,10 @@ export const metadata: Metadata = {
   description: "A tool to restore and explore the ancient 364-day solar calendar.",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   icons: {
-    icon: '/favicon.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
+    ],
     apple: '/apple-touch-icon.png',
   },
   openGraph: {
