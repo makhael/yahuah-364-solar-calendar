@@ -25,7 +25,7 @@ interface Proposal {
   restorationNote?: string;
   tags?: string[];
   status: 'pending' | 'approved' | 'rejected';
-  createdAt: { seconds: number };
+  createdAt?: { seconds: number };
 }
 
 export const MyProposals = ({ userId }: { userId: string }) => {
@@ -142,7 +142,7 @@ export const MyProposals = ({ userId }: { userId: string }) => {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground/80 pt-2 border-t">
-                  Submitted: {new Date(proposal.createdAt.seconds * 1000).toLocaleDateString()}
+                  Submitted: {proposal.createdAt ? new Date(proposal.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
                 </p>
               </div>
               <div className="flex flex-col gap-2">
@@ -181,5 +181,3 @@ export const MyProposals = ({ userId }: { userId: string }) => {
     </ScrollArea>
   );
 };
-
-    
