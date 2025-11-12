@@ -10,16 +10,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { LoaderCircle, XCircle, ScrollText } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useFirestore, useUser } from '@/firebase';
-import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, serverTimestamp, doc } from 'firebase/firestore';
+import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useUI } from '@/context/UIContext';
 
 const proposalSchema = z.object({
   term: z.string().min(2, { message: "Term must be at least 2 characters." }),
   definition: z.string().min(10, { message: "Definition must be at least 10 characters." }),
+  tags: z.string().optional(),
 });
 
 type ProposalFormData = z.infer<typeof proposalSchema>;
@@ -31,6 +29,7 @@ interface GlossaryProposalModalProps {
     id: string;
     term: string;
     definition: string;
+    tags?: string[];
   } | null;
 }
 
@@ -40,10 +39,10 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
     defaultValues: {
       term: '',
       definition: '',
+      tags: '',
     }
   });
 
-  const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
   const { closeAllModals, handleSaveGlossaryProposal } = useUI();
@@ -55,16 +54,14 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
     }
 
     await handleSaveGlossaryProposal(data, proposal?.id);
-    reset(); 
-    closeAllModals(); 
   }
   
   useEffect(() => {
     if (isOpen) {
       if (proposal) {
-        reset({ term: proposal.term, definition: proposal.definition });
+        reset({ term: proposal.term, definition: proposal.definition, tags: proposal.tags?.join(', ') || '' });
       } else {
-        reset({ term: '', definition: '' });
+        reset({ term: '', definition: '', tags: '' });
       }
     }
   }, [isOpen, proposal, reset]);
@@ -101,6 +98,10 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
                     <Label htmlFor="definition">Definition</Label>
                     <Controller name="definition" control={control} render={({ field }) => <Textarea id="definition" {...field} rows={4} className="bg-background/50" />} />
                     {errors.definition && <p className="text-sm text-destructive">{errors.definition.message}</p>}
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="tags">Tags (comma-separated)</Label>
+                    <Controller name="tags" control={control} render={({ field }) => <Input id="tags" {...field} placeholder="e.g. hebrew, feast, concept" className="bg-background/50" />} />
                 </div>
             </div>
             <div className="p-4 flex justify-end items-center gap-2 border-t bg-secondary/30 rounded-b-2xl">
