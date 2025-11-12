@@ -45,25 +45,27 @@ export default function ScriptureManagement() {
   const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
   useEffect(() => {
-    if (!firestore || areUsersLoading || !users) return;
+    if (!firestore || areUsersLoading || !users) {
+      // Don't start fetching scriptures until users are loaded
+      return;
+    }
 
     const fetchAllScriptures = async () => {
       setIsLoading(true);
-      
-      const scripturePromises = users.map(user => 
-        getDocs(query(collection(firestore, `users/${user.id}/scriptureReadings`)))
-      );
-
       try {
+        const scripturePromises = users.map(user => 
+            getDocs(query(collection(firestore, `users/${user.id}/scriptureReadings`)))
+        );
+        
         const userScriptureSnapshots = await Promise.all(scripturePromises);
         
         const flattenedScriptures = userScriptureSnapshots.flatMap((snapshot, index) => {
             const user = users[index];
-            return snapshot.docs.map(doc => ({
-                id: doc.id,
-                path: doc.ref.path,
-                userDisplayName: user?.displayName || doc.data().userDisplayName || 'Unknown',
-                ...doc.data()
+            return snapshot.docs.map(docSnap => ({
+                id: docSnap.id,
+                path: docSnap.ref.path,
+                userDisplayName: user?.displayName || docSnap.data().userDisplayName || 'Unknown',
+                ...docSnap.data()
             } as ScriptureReading))
         });
         
