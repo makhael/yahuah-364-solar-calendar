@@ -61,7 +61,7 @@ export default function ScriptureManagement() {
             return snapshot.docs.map(doc => ({
                 id: doc.id,
                 path: doc.ref.path,
-                userDisplayName: user?.displayName || doc.data().userDisplayName,
+                userDisplayName: user?.displayName || doc.data().userDisplayName || 'Unknown',
                 ...doc.data()
             } as ScriptureReading))
         });
@@ -235,3 +235,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    
