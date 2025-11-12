@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, where, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, doc, query, orderBy, where, getDocs, deleteDoc, setDoc } from 'firebase/firestore';
 import { LoaderCircle, Check, X, Hourglass, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,7 @@ import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 interface User {
   id: string;
@@ -28,6 +29,7 @@ interface Proposal {
     userId: string;
     userDisplayName: string;
     createdAt?: { seconds: number };
+    tags?: string[];
     path: string; 
 }
 
@@ -193,10 +195,35 @@ export default function GlossaryManagement() {
         if (!firestore || !proposal.path) return;
         const proposalRef = doc(firestore, proposal.path);
         updateDocumentNonBlocking(proposalRef, { status });
-        toast({
-            title: `Proposal ${status}`,
-            description: `The glossary proposal has been marked as ${status}.`
-        });
+
+        if (status === 'approved') {
+            const glossaryTermRef = doc(firestore, 'glossaryTerms', proposal.term.toLowerCase().replace(/ /g, '-'));
+            const newTermData = {
+                term: proposal.term,
+                definition: proposal.definition,
+                tags: proposal.tags || [],
+                style: 'custom' // Or some other default
+            };
+            // Use setDoc non-blockingly to create or overwrite the term in the main glossary
+            setDoc(glossaryTermRef, newTermData).then(() => {
+                toast({
+                    title: 'Proposal Approved & Published',
+                    description: `The term "${proposal.term}" has been added to the main glossary.`
+                });
+            }).catch(error => {
+                console.error("Error publishing glossary term: ", error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Publishing Failed',
+                    description: 'The proposal was approved but failed to publish to the main glossary.'
+                });
+            });
+        } else {
+             toast({
+                title: `Proposal ${status}`,
+                description: `The glossary proposal has been marked as ${status}.`
+            });
+        }
     };
 
     const handleDelete = async (proposal: Proposal) => {
