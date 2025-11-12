@@ -122,8 +122,6 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
             return;
         }
 
-        const batch = writeBatch(firestore);
-
         const sharedData = {
             scripture: data.scripture,
             date: dateId,
@@ -133,16 +131,8 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
             createdAt: serverTimestamp()
         };
 
-        // Write to the global collection for community view
-        const globalReadingRef = doc(collection(firestore, 'scriptureReadings'));
-        batch.set(globalReadingRef, sharedData);
-
-        // Write to the user-specific subcollection for their personal view
-        const userReadingRef = doc(collection(firestore, `users/${user.uid}/scriptureReadings`));
-        batch.set(userReadingRef, sharedData);
-        
         try {
-            await batch.commit();
+            await addDoc(collection(firestore, 'scriptureReadings'), sharedData);
             toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution.' });
             reset();
         } catch (error) {
@@ -378,5 +368,3 @@ export const IntroSection = ({ openGlossaryModal }: IntroSectionProps) => {
     </div>
   );
 };
-
-    

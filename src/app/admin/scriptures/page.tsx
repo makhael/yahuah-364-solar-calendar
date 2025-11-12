@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, deleteDoc, doc, updateDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, deleteDoc, doc, where, getDocs, writeBatch } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, Trash2, Edit, Check, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,25 +52,10 @@ export default function ScriptureManagement() {
     }, {} as Record<string, ScriptureReading[]>);
   }, [scriptures]);
 
-  const handleDelete = async (scripture: ScriptureReading) => {
+  const handleDelete = async (scriptureId: string) => {
     if (!firestore) return;
     try {
-      const batch = writeBatch(firestore);
-
-      // Delete from global collection
-      batch.delete(doc(firestore, 'scriptureReadings', scripture.id));
-
-      // Also delete from user's subcollection
-      const userScriptureQuery = query(
-        collection(firestore, `users/${scripture.userId}/scriptureReadings`),
-        where('date', '==', scripture.date),
-        where('scripture', '==', scripture.scripture)
-      );
-      const userScriptureSnap = await getDocs(userScriptureQuery);
-      userScriptureSnap.forEach(doc => batch.delete(doc.ref));
-
-      await batch.commit();
-      
+      await deleteDoc(doc(firestore, 'scriptureReadings', scriptureId));
       toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
@@ -187,7 +172,7 @@ export default function ScriptureManagement() {
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(submission)}>Yes, Delete</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(submission.id)}>Yes, Delete</AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
@@ -206,5 +191,3 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
-
-    

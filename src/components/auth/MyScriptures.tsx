@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, doc, deleteDoc, writeBatch, where } from 'firebase/firestore';
 import { BookOpen, LoaderCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -27,7 +27,8 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
   const myScripturesQuery = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
     return query(
-      collection(firestore, `users/${userId}/scriptureReadings`),
+      collection(firestore, 'scriptureReadings'),
+      where('userId', '==', userId),
       orderBy('date', 'desc')
     );
   }, [firestore, userId]);
@@ -37,7 +38,7 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
   const handleDelete = async (id: string) => {
     if (!firestore || !userId) return;
     try {
-      await deleteDoc(doc(firestore, 'users', userId, 'scriptureReadings', id));
+      await deleteDoc(doc(firestore, 'scriptureReadings', id));
       toast({ title: 'Submission Deleted' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error deleting submission', description: error.message });
@@ -98,7 +99,7 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete your submission of "{scripture.scripture}"? This will remove it from both your personal list and the community view.
+                    Are you sure you want to delete your submission of "{scripture.scripture}"?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -113,5 +114,3 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
     </ScrollArea>
   );
 };
-
-    
