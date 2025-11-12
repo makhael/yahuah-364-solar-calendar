@@ -74,7 +74,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const mockAdminUser = {
       uid: 'mock-admin-uid-sheldon',
       email: 'sheldonharding@gmail.com',
-      displayName: 'Sheldon Harding',
+      displayName: 'Sheldon Harding (Admin)',
       photoURL: null,
       emailVerified: true,
       isAnonymous: false,
@@ -90,6 +90,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       toJSON: () => ({}),
     } as User;
     
+    // Set ONLY the mock user and stop loading. Do not perform any real auth.
     setUserAuthState({ user: mockAdminUser, isUserLoading: false, userError: null });
 
   }, [auth]);
