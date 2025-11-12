@@ -3,26 +3,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow admins to perform collection group queries for moderation.
-    // In a real app, you'd restrict this to authenticated admins, e.g.:
-    // allow list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    match /{path=**}/notes/{noteId} {
-      allow read, write, list, delete: if true; 
-    }
-    match /{path=**}/glossaryProposals/{proposalId} {
-      allow read, write, list, delete: if true; 
-    }
-
-    // Allow users to manage their own data.
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Allow any authenticated user to read public data.
-    // Writes are currently open for development but should be restricted.
+    // Allow read/write access to all documents
+    // This is for development purposes and should be secured before production
     match /{document=**} {
-      allow read: if request.auth != null;
-      allow write: if true; // Should be restricted in production
+      allow read, write: if true;
     }
   }
 }
