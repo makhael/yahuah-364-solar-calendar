@@ -45,7 +45,10 @@ export default function ScriptureManagement() {
   const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
   useEffect(() => {
-    if (!firestore || !users) return;
+    if (!firestore || !users) {
+      setIsLoading(false);
+      return;
+    };
 
     const fetchAllScriptures = async () => {
       setIsLoading(true);
@@ -69,7 +72,7 @@ export default function ScriptureManagement() {
     };
 
     fetchAllScriptures();
-  }, [firestore, users]);
+  }, [firestore, JSON.stringify(users)]); // Use JSON.stringify to depend on the content of the users array
 
   const groupedByDate = React.useMemo(() => {
     return scriptures.reduce((acc, scripture) => {
@@ -223,5 +226,3 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
-
-    
