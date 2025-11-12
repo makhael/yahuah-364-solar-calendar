@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -81,49 +82,14 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ScriptureFormData>({
         resolver: zodResolver(scriptureSchema),
     });
-
-    const scripturesQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        // Simplified query to avoid composite index requirement
-        return query(
-            collection(firestore, 'scriptureReadings'),
-            where('date', '==', dateId)
-        );
-    }, [firestore, dateId]);
-    
-    const { data, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
-
-    // Sort on the client-side
-    const scriptures = React.useMemo(() => {
-        if (!data) return [];
-        return [...data].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-    }, [data]);
-
-
-    const handleVote = (scriptureId: string) => {
-        if (!user || user.isAnonymous) {
-            toast({ variant: 'destructive', title: 'Please sign in to vote.' });
-            return;
-        }
-        if (!scriptures) return;
-
-        const scriptureRef = doc(firestore, 'scriptureReadings', scriptureId);
-        const scripture = scriptures.find(s => s.id === scriptureId);
-        if (!scripture) return;
-
-        const hasVoted = scripture.upvoters.includes(user.uid);
-        
-        updateDocumentNonBlocking(scriptureRef, {
-            upvoters: hasVoted ? arrayRemove(user.uid) : arrayUnion(user.uid)
-        });
-    };
     
     const onSubmit = (data: ScriptureFormData) => {
         if (!user || user.isAnonymous) {
             toast({ variant: 'destructive', title: 'Please sign in to submit scripture.' });
             return;
         }
-        const scriptureCol = collection(firestore, 'scriptureReadings');
+        // Save to the user's specific subcollection
+        const scriptureCol = collection(firestore, 'users', user.uid, 'scriptureReadings');
         addDocumentNonBlocking(scriptureCol, {
             scripture: data.scripture,
             date: dateId,
@@ -132,45 +98,18 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
             upvoters: [user.uid], // Creator automatically upvotes
             createdAt: serverTimestamp()
         }).then(() => {
-           toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution.' });
+           toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution. View it in your "Personal" area.' });
            reset();
         });
     };
     
-    if (isLoading) {
-      return (
-        <div className="flex items-center justify-center p-4">
-          <LoaderCircle className="animate-spin" />
-        </div>
-      )
-    }
-
     return (
         <div className="bg-secondary/50 p-4 rounded-lg border">
-            <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5"/> Community Scriptures</h3>
+            <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5"/> Submit Scripture for this Day</h3>
             
-            {scriptures && scriptures.length === 0 && (
-                <p className="text-sm text-center text-muted-foreground mb-4">No scriptures submitted for this day yet. Be the first!</p>
-            )}
-            
-            {scriptures && scriptures.length > 0 && (
-                <div className="space-y-3 mb-4">
-                    {scriptures.map(s => (
-                        <div key={s.id} className="flex items-center justify-between gap-2 bg-background p-2 rounded-md">
-                            <div className="flex-1">
-                                <p className="font-semibold text-primary">{s.scripture}</p>
-                                <ScriptureAuthor userId={s.userId} />
-                            </div>
-                            <Button variant={user && s.upvoters.includes(user.uid) ? "default" : "outline"} size="sm" onClick={() => handleVote(s.id)} disabled={!user}>
-                                <ThumbsUp className="w-4 h-4 mr-2" />
-                                {s.upvoters.length}
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <p className="text-sm text-center text-muted-foreground mb-4">Your submission will be private to you but visible to administrators.</p>
 
-            {user && !user.isAnonymous && (
+            {user && !user.isAnonymous ? (
                 <form onSubmit={handleSubmit(onSubmit)} className="flex items-start gap-2">
                     <div className="flex-grow">
                         <Input 
@@ -184,6 +123,8 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
                         {isSubmitting ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
                     </Button>
                 </form>
+            ) : (
+                 <p className="text-sm text-center text-muted-foreground">Please sign in to submit a scripture.</p>
             )}
         </div>
     );

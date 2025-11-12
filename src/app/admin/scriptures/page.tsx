@@ -1,9 +1,9 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, query, getDocs } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,11 +14,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc } from 'firebase/firestore';
 
 interface User {
   id: string;
-  displayName?: string;
 }
 
 interface ScriptureReading {
@@ -93,15 +93,11 @@ export default function ScriptureManagement() {
     }, {} as Record<string, ScriptureReading[]>);
   }, [allScriptures]);
 
-  const handleDelete = async (scripture: ScriptureReading) => {
+  const handleDelete = (scripture: ScriptureReading) => {
     if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, scripture.path));
-      setAllScriptures(prev => prev.filter(s => s.path !== scripture.path));
-      toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
-    }
+    deleteDocumentNonBlocking(doc(firestore, scripture.path));
+    setAllScriptures(prev => prev.filter(s => s.path !== scripture.path));
+    toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
   };
   
   const handleEdit = (submission: ScriptureReading) => {
