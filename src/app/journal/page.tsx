@@ -13,7 +13,6 @@ import { useUI } from '@/context/UIContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MyJournal } from '@/components/auth/MyJournal';
-import { MyScriptures } from '@/components/auth/MyScriptures';
 import { MyProposals } from '@/components/auth/MyProposals';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -63,7 +62,7 @@ export default function JournalPage() {
                         </Link>
                         <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2 text-left">
                             <h1 className="text-base font-bold text-primary tracking-wide">Personal</h1>
-                            <p className="text-xs text-muted-foreground mt-0.5">Manage your journal entries, scripture submissions, and glossary proposals.</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Manage your journal entries and glossary proposals.</p>
                         </div>
                     </div>
                     <UserProfile onOpenInstructions={() => openModal('instructions')} />
@@ -72,9 +71,8 @@ export default function JournalPage() {
                 <Card>
                     <Tabs defaultValue="journal" className="w-full">
                          <CardHeader>
-                            <TabsList className="grid w-full grid-cols-3">
+                            <TabsList className="grid w-full grid-cols-2">
                                 <TabsTrigger value="journal">My Journal</TabsTrigger>
-                                <TabsTrigger value="scriptures">My Scriptures</TabsTrigger>
                                 <TabsTrigger value="proposals">My Glossary Proposals</TabsTrigger>
                             </TabsList>
                         </CardHeader>
@@ -82,9 +80,6 @@ export default function JournalPage() {
                              <div className="pt-6">
                                 <TabsContent value="journal">
                                     <MyJournal userId={user.uid} />
-                                </TabsContent>
-                                <TabsContent value="scriptures">
-                                    <MyScriptures userId={user.uid} />
                                 </TabsContent>
                                 <TabsContent value="proposals">
                                     <div className="flex justify-end mb-4">

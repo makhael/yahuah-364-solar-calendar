@@ -59,9 +59,138 @@ interface Appointment {
   }
 }
 
+interface ScriptureReading {
+  id: string;
+  scripture: string;
+  userId: string;
+  userDisplayName?: string;
+  upvoters: string[];
+  createdAt: { seconds: number };
+}
+
 type ModalProps = {
   info: any;
 };
+
+const CommunityScriptures = ({ dateId }: { dateId: string }) => {
+    const firestore = useFirestore();
+    const { user } = useUser();
+    const { toast } = useToast();
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editText, setEditText] = useState('');
+
+    const scripturesQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'scriptureReadings'), where('date', '==', dateId), orderBy('createdAt', 'desc'));
+    }, [firestore, dateId]);
+
+    const { data: scriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
+
+    const scriptureForm = useForm<{ scripture: string }>({
+        resolver: zodResolver(z.object({ scripture: z.string().min(3, "Please enter a valid scripture reference.") })),
+    });
+
+    const handleNewScripture = (data: { scripture: string }) => {
+        if (!user || user.isAnonymous) {
+            toast({ variant: 'destructive', title: 'Please sign in to submit scripture.' });
+            return;
+        }
+        addDocumentNonBlocking(collection(firestore, 'scriptureReadings'), {
+            scripture: data.scripture,
+            date: dateId,
+            userId: user.uid,
+            userDisplayName: user.displayName || user.email?.split('@')[0],
+            upvoters: [],
+            createdAt: serverTimestamp()
+        });
+        toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution.' });
+        scriptureForm.reset();
+    };
+    
+    const handleUpdateScripture = (scriptureId: string) => {
+        if (!firestore) return;
+        updateDocumentNonBlocking(doc(firestore, 'scriptureReadings', scriptureId), { scripture: editText });
+        toast({ title: 'Submission Updated' });
+        setEditingId(null);
+        setEditText('');
+    }
+
+    const handleDelete = (scriptureId: string) => {
+        if (!firestore) return;
+        deleteDocumentNonBlocking(doc(firestore, 'scriptureReadings', scriptureId));
+        toast({ title: 'Submission Deleted' });
+    };
+
+    if (isLoading) {
+        return <div className="p-4 flex justify-center"><LoaderCircle className="animate-spin"/></div>
+    }
+
+    return (
+        <div className="bg-secondary/50 p-4 rounded-lg border">
+            <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5"/> Community Scriptures</h3>
+            <div className="space-y-3 mb-4">
+                {scriptures && scriptures.map(s => {
+                    const isOwner = user?.uid === s.userId;
+                    return (
+                        <div key={s.id} className="flex items-center justify-between gap-2 p-2 rounded-md bg-background/60">
+                           {editingId === s.id ? (
+                                <div className="flex-grow flex gap-2 items-center">
+                                    <Input value={editText} onChange={(e) => setEditText(e.target.value)} className="text-sm" />
+                                    <Button size="icon" className="h-8 w-8" onClick={() => handleUpdateScripture(s.id)}><CheckCircle2 className="h-4 w-4"/></Button>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingId(null)}><X className="h-4 w-4"/></Button>
+                                </div>
+                           ) : (
+                            <>
+                                <p className="font-semibold text-foreground">{s.scripture}</p>
+                                {isOwner && (
+                                    <div className="flex items-center">
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingId(s.id); setEditText(s.scripture); }}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete this submission?</AlertDialogTitle>
+                                                    <AlertDialogDescription>This will permanently delete your submission of "{s.scripture}".</AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(s.id)}>Yes, Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                )}
+                            </>
+                           )}
+                        </div>
+                    )
+                })}
+                {scriptures?.length === 0 && <p className="text-sm text-muted-foreground text-center py-2">No scriptures submitted for this day yet.</p>}
+            </div>
+             {user && !user.isAnonymous && (
+                <form onSubmit={scriptureForm.handleSubmit(handleNewScripture)} className="flex items-start gap-2 pt-4 border-t">
+                    <div className="flex-grow">
+                        <Input 
+                            {...scriptureForm.register("scripture")}
+                            placeholder="e.g., Genesis 1:1-5" 
+                            className="bg-background"
+                        />
+                        {scriptureForm.formState.errors.scripture && <p className="text-xs text-destructive mt-1">{scriptureForm.formState.errors.scripture.message}</p>}
+                    </div>
+                    <Button type="submit" disabled={scriptureForm.formState.isSubmitting}>
+                        {scriptureForm.formState.isSubmitting ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
+                    </Button>
+                </form>
+            )}
+        </div>
+    )
+}
 
 const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWeek: number }) => {
     const firestore = useFirestore();
@@ -575,6 +704,7 @@ export const DayDetailModal = ({ info }: ModalProps) => {
 
         <div className="overflow-y-auto flex-grow p-6 pt-2 space-y-4">
             <CommunityAppointments dateId={dateId} dayOfWeek={dayOfWeek} />
+            <CommunityScriptures dateId={dateId} />
             
             {meaningText && (
               <div className="bg-secondary/50 p-4 rounded-lg border">

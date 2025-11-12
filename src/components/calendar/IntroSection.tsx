@@ -20,60 +20,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useDoc } from '@/firebase/firestore/use-doc';
 
-interface ScriptureReading {
-  id: string;
-  scripture: string;
-  userId: string;
-  userDisplayName?: string;
-  upvoters: string[];
-  createdAt: { seconds: number };
-}
-
-interface UserProfile {
-    displayName: string;
-    email: string;
-}
-
 const scriptureSchema = z.object({
   scripture: z.string().min(3, "Please enter a valid scripture reference."),
 });
 
 type ScriptureFormData = z.infer<typeof scriptureSchema>;
-
-const ScriptureAuthor = ({ userId }: { userId: string }) => {
-    const firestore = useFirestore();
-    const userProfileRef = useMemoFirebase(() => {
-        if (!firestore || !userId) return null;
-        return doc(firestore, 'users', userId);
-    }, [firestore, userId]);
-
-    const { data: userProfile, isLoading } = useDoc<UserProfile>(userProfileRef);
-
-    if (isLoading) {
-        return <span className="text-xs text-muted-foreground italic">Loading author...</span>;
-    }
-
-    if (!userProfile) {
-        return <span className="text-xs text-muted-foreground italic">Unknown author</span>;
-    }
-    
-    const displayName = userProfile.displayName || (userProfile.email ? userProfile.email.split('@')[0] : 'Unknown');
-
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <span className="text-xs text-muted-foreground italic cursor-pointer">
-                        by {displayName}
-                    </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>{userProfile.email || 'No email available'}</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
-};
 
 export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
     const firestore = useFirestore();
@@ -88,17 +39,17 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
             toast({ variant: 'destructive', title: 'Please sign in to submit scripture.' });
             return;
         }
-        // Save to the user's specific subcollection
-        const scriptureCol = collection(firestore, 'users', user.uid, 'scriptureReadings');
+        // Save to the new root-level 'scriptures' collection
+        const scriptureCol = collection(firestore, 'scriptureReadings');
         addDocumentNonBlocking(scriptureCol, {
             scripture: data.scripture,
             date: dateId,
             userId: user.uid,
             userDisplayName: user.displayName || user.email?.split('@')[0],
-            upvoters: [user.uid], // Creator automatically upvotes
+            upvoters: [],
             createdAt: serverTimestamp()
         }).then(() => {
-           toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution. View it in your "Personal" area.' });
+           toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution.' });
            reset();
         });
     };
@@ -107,7 +58,7 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
         <div className="bg-secondary/50 p-4 rounded-lg border">
             <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5"/> Submit Scripture for this Day</h3>
             
-            <p className="text-sm text-center text-muted-foreground mb-4">Your submission will be private to you but visible to administrators.</p>
+            <p className="text-sm text-center text-muted-foreground mb-4">Your submission will appear on the calendar for the community.</p>
 
             {user && !user.isAnonymous ? (
                 <form onSubmit={handleSubmit(onSubmit)} className="flex items-start gap-2">
