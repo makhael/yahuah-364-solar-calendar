@@ -61,12 +61,10 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
   
   if (dayType === 'work' && hasAppointment && appointmentTheme && appointmentTheme !== 'default') {
       bg = `appointment-bg-${appointmentTheme}`;
-      if (theme !== 'theme-paper-light') {
-        dayNumberColor = 'text-white';
-        dayNameColor = 'text-white/90';
-        currentDateText = 'text-white/70';
-        badgeTextColor = 'text-white';
-      }
+      dayNumberColor = 'text-white';
+      dayNameColor = 'text-white/90';
+      currentDateText = 'text-white/70';
+      badgeTextColor = 'text-white';
   }
 
   if (isToday) {
@@ -168,7 +166,7 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
       <div className="h-6 flex items-end justify-between w-full">
          <div className="flex items-center justify-start min-w-[24px]">
             {hasAppointment && (
-              <CalendarDays className={cn("w-4 h-4", dayType !== 'work' ? "text-white/80" : "text-primary")} />
+              <CalendarDays className={cn("w-4 h-4", dayType !== 'work' ? "text-white/80" : (appointmentTheme && appointmentTheme !== 'default' ? 'text-white' : "text-primary"))} />
             )}
         </div>
         <div className="flex items-center justify-center gap-1.5">
