@@ -53,7 +53,7 @@ export const TopicChat = ({ topic }: TopicChatProps) => {
   const { data: userProfile } = useDoc<UserProfileData>(userProfileRef);
 
 
-  const chatQuery = useMemo(() => {
+  const chatQuery = useMemoFirebase(() => {
     if (!firestore || !topic) return null;
     return query(
       collection(firestore, 'communityTopics', topic.id, 'messages'),
