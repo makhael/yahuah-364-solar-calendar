@@ -7,7 +7,7 @@ import { APPOINTMENTS, TEKUFAH_DETAILS } from "@/lib/calendar-data";
 import { InfoIcon } from "./icons";
 import { cn } from "@/lib/utils";
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, where, orderBy, doc, addDoc, serverTimestamp, arrayUnion, arrayRemove, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, addDoc, serverTimestamp, arrayUnion, arrayRemove, getDocs, writeBatch } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -116,29 +116,43 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
         });
     };
     
-    const onSubmit = (data: ScriptureFormData) => {
-        if (!user || user.isAnonymous) {
+    const onSubmit = async (data: ScriptureFormData) => {
+        if (!user || user.isAnonymous || !firestore) {
             toast({ variant: 'destructive', title: 'Please sign in to submit scripture.' });
             return;
         }
-        
-        const centralDocRef = doc(collection(firestore, 'scriptureReadings'));
-        const userDocRef = doc(collection(firestore, 'users', user.uid, 'scriptureReadings'), centralDocRef.id);
-        
-        const payload = {
-            scripture: data.scripture,
-            date: dateId,
-            userId: user.uid,
-            userDisplayName: user.displayName || user.email?.split('@')[0],
-            upvoters: [user.uid],
-            createdAt: serverTimestamp()
-        };
 
-        addDocumentNonBlocking(centralDocRef, payload);
-        addDocumentNonBlocking(userDocRef, payload);
+        try {
+            const batch = writeBatch(firestore);
+            
+            // Create a reference for a new document in the central collection
+            const centralDocRef = doc(collection(firestore, 'scriptureReadings'));
 
-        toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution.' });
-        reset();
+            // Create a reference for a document in the user's subcollection with the SAME ID
+            const userDocRef = doc(firestore, 'users', user.uid, 'scriptureReadings', centralDocRef.id);
+            
+            const payload = {
+                scripture: data.scripture,
+                date: dateId,
+                userId: user.uid,
+                userDisplayName: user.displayName || user.email?.split('@')[0],
+                upvoters: [user.uid],
+                createdAt: serverTimestamp()
+            };
+
+            // Set the data for both documents in the batch
+            batch.set(centralDocRef, payload);
+            batch.set(userDocRef, payload);
+
+            // Commit the batch
+            await batch.commit();
+
+            toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution.' });
+            reset();
+        } catch (error) {
+            console.error("Error submitting scripture:", error);
+            toast({ variant: 'destructive', title: 'Submission Failed', description: 'Could not save scripture. Please try again.' });
+        }
     };
     
     if (isLoading) {
