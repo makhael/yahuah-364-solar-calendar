@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -15,72 +14,11 @@ import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LoaderCircle, PlusCircle, BookOpen, ThumbsUp } from 'lucide-react';
+import { LoaderCircle, PlusCircle, BookOpen, ThumbsUp, Send, Edit, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useDoc } from '@/firebase/firestore/use-doc';
-
-const scriptureSchema = z.object({
-  scripture: z.string().min(3, "Please enter a valid scripture reference."),
-});
-
-type ScriptureFormData = z.infer<typeof scriptureSchema>;
-
-export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
-    const firestore = useFirestore();
-    const { user } = useUser();
-    const { toast } = useToast();
-    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ScriptureFormData>({
-        resolver: zodResolver(scriptureSchema),
-    });
-    
-    const onSubmit = (data: ScriptureFormData) => {
-        if (!user || user.isAnonymous) {
-            toast({ variant: 'destructive', title: 'Please sign in to submit scripture.' });
-            return;
-        }
-        // Save to the new root-level 'scriptures' collection
-        const scriptureCol = collection(firestore, 'scriptureReadings');
-        addDocumentNonBlocking(scriptureCol, {
-            scripture: data.scripture,
-            date: dateId,
-            userId: user.uid,
-            userDisplayName: user.displayName || user.email?.split('@')[0],
-            upvoters: [],
-            createdAt: serverTimestamp()
-        }).then(() => {
-           toast({ title: 'Scripture Submitted!', description: 'Thank you for your contribution.' });
-           reset();
-        });
-    };
-    
-    return (
-        <div className="bg-secondary/50 p-4 rounded-lg border">
-            <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5"/> Submit Scripture for this Day</h3>
-            
-            <p className="text-sm text-center text-muted-foreground mb-4">Your submission will appear on the calendar for the community.</p>
-
-            {user && !user.isAnonymous ? (
-                <form onSubmit={handleSubmit(onSubmit)} className="flex items-start gap-2">
-                    <div className="flex-grow">
-                        <Input 
-                            {...register("scripture")}
-                            placeholder="e.g., Genesis 1:1-5" 
-                            className="bg-background"
-                        />
-                        {errors.scripture && <p className="text-xs text-destructive mt-1">{errors.scripture.message}</p>}
-                    </div>
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
-                    </Button>
-                </form>
-            ) : (
-                 <p className="text-sm text-center text-muted-foreground">Please sign in to submit a scripture.</p>
-            )}
-        </div>
-    );
-};
-
+import { ScriptureSubmission } from '@/components/intro/IntroSection';
 
 const DateChip = ({ dateStr }: { dateStr: string }) => {
   const [month, day] = dateStr.split('-');
@@ -140,7 +78,7 @@ export const IntroSection = ({ openGlossaryModal }: IntroSectionProps) => {
   return (
     <div id="intro-section" className="space-y-12">
        <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
-        <CommunityScriptures dateId={todayDateId} />
+        <ScriptureSubmission dateId={todayDateId} />
       </div>
 
       <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
