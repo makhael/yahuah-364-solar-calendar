@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <div className="container mx-auto p-4 sm:p-6 md:p-8">
                   <CalendarHeader />
                 </div>
-                <main className="flex-1">
+                <main className="flex-1 pb-24">
                   {children}
                 </main>
                 <CalendarFooter />
