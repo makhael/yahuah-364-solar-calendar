@@ -404,4 +404,3 @@
     "reasoning": "The Firestore data structure is designed to store information related to the Yahuah 364-day solar calendar. It includes collections for month information, appointed times (Moedim), Tekufot (seasonal turning points), weekday origins, glossary terms, podcast series, and a centralized collection for scripture readings. The structure prioritizes ease of access and data integrity. All content is globally readable by any authenticated user. User-submitted content like scripture readings is stored in a way that allows for efficient querying for both administrative and user-facing features."
   }
 }
-    

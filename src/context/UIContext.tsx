@@ -399,7 +399,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         scripturalWitness: scripturalWitness || '',
         restorationNote: restorationNote || '',
         tags: tagsArray,
-        status: 'pending',
+        status: 'pending' as 'pending',
         userId: user.uid,
         userDisplayName: user.displayName || user.email,
         updatedAt: serverTimestamp(),
