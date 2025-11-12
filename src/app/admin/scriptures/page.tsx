@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { collection, query, getDocs, doc } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,10 +15,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc } from 'firebase/firestore';
 
 interface User {
   id: string;
+  displayName?: string;
+  email?: string;
 }
 
 interface ScriptureReading {
@@ -59,20 +60,25 @@ export default function ScriptureManagement() {
         
         const userScriptureSnapshots = await Promise.all(scripturePromises);
         
-        const flattenedScriptures = userScriptureSnapshots.flatMap((snapshot) => 
-            snapshot.docs.map(docSnap => ({
-                id: docSnap.id,
-                path: docSnap.ref.path,
-                ...(docSnap.data() as Omit<ScriptureReading, 'id' | 'path'>)
-            }))
-        );
+        const flattenedScriptures = userScriptureSnapshots.flatMap((snapshot, index) => {
+            const user = users[index];
+            return snapshot.docs.map(docSnap => {
+                const data = docSnap.data();
+                return {
+                    id: docSnap.id,
+                    path: docSnap.ref.path,
+                    userDisplayName: user?.displayName || data.userDisplayName || user?.email?.split('@')[0] || 'Unknown',
+                    ...data
+                } as ScriptureReading;
+            });
+        });
         
         flattenedScriptures.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setAllScriptures(flattenedScriptures as ScriptureReading[]);
+        setAllScriptures(flattenedScriptures);
 
       } catch (error) {
         console.error("Error fetching all scriptures:", error);
-        toast({ variant: 'destructive', title: "Error", description: "Could not load scripture submissions." });
+        toast({ variant: "destructive", title: "Error", description: "Could not load scripture submissions." });
       } finally {
         setIsLoading(false);
       }
@@ -179,7 +185,7 @@ export default function ScriptureManagement() {
                            )}
                           <Badge variant="secondary" className="mt-1">
                             <User className="w-3 h-3 mr-1.5" />
-                            {submission.userDisplayName || submission.userId}
+                            {submission.userDisplayName || 'Unknown User'}
                           </Badge>
                         </div>
 
