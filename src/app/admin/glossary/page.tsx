@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, where, getDocs, deleteDoc, setDoc } from 'firebase/firestore';
@@ -105,81 +105,14 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
     );
 }
 
-const ProposalsList = ({ status, onUpdate, onDelete, onCountChange }: { status: Proposal['status'], onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void, onCountChange: (count: number) => void }) => {
-    const firestore = useFirestore();
-    const logo = PlaceHolderImages.find(p => p.id === 'logo');
-    
-    const [proposals, setProposals] = useState<Proposal[] | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-    const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
-
-    useEffect(() => {
-        if (!firestore || areUsersLoading || !users) {
-            setIsLoading(areUsersLoading);
-            return;
-        }
-
-        const fetchAllProposals = async () => {
-            setIsLoading(true);
-            const allProposals: Proposal[] = [];
-            
-            for (const user of users) {
-                const proposalsQuery = query(
-                    collection(firestore, 'users', user.id, 'glossaryProposals'),
-                    where('status', '==', status),
-                    orderBy('createdAt', 'desc')
-                );
-                const querySnapshot = await getDocs(proposalsQuery);
-                querySnapshot.forEach((doc) => {
-                    allProposals.push({
-                        id: doc.id,
-                        path: doc.ref.path,
-                        ...doc.data()
-                    } as Proposal);
-                });
-            }
-            
-            // Sort once after all fetches are complete
-            allProposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-            setProposals(allProposals);
-            onCountChange(allProposals.length);
-            setIsLoading(false);
-        };
-
-        fetchAllProposals();
-    }, [firestore, users, areUsersLoading, status, onCountChange]);
-
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center p-12">
-                <div className="relative flex h-24 w-24 items-center justify-center">
-                    <LoaderCircle className="absolute h-full w-full animate-spin text-primary/50" />
-                    {logo && (
-                        <Image
-                            src={logo.imageUrl}
-                            alt={logo.description}
-                            width={64}
-                            height={64}
-                            data-ai-hint={logo.imageHint}
-                            className="h-16 w-16 rounded-full object-cover"
-                            priority
-                        />
-                    )}
-                </div>
-            </div>
-        );
-    }
-    
+const ProposalsList = ({ proposals, onUpdate, onDelete }: { proposals: Proposal[] | null, onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void }) => {
     if (!proposals || proposals.length === 0) {
         return <p className="text-center text-muted-foreground py-8">No proposals in this category.</p>;
     }
 
-
     return (
         <div className="space-y-4">
-            {proposals?.map(p => <ProposalCard key={p.id} proposal={p} onUpdate={onUpdate} onDelete={onDelete} />)}
+            {proposals.map(p => <ProposalCard key={p.path} proposal={p} onUpdate={onUpdate} onDelete={onDelete} />)}
         </div>
     )
 }
@@ -187,19 +120,45 @@ const ProposalsList = ({ status, onUpdate, onDelete, onCountChange }: { status: 
 export default function GlossaryManagement() {
     const firestore = useFirestore();
     const { toast } = useToast();
-    const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
+    const logo = PlaceHolderImages.find(p => p.id === 'logo');
+
+    const [allProposals, setAllProposals] = useState<Proposal[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+    const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
+
+    useEffect(() => {
+        if (!firestore || !users) return;
+
+        const fetchProposals = async () => {
+            setIsLoading(true);
+            const proposals: Proposal[] = [];
+            for (const user of users) {
+                const proposalsQuery = query(collection(firestore, `users/${user.id}/glossaryProposals`));
+                const snapshot = await getDocs(proposalsQuery);
+                snapshot.forEach(doc => {
+                    proposals.push({
+                        id: doc.id,
+                        path: doc.ref.path,
+                        ...doc.data()
+                    } as Proposal);
+                });
+            }
+            proposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            setAllProposals(proposals);
+            setIsLoading(false);
+        };
+
+        fetchProposals();
+
+    }, [firestore, users]);
 
     const handleUpdateStatus = (proposal: Proposal, status: Proposal['status']) => {
         if (!firestore || !proposal.path) return;
         
-        // Optimistically update UI
-        setCounts(c => {
-            const newCounts = { ...c };
-            (newCounts[proposal.status as keyof typeof c] as number)--;
-            (newCounts[status as keyof typeof c] as number)++;
-            return newCounts;
-        });
-
+        setAllProposals(prev => prev.map(p => p.path === proposal.path ? { ...p, status } : p));
+        
         const proposalRef = doc(firestore, proposal.path);
         updateDocumentNonBlocking(proposalRef, { status });
 
@@ -234,20 +193,39 @@ export default function GlossaryManagement() {
 
     const handleDelete = async (proposal: Proposal) => {
         if (!firestore || !proposal.path) return;
+        setAllProposals(prev => prev.filter(p => p.path !== proposal.path));
         try {
             await deleteDoc(doc(firestore, proposal.path));
-            setCounts(c => ({...c, [proposal.status]: c[proposal.status as keyof typeof c] - 1 }));
             toast({ title: 'Proposal Deleted', description: 'The proposal has been permanently removed.' });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
         }
     };
     
-    // Using useCallback to stabilize the function reference
-    const setPendingCount = useCallback((count: number) => setCounts(c => ({ ...c, pending: count })), []);
-    const setApprovedCount = useCallback((count: number) => setCounts(c => ({ ...c, approved: count })), []);
-    const setRejectedCount = useCallback((count: number) => setCounts(c => ({ ...c, rejected: count })), []);
+    const pendingProposals = useMemo(() => allProposals.filter(p => p.status === 'pending'), [allProposals]);
+    const approvedProposals = useMemo(() => allProposals.filter(p => p.status === 'approved'), [allProposals]);
+    const rejectedProposals = useMemo(() => allProposals.filter(p => p.status === 'rejected'), [allProposals]);
 
+    if (isLoading || areUsersLoading) {
+        return (
+            <div className="flex justify-center items-center p-12">
+                <div className="relative flex h-24 w-24 items-center justify-center">
+                    <LoaderCircle className="absolute h-full w-full animate-spin text-primary/50" />
+                    {logo && (
+                        <Image
+                            src={logo.imageUrl}
+                            alt={logo.description}
+                            width={64}
+                            height={64}
+                            data-ai-hint={logo.imageHint}
+                            className="h-16 w-16 rounded-full object-cover"
+                            priority
+                        />
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
       <Card>
@@ -259,24 +237,24 @@ export default function GlossaryManagement() {
               <Tabs defaultValue="pending">
                   <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="pending">
-                          Pending ({counts.pending})
+                          Pending ({pendingProposals.length})
                       </TabsTrigger>
                       <TabsTrigger value="approved">
-                          Approved ({counts.approved})
+                          Approved ({approvedProposals.length})
                       </TabsTrigger>
                       <TabsTrigger value="rejected">
-                          Rejected ({counts.rejected})
+                          Rejected ({rejectedProposals.length})
                       </TabsTrigger>
                   </TabsList>
                   <div className="pt-6">
                       <TabsContent value="pending">
-                          <ProposalsList status="pending" onUpdate={handleUpdateStatus} onDelete={handleDelete} onCountChange={setPendingCount} />
+                          <ProposalsList proposals={pendingProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
                       </TabsContent>
                       <TabsContent value="approved">
-                          <ProposalsList status="approved" onUpdate={handleUpdateStatus} onDelete={handleDelete} onCountChange={setApprovedCount} />
+                          <ProposalsList proposals={approvedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
                       </TabsContent>
                       <TabsContent value="rejected">
-                          <ProposalsList status="rejected" onUpdate={handleUpdateStatus} onDelete={handleDelete} onCountChange={setRejectedCount} />
+                          <ProposalsList proposals={rejectedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
                       </TabsContent>
                   </div>
               </Tabs>
@@ -284,5 +262,3 @@ export default function GlossaryManagement() {
       </Card>
     );
 }
-
-    
