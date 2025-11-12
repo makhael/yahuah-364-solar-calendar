@@ -45,24 +45,22 @@ export default function ScriptureManagement() {
   const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
   useEffect(() => {
-    if (!firestore || areUsersLoading) return;
+    if (!firestore || !users) return;
 
     const fetchAllScriptures = async () => {
       setIsLoading(true);
       const allScriptures: ScriptureReading[] = [];
-      if (users && users.length > 0) {
-        for (const user of users) {
-          const scripturesQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`), orderBy('date', 'desc'));
-          const snapshot = await getDocs(scripturesQuery);
-          snapshot.forEach(doc => {
-            allScriptures.push({
-              id: doc.id,
-              path: doc.ref.path,
-              userDisplayName: user.displayName,
-              ...doc.data()
-            } as ScriptureReading);
-          });
-        }
+      for (const user of users) {
+        const scripturesQuery = query(collection(firestore, `users/${user.id}/scriptureReadings`), orderBy('date', 'desc'));
+        const snapshot = await getDocs(scripturesQuery);
+        snapshot.forEach(doc => {
+          allScriptures.push({
+            id: doc.id,
+            path: doc.ref.path,
+            userDisplayName: user.displayName || user.id, // Fallback to user ID
+            ...doc.data()
+          } as ScriptureReading);
+        });
       }
       // Sort all scriptures by date after fetching
       allScriptures.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -71,7 +69,7 @@ export default function ScriptureManagement() {
     };
 
     fetchAllScriptures();
-  }, [firestore, users, areUsersLoading]);
+  }, [firestore, users]);
 
   const groupedByDate = React.useMemo(() => {
     return scriptures.reduce((acc, scripture) => {
@@ -225,3 +223,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    
