@@ -31,7 +31,7 @@ const scriptureSchema = z.object({
 
 type ScriptureFormData = z.infer<typeof scriptureSchema>;
 
-export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
+export const ScriptureSubmission = ({ dateId }: { dateId: string }) => {
     const firestore = useFirestore();
     const { user } = useUser();
     const { toast } = useToast();
@@ -193,7 +193,7 @@ export const IntroSection = ({ openGlossaryModal }: IntroSectionProps) => {
   return (
     <div id="intro-section" className="space-y-12">
        <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
-        <CommunityScriptures dateId={todayDateId} />
+        <ScriptureSubmission dateId={todayDateId} />
       </div>
 
       <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
@@ -309,3 +309,5 @@ export const IntroSection = ({ openGlossaryModal }: IntroSectionProps) => {
     </div>
   );
 };
+
+    
