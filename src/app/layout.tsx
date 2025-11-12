@@ -6,6 +6,8 @@ import React, { ReactNode } from 'react';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { UIProvider } from '@/context/UIContext';
 import { ModalRenderer } from '@/components/modals/ModalRenderer';
+import Header from '@/components/header';
+import { CalendarFooter } from '@/components/calendar/CalendarFooter';
 
 export const metadata: Metadata = {
   title: "Yahuah's 364-Day Solar Calendar",
@@ -41,7 +43,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <FirebaseClientProvider>
             <UIProvider>
-              {children}
+              <div className="flex min-h-screen w-full flex-col">
+                <Header />
+                <main className="flex-1">
+                  {children}
+                </main>
+                <CalendarFooter />
+              </div>
               <ModalRenderer />
             </UIProvider>
           </FirebaseClientProvider>

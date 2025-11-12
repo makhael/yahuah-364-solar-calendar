@@ -3,19 +3,16 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { useUI } from '@/context/UIContext';
 
-interface CalendarFooterProps {
-    openFullGlossaryModal: () => void;
-}
+export const CalendarFooter = () => {
+    const { openModal } = useUI();
 
-export const CalendarFooter = ({
-    openFullGlossaryModal,
-}: CalendarFooterProps) => {
     return (
-        <footer className="mt-12 p-6 rounded-xl border bg-card shadow-2xl intro-bg-pattern text-center no-print">
+        <footer className="mt-12 p-6 rounded-t-xl border-t bg-card shadow-inner intro-bg-pattern text-center no-print">
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-4">
                 <p className="text-muted-foreground text-sm">364-Day Calendar | Restoration of True Time</p>
-                <Button variant="outline" onClick={openFullGlossaryModal}>
+                <Button variant="outline" onClick={() => openModal('fullGlossary')}>
                     <span className="font-sans mr-2">📖</span>
                     Full Glossary
                 </Button>

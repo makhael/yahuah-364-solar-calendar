@@ -6,11 +6,10 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { FilterControls } from './FilterControls';
 import { CalendarControls } from './CalendarControls';
-import { CalendarFooter } from './CalendarFooter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Month } from './Month';
 import { useTheme } from '@/context/ThemeContext';
-import { CalendarHeader } from './CalendarHeader';
+import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { PodcastSection } from '@/components/podcast/PodcastSection';
 import { IntroSection } from '@/components/calendar/IntroSection';
 import { useUI } from '@/context/UIContext';
@@ -190,7 +189,6 @@ export default function YahuahCalendar() {
                     )}
                 </div>
             </main>
-            <CalendarFooter openFullGlossaryModal={() => openModal('fullGlossary')} />
         </div>
     );
 }
