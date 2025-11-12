@@ -46,7 +46,7 @@ export default function ScriptureManagement() {
 
   useEffect(() => {
     if (!firestore || areUsersLoading || !users) {
-      if (!areUsersLoading) setIsLoading(false); // If users are loaded but empty, stop loading
+      if (!areUsersLoading) setIsLoading(false);
       return;
     }
 
@@ -59,15 +59,13 @@ export default function ScriptureManagement() {
         
         const userScriptureSnapshots = await Promise.all(scripturePromises);
         
-        const flattenedScriptures = userScriptureSnapshots.flatMap((snapshot, index) => {
-            const user = users[index];
-            return snapshot.docs.map(docSnap => ({
+        const flattenedScriptures = userScriptureSnapshots.flatMap((snapshot) => 
+            snapshot.docs.map(docSnap => ({
                 id: docSnap.id,
                 path: docSnap.ref.path,
-                userDisplayName: user?.displayName || docSnap.data().userDisplayName || 'Unknown',
-                ...docSnap.data()
+                ...(docSnap.data() as Omit<ScriptureReading, 'id' | 'path'>)
             } as ScriptureReading))
-        });
+        );
         
         flattenedScriptures.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setAllScriptures(flattenedScriptures);
@@ -238,5 +236,3 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
-
-    
