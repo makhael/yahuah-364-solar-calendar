@@ -1,9 +1,9 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, doc, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, doc, orderBy, deleteDoc, where } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -39,11 +39,13 @@ export default function ScriptureManagement() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
-  const [allScriptures, setAllScriptures] = useState<ScriptureReading[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-  const { data: users, isLoading: areUsersLoading } = useCollection<{id: string}>(usersQuery);
+  const scripturesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
+  }, [firestore]);
+
+  const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
   
   const userProfileRef = useMemoFirebase(() => {
     if (!currentUser || !firestore) return null;
@@ -52,42 +54,6 @@ export default function ScriptureManagement() {
   
   const { data: userProfile } = useDoc<UserData>(userProfileRef);
   const isAdmin = userProfile?.role === 'admin';
-
-  useEffect(() => {
-    if (!firestore || areUsersLoading || !users) return;
-
-    const fetchAllScriptures = async () => {
-      setIsLoading(true);
-      const scripturePromises = users.map(user => {
-        const scripturesQuery = query(collection(firestore, 'users', user.id, 'scriptureReadings'));
-        return getDocs(scripturesQuery);
-      });
-
-      try {
-        const userScriptureSnapshots = await Promise.all(scripturePromises);
-        const flattenedScriptures = userScriptureSnapshots.flatMap((snapshot, index) => {
-          const user = users[index];
-          return snapshot.docs.map(docSnap => ({
-            id: docSnap.id,
-            path: docSnap.ref.path,
-            userDisplayName: user?.displayName || docSnap.data().userDisplayName || 'Unknown',
-            ...docSnap.data()
-          } as ScriptureReading));
-        });
-        
-        flattenedScriptures.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-        setAllScriptures(flattenedScriptures);
-      } catch (error) {
-        console.error("Error fetching all scriptures:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not load scripture submissions.' });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAllScriptures();
-  }, [firestore, users, areUsersLoading, toast]);
-  
 
   const groupedByDate = React.useMemo(() => {
     if (!allScriptures) return {};
@@ -101,10 +67,9 @@ export default function ScriptureManagement() {
     }, {} as Record<string, ScriptureReading[]>);
   }, [allScriptures]);
 
-  const handleDelete = (scripturePath: string) => {
+  const handleDelete = (scriptureId: string) => {
     if (!firestore) return;
-    deleteDocumentNonBlocking(doc(firestore, scripturePath));
-    setAllScriptures(prev => prev.filter(s => s.path !== scripturePath));
+    deleteDocumentNonBlocking(doc(firestore, 'scriptureReadings', scriptureId));
     toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
   };
   
@@ -118,16 +83,15 @@ export default function ScriptureManagement() {
     setEditText('');
   }
 
-  const handleSaveEdit = (scripturePath: string) => {
+  const handleSaveEdit = (scriptureId: string) => {
     if (!firestore || !editingId) return;
-    const docRef = doc(firestore, scripturePath);
+    const docRef = doc(firestore, 'scriptureReadings', scriptureId);
     updateDocumentNonBlocking(docRef, { scripture: editText });
-    setAllScriptures(prev => prev.map(s => s.path === scripturePath ? {...s, scripture: editText} : s));
     toast({ title: 'Submission Updated' });
     handleCancelEdit();
   }
 
-  if (isLoading || areUsersLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="relative flex h-24 w-24 items-center justify-center">
@@ -194,7 +158,7 @@ export default function ScriptureManagement() {
                             <div className="flex items-center gap-1">
                               {editingId === submission.id ? (
                                 <>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={() => handleSaveEdit(submission.path)}>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={() => handleSaveEdit(submission.id)}>
                                     <Check className="h-4 w-4" />
                                   </Button>
                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleCancelEdit}>
@@ -221,7 +185,7 @@ export default function ScriptureManagement() {
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(submission.path)}>Yes, Delete</AlertDialogAction>
+                                        <AlertDialogAction onClick={() => handleDelete(submission.id)}>Yes, Delete</AlertDialogAction>
                                       </AlertDialogFooter>
                                     </AlertDialogContent>
                                   </AlertDialog>
