@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, deleteDoc, doc, where, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, query, orderBy, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +15,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { cn } from '@/lib/utils';
 
 interface ScriptureReading {
   id: string;
@@ -227,5 +225,3 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
-
-    
