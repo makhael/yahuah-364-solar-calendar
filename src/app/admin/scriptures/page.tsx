@@ -2,8 +2,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, doc, orderBy } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, doc, orderBy, getDocs } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,9 +15,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useDoc } from '@/firebase/firestore/use-doc';
 
 interface ScriptureReading {
   id: string;
+  path: string;
   scripture: string;
   userId: string;
   userDisplayName?: string;
@@ -25,20 +27,67 @@ interface ScriptureReading {
   createdAt: { seconds: number };
 }
 
+interface UserData {
+  role?: string;
+}
+
 export default function ScriptureManagement() {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { user: currentUser } = useUser();
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [allScriptures, setAllScriptures] = useState<ScriptureReading[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const scripturesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'scriptureReadings'), orderBy('date', 'desc'));
-  }, [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const { data: users, isLoading: areUsersLoading } = useCollection<{id: string}>(usersQuery);
+  
+  const userProfileRef = useMemoFirebase(() => {
+    if (!currentUser || !firestore) return null;
+    return doc(firestore, 'users', currentUser.uid);
+  }, [currentUser, firestore]);
+  
+  const { data: userProfile } = useDoc<UserData>(userProfileRef);
+  const isAdmin = userProfile?.role === 'admin';
 
-  const { data: allScriptures, isLoading: areScripturesLoading } = useCollection<ScriptureReading>(scripturesQuery);
+  useEffect(() => {
+    if (!firestore || areUsersLoading || !users) return;
+
+    const fetchAllScriptures = async () => {
+      setIsLoading(true);
+      const scripturePromises = users.map(user => {
+        const scripturesQuery = query(collection(firestore, 'users', user.id, 'scriptureReadings'));
+        return getDocs(scripturesQuery);
+      });
+
+      try {
+        const userScriptureSnapshots = await Promise.all(scripturePromises);
+        const flattenedScriptures = userScriptureSnapshots.flatMap((snapshot, index) => {
+          const user = users[index];
+          return snapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            path: docSnap.ref.path,
+            userDisplayName: user?.displayName || docSnap.data().userDisplayName || 'Unknown',
+            ...docSnap.data()
+          } as ScriptureReading));
+        });
+        
+        flattenedScriptures.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        setAllScriptures(flattenedScriptures);
+      } catch (error) {
+        console.error("Error fetching all scriptures:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load scripture submissions.' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllScriptures();
+  }, [firestore, users, areUsersLoading, toast]);
+  
 
   const groupedByDate = React.useMemo(() => {
     if (!allScriptures) return {};
@@ -52,9 +101,10 @@ export default function ScriptureManagement() {
     }, {} as Record<string, ScriptureReading[]>);
   }, [allScriptures]);
 
-  const handleDelete = (scriptureId: string) => {
+  const handleDelete = (scripturePath: string) => {
     if (!firestore) return;
-    deleteDocumentNonBlocking(doc(firestore, 'scriptureReadings', scriptureId));
+    deleteDocumentNonBlocking(doc(firestore, scripturePath));
+    setAllScriptures(prev => prev.filter(s => s.path !== scripturePath));
     toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
   };
   
@@ -68,15 +118,16 @@ export default function ScriptureManagement() {
     setEditText('');
   }
 
-  const handleSaveEdit = (scriptureId: string) => {
+  const handleSaveEdit = (scripturePath: string) => {
     if (!firestore || !editingId) return;
-    const docRef = doc(firestore, 'scriptureReadings', scriptureId);
+    const docRef = doc(firestore, scripturePath);
     updateDocumentNonBlocking(docRef, { scripture: editText });
+    setAllScriptures(prev => prev.map(s => s.path === scripturePath ? {...s, scripture: editText} : s));
     toast({ title: 'Submission Updated' });
     handleCancelEdit();
   }
 
-  if (areScripturesLoading) {
+  if (isLoading || areUsersLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="relative flex h-24 w-24 items-center justify-center">
@@ -121,59 +172,66 @@ export default function ScriptureManagement() {
                     {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                   </h3>
                   <div className="space-y-3">
-                    {submissions.map(submission => (
-                      <div key={submission.id} className="p-3 border rounded-lg bg-background/50 flex justify-between items-start gap-4">
-                        <div className="flex-grow">
-                           {editingId === submission.id ? (
-                               <Input value={editText} onChange={(e) => setEditText(e.target.value)} className="text-lg" />
-                           ) : (
-                               <p className="font-semibold text-lg text-foreground">{submission.scripture}</p>
-                           )}
-                          <Badge variant="secondary" className="mt-1">
-                            <User className="w-3 h-3 mr-1.5" />
-                            {submission.userDisplayName || 'Unknown User'}
-                          </Badge>
-                        </div>
+                    {submissions.map(submission => {
+                      const isOwner = currentUser?.uid === submission.userId;
+                      const canModerate = isAdmin || isOwner;
 
-                        <div className="flex items-center gap-1">
-                          {editingId === submission.id ? (
-                            <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={() => handleSaveEdit(submission.id)}>
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleCancelEdit}>
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => handleEdit(submission)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10">
-                                    <Trash2 className="h-4 w-4" />
+                      return (
+                        <div key={submission.id} className="p-3 border rounded-lg bg-background/50 flex justify-between items-start gap-4">
+                          <div className="flex-grow">
+                            {editingId === submission.id ? (
+                                <Input value={editText} onChange={(e) => setEditText(e.target.value)} className="text-lg" />
+                            ) : (
+                                <p className="font-semibold text-lg text-foreground">{submission.scripture}</p>
+                            )}
+                            <Badge variant="secondary" className="mt-1">
+                              <User className="w-3 h-3 mr-1.5" />
+                              {submission.userDisplayName || 'Unknown User'}
+                            </Badge>
+                          </div>
+
+                          {canModerate && (
+                            <div className="flex items-center gap-1">
+                              {editingId === submission.id ? (
+                                <>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={() => handleSaveEdit(submission.path)}>
+                                    <Check className="h-4 w-4" />
                                   </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete the submission for "{submission.scripture}"?
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(submission.id)}>Yes, Delete</AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleCancelEdit}>
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => handleEdit(submission)}>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to delete the submission for "{submission.scripture}"?
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(submission.path)}>Yes, Delete</AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </>
+                              )}
+                            </div>
                           )}
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               ))}
@@ -184,5 +242,3 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
-
-    

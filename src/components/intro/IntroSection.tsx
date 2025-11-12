@@ -261,5 +261,3 @@ export const IntroSection = ({ openGlossaryModal }: IntroSectionProps) => {
     </div>
   );
 };
-
-    
