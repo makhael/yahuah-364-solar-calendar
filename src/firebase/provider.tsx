@@ -92,29 +92,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     
     setUserAuthState({ user: mockAdminUser, isUserLoading: false, userError: null });
 
-    // Original auth logic is commented out to enable the mock user
-    /*
-    if (!auth) return;
-
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (user) => {
-        if (user) {
-          setUserAuthState({ user, isUserLoading: false, userError: null });
-        } else {
-          // If no user is signed in, start the anonymous sign-in process
-          initiateAnonymousSignIn(auth);
-          // State will be updated by a subsequent onAuthStateChanged event
-        }
-      },
-      (error) => {
-        // Handle listener errors
-        setUserAuthState({ user: null, isUserLoading: false, userError: error });
-      }
-    );
-
-    return () => unsubscribe();
-    */
   }, [auth]);
 
   // Memoize the context value
