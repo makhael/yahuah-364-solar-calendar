@@ -77,20 +77,16 @@
 }
 
 @layer utilities {
-  .appointment-bg-default {
-    background-color: hsl(var(--card));
-    color: hsl(var(--card-foreground));
+  .month-bg-pattern .appointment-bg-blue {
+    background-color: #3b82f6 !important;
   }
-  .appointment-bg-blue {
-    background-color: #3b82f6;
+  .month-bg-pattern .appointment-bg-green {
+    background-color: #22c55e !important;
   }
-  .appointment-bg-green {
-    background-color: #22c55e;
+  .month-bg-pattern .appointment-bg-purple {
+    background-color: #8b5cf6 !important;
   }
-  .appointment-bg-purple {
-    background-color: #8b5cf6;
-  }
-  .appointment-bg-orange {
-    background-color: #f97316;
+  .month-bg-pattern .appointment-bg-orange {
+    background-color: #f97316 !important;
   }
 }
