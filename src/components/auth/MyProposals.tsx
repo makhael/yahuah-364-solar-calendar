@@ -182,4 +182,3 @@ export const MyProposals = ({ userId }: { userId: string }) => {
   );
 };
 
-    
