@@ -41,7 +41,7 @@ export default function ScriptureManagement() {
   const [allScriptures, setAllScriptures] = useState<ScriptureReading[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
+  const usersQuery = useMemoFirebase(() => firestore ? query(collection(firestore, 'users')) : null, [firestore]);
   const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 
   useEffect(() => {

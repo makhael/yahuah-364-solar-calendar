@@ -53,5 +53,10 @@ service cloud.firestore {
         allow delete: if request.auth != null && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
       }
     }
+    
+    // Allow admins to read all scripture readings
+    match /users/{userId}/scriptureReadings/{readingId} {
+        allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
   }
 }
