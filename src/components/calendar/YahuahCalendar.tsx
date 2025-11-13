@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -20,7 +21,7 @@ import { hebrewDays } from '@/lib/calendar-data';
 import { PODCAST_SERIES_DATA } from '@/lib/calendar-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { LoaderCircle } from 'lucide-react';
-import { ScriptureSubmission } from '../intro/IntroSection';
+import { ScriptureSubmission } from '../scriptures/ScriptureSubmission';
 
 
 export default function YahuahCalendar() {

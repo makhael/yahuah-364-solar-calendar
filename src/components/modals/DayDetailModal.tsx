@@ -26,7 +26,8 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MarkdownRenderer } from '../common/MarkdownRenderer';
 import { add, isBefore, isEqual, startOfDay, isAfter } from 'date-fns';
-import { ScriptureSubmission } from '@/components/intro/IntroSection';
+import { ScriptureSubmission } from '@/components/scriptures/ScriptureSubmission';
+import { CommunityScriptures } from '@/components/scriptures/CommunityScriptures';
 
 
 const noteSchema = z.object({
@@ -585,9 +586,7 @@ export const DayDetailModal = ({ info }: ModalProps) => {
 
         <div className="overflow-y-auto flex-grow p-6 pt-2 space-y-4">
             <CommunityAppointments dateId={dateId} dayOfWeek={dayOfWeek} />
-            <div className="bg-secondary/50 p-4 rounded-lg border">
-                <ScriptureSubmission dateId={dateId} />
-            </div>
+            <CommunityScriptures dateId={dateId} />
             
             {meaningText && (
               <div className="bg-secondary/50 p-4 rounded-lg border">
