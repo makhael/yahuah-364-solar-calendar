@@ -158,10 +158,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   // -- APPOINTMENT LOGIC -- //
   
   const allAppointmentsQuery = useMemoFirebase(() => {
-    if (isUserLoading) {
-      return null;
-    }
-    if (!firestore) {
+    if (isUserLoading || !firestore) {
       return null;
     }
 
