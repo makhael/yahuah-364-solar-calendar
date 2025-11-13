@@ -1,22 +1,20 @@
 
-/**
- * @fileoverview Firestore Security Rules for the Calendar application.
- *
- * Core Philosophy:
- * This ruleset enforces a user-ownership model for user settings, ensuring that only the authenticated user can access their own settings.
- * Calendar events, glossary terms, and podcast series are treated as public data, accessible to all users.
- *
- * Data Structure:
- * - User settings are stored under `/users/{userId}/settings/{settingsId}`.
- * - Calendar events are stored under `/calendar_events/{calendarEventId}`.
- * - Glossary terms are stored under `/glossary_terms/{glossaryTermId}`.
- * - Podcast series are stored under `/podcast_series/{podcastSeriesId}`.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Allow public read on appointments, but only authenticated writes.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
     match /appointments/{appointmentId} {
       allow read: if true;
       allow write: if isSignedIn();
@@ -38,71 +36,33 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Admins can list all users.
-      allow list: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      // Admins can read/write any profile, and users can read/write their own.
-      allow read, write: if isSignedIn() && (isOwner(userId) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow list: if isAdmin();
+      allow read, write: if isOwner(userId) || isAdmin();
     }
     
-    // Rule for user's calendar presets subcollection
-    match /users/{userId}/calendarPresets/{presetId} {
-        allow read, write, list: if isSignedIn() && isOwner(userId);
-    }
-
-    // This rule allows a user to read and write to any documents
-    // in any subcollection under their own user document.
     match /users/{userId}/{document=**} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
     match /glossaryTerms/{termId} {
       allow read: if true;
-      allow create, update, delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow create, update, delete: if isAdmin();
     }
 
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
-        allow list, get, update, delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        allow list, get, update, delete: if isAdmin();
     }
 
     match /scriptureReadings/{readingId} {
       allow get, list: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin() || resource.data.userId == request.auth.uid;
     }
 
-    /**
-     * @description Allows public read access to podcast series.
-     * @path /podcast_series/{podcastSeriesId}
-     * @allow (get) - Any user, authenticated or unauthenticated, can get a podcast series.
-     * @allow (list) - Any user, authenticated or unauthenticated, can list podcast series.
-     * @allow (create) - Any authenticated user can create a podcast series.
-     * @allow (update) - Any authenticated user can update a podcast series.
-     * @allow (delete) - Any authenticated user can delete a podcast series.
-     * @deny (create) - An unauthenticated user cannot create a podcast series.
-     * @principle Grants public read access while restricting writes to authenticated users.
-     */
     match /podcast_series/{podcastSeriesId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
-  }
-
-  // Helper function to determine if the user is signed in.
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
-  // Helper function to determine if the user is the owner of the resource.
-  function isOwner(userId) {
-    return request.auth.uid == userId;
-  }
-  
-    // Helper function to determine if the user is the existing owner of the resource.
-  function isExistingOwner(userId) {
-    return isSignedIn() && isOwner(userId) && resource != null;
   }
 }

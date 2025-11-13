@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { LoaderCircle, Shield, Users, CalendarClock, MessageSquare, BookOpen, ScrollText } from 'lucide-react';
+import { LoaderCircle, Shield, Users, CalendarClock, MessageSquare, BookOpen, ScrollText, Ban } from 'lucide-react';
 import Image from 'next/image';
 import { UserManagement } from '@/components/admin/UserManagement';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
@@ -14,9 +14,10 @@ import GlossaryManagement from './glossary/page';
 import ScriptureManagement from './scriptures/page';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface UserProfileData {
-  role?: string;
+  role?: 'admin' | 'leader' | 'member';
 }
 
 type AdminView = 'users' | 'appointments' | 'forums' | 'glossary' | 'scriptures';
@@ -28,7 +29,6 @@ const menuItems: { id: AdminView; label: string; icon: React.ReactNode }[] = [
     { id: 'glossary', label: 'Glossary', icon: <ScrollText className="w-5 h-5" /> },
     { id: 'scriptures', label: 'Scriptures', icon: <BookOpen className="w-5 h-5" /> },
 ];
-
 
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -45,6 +45,7 @@ export default function AdminDashboardPage() {
 
   const isLoading = isUserLoading || isProfileLoading;
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
 
   if (isLoading) {
     return (
@@ -72,6 +73,29 @@ export default function AdminDashboardPage() {
     return null;
   }
   
+  if (!isAdmin) {
+    return (
+        <div className="min-h-screen p-4 sm:p-8 flex items-center justify-center">
+            <Card className="max-w-md w-full">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-destructive">
+                        <Ban className="w-6 h-6"/> Access Denied
+                    </CardTitle>
+                    <CardDescription>
+                        You do not have the required permissions to view this page.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">The Admin Dashboard is restricted to users with 'Admin' or 'Leader' roles. Please contact an administrator if you believe this is an error.</p>
+                     <Button onClick={() => router.push('/')} className="mt-4 w-full">
+                        Return to Calendar
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
+
   const renderContent = () => {
     switch (activeView) {
       case 'users':
@@ -88,7 +112,6 @@ export default function AdminDashboardPage() {
         return <UserManagement />;
     }
   }
-
 
   return (
     <div className="min-h-screen p-4 sm:p-8">
