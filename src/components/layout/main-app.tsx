@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarFooter } from '@/components/calendar/CalendarFooter';
 import { UIProvider } from '@/context/UIContext';
+import { ModalRenderer } from '../modals/ModalRenderer';
+import { Toaster } from '../ui/toaster';
 
 export function MainApp({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -24,6 +26,8 @@ export function MainApp({ children }: { children: ReactNode }) {
         <main className="flex-1">{children}</main>
         <CalendarFooter />
       </div>
+      <ModalRenderer />
+      <Toaster />
     </UIProvider>
   );
 }

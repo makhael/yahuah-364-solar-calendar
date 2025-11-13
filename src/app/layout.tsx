@@ -2,8 +2,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import React, { ReactNode } from 'react';
-import { Toaster } from '@/components/ui/toaster';
-import { ModalRenderer } from '@/components/modals/ModalRenderer';
 import { MainApp } from '@/components/layout/main-app';
 import { ClientProviders } from './client-providers';
 
@@ -44,8 +42,6 @@ export default function RootLayout({
           <MainApp>
             {children}
           </MainApp>
-          <ModalRenderer />
-          <Toaster />
         </ClientProviders>
       </body>
     </html>
