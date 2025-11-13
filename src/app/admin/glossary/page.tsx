@@ -82,8 +82,8 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                     </div>}
                 </div>
             </CardContent>
-            <CardFooter className="pt-4 mt-4 border-t flex justify-end">
-                <div className="flex gap-2">
+            <CardFooter className="pt-4 mt-4 border-t">
+                <div className="w-full flex flex-col sm:flex-row sm:justify-end items-stretch gap-2">
                     {proposal.status === 'pending' && (
                         <>
                             <Button variant="outline" size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
