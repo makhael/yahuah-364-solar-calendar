@@ -87,8 +87,8 @@ service cloud.firestore {
     }
 
     match /scriptureReadings {
-      // Allow listing if the query is for approved scriptures (public), if the user is an admin, or if the user is signed in.
-      allow list: if request.query.filters.hasAny(['status', '==', 'approved']) || isSignedIn() || isAdmin();
+      // Allow listing if the query is for approved scriptures (public), if the user is an admin, or if a user is querying for their own submissions.
+      allow list: if request.query.filters.hasAny(['status', '==', 'approved']) || (isSignedIn() && request.query.where[0].field == 'userId' && request.query.where[0].value == request.auth.uid) || isAdmin();
     }
 
     match /podcast_series/{podcastSeriesId} {
