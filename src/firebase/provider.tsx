@@ -4,7 +4,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -79,8 +79,33 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     const unsubscribe = onAuthStateChanged(
       auth,
-      (firebaseUser) => { // Auth state determined
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+      async (firebaseUser) => { // Auth state determined
+        if (!firebaseUser) {
+          // No user found, attempt auto-login for admin
+          try {
+            // NOTE: Using a placeholder password. In a real app, this would be insecure.
+            // This is for demonstration purposes to log in the specified admin user.
+            await signInWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
+            // onAuthStateChanged will be triggered again upon successful sign-in.
+          } catch (error: any) {
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+               // This is expected if the user doesn't exist yet or password is wrong.
+               // We will now create the user.
+               try {
+                 const { createUserWithEmailAndPassword } = await import('firebase/auth');
+                 await createUserWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
+               } catch (createUserError) {
+                  console.error("FirebaseProvider: Auto user creation failed:", createUserError);
+                  setUserAuthState({ user: null, isUserLoading: false, userError: createUserError as Error });
+               }
+            } else {
+              console.error("FirebaseProvider: Auto sign-in failed:", error);
+              setUserAuthState({ user: null, isUserLoading: false, userError: error });
+            }
+          }
+        } else {
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        }
       },
       (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
@@ -105,7 +130,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         const role = email === 'sheldonharding@gmail.com' ? 'admin' : 'member';
 
         const userData = {
-          displayName,
+          displayName: displayName || email,
           email,
           photoURL,
           role,
