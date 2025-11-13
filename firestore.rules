@@ -61,7 +61,7 @@ service cloud.firestore {
     }
 
     match /scriptureReadings/{readingId} {
-      allow read: if true;
+      allow get, list: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || resource.data.userId == request.auth.uid);
     }
