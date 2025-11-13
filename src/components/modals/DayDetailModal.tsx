@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ThumbsUp, PlusCircle, MessageSquare, Copy, XCircle, ChevronLeft, ChevronRight, Clock, Users, CalendarDays, Info, CheckCircle2, HelpCircle, X, UserCheck, LogIn, Edit, Trash2, Repeat, LoaderCircle, BookText, BookOpen, AlertTriangle } from 'lucide-react';
 import { MONTH_CONTEXT, CREATION_DAYS, WEEKDAY_ORIGINS, hebrewDays, TEKUFAH_DETAILS, TEKUFAH_MONTHS, APPOINTMENTS } from '@/lib/calendar-data';
-import { copyToClipboard, getGregorianDate } from '@/lib/calendar-utils';
+import { copyToClipboard, getGregorianDate, get364DateFromGregorian } from '@/lib/calendar-utils';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, serverTimestamp, collection, query, where, arrayUnion, arrayRemove, getDocs, deleteDoc, orderBy, writeBatch } from 'firebase/firestore';
 import { Textarea } from '@/components/ui/textarea';
@@ -95,18 +95,16 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         if (!firestore) return null;
         
         let baseQuery = query(collection(firestore, 'appointments'));
-
-        // Guests and anonymous users should only ever see 'all' scope.
+        
         if (!isUserFullyAuthenticated) {
              return query(baseQuery, where('inviteScope', '==', 'all'));
         }
 
-        // Admins can see all. Regular signed-in users can see 'all' and 'community'.
         if (!isAdmin) {
              return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
         }
         
-        return baseQuery; // Admins get the unfiltered query
+        return baseQuery;
 
     }, [firestore, isUserFullyAuthenticated, isAdmin]);
     
@@ -465,31 +463,57 @@ const NoteSection = ({ dateId }: { dateId: string }) => {
 
 
 export const DayDetailModal = ({ info }: ModalProps) => {
-  const { yahuahDay, gregorianDate: initialGregorianDate, dayOfWeek, isSabbath, special, monthNum, isToday, dateId: dateIdFromNote } = info;
+  const { closeAllModals, openModal, startDate, openChatModal } = useUI();
   const { toast } = useToast();
   const { user } = useUser();
-  const { closeAllModals, openModal, startDate, openChatModal } = useUI();
   const router = useRouter();
 
-  // Create a robust gregorianDate object
   const gregorianDate = useMemo(() => {
-    if (initialGregorianDate) {
-      return initialGregorianDate;
+    if (info.gregorianDate) {
+      return info.gregorianDate;
     }
-    if (dateIdFromNote) {
-      // The date string from Firestore is 'YYYY-MM-DD'. Adding 'T00:00:00' ensures it's parsed in the local timezone
-      // consistently, avoiding potential off-by-one day errors.
-      return new Date(dateIdFromNote + 'T00:00:00');
+    if (info.dateId) {
+      return new Date(info.dateId + 'T00:00:00');
     }
-    return new Date(); // Fallback, should not be reached in normal flow
-  }, [initialGregorianDate, dateIdFromNote]);
+    // This should not happen in normal flow
+    return new Date();
+  }, [info.gregorianDate, info.dateId]);
 
-  const dateId = gregorianDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+  const dateId = gregorianDate.toISOString().split('T')[0];
+
+  const calculated364Date = useMemo(() => {
+    if (startDate && gregorianDate) {
+      return get364DateFromGregorian(gregorianDate, startDate);
+    }
+    return null;
+  }, [gregorianDate, startDate]);
+
+  const yahuahDay = info.yahuahDay ?? calculated364Date?.day;
+  const monthNum = info.monthNum ?? calculated364Date?.month;
   
+  const dayOfWeek = useMemo(() => {
+      if (yahuahDay === undefined) return 0;
+      return (yahuahDay -1) % 7;
+  }, [yahuahDay]);
+
+  const isSabbath = info.isSabbath ?? (yahuahDay !== undefined && yahuahDay % 7 === 0 && yahuahDay <= 28);
+  
+  const special = useMemo(() => {
+      if (info.special) return info.special;
+      if (monthNum === undefined || yahuahDay === undefined) return null;
+      const key = `${monthNum}-${yahuahDay}`;
+      return APPOINTMENTS[key as keyof typeof APPOINTMENTS] || null;
+  }, [info.special, monthNum, yahuahDay]);
+
+  const isToday = useMemo(() => {
+    if (info.isToday !== undefined) return info.isToday;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return gregorianDate.getTime() === today.getTime();
+  }, [info.isToday, gregorianDate]);
+
   const onNavigate = useCallback(async (direction: number) => {
-    if (!info) return;
-  
-    const { monthNum, yahuahDay } = info;
+    if (!monthNum || yahuahDay === undefined) return;
   
     let nextDay = yahuahDay + direction;
     let nextMonth = monthNum;
@@ -507,26 +531,14 @@ export const DayDetailModal = ({ info }: ModalProps) => {
     }
   
     const nextGregorianDate = getGregorianDate(startDate, nextMonth, nextDay);
-    const nextDayOfWeek = (nextDay - 1) % 7;
-    const nextIsSabbath = nextDay % 7 === 0 && nextDay <= 28;
-    const key = `${nextMonth}-${nextDay}`;
-    const nextSpecial = APPOINTMENTS[key as keyof typeof APPOINTMENTS];
-    
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const nextIsToday = nextGregorianDate.getTime() === today.getTime();
     
     openModal('dayDetail', {
-        yahuahDay: nextDay,
-        gregorianDate: nextGregorianDate,
-        dayOfWeek: nextDayOfWeek,
-        isSabbath: nextIsSabbath,
-        special: nextSpecial,
-        monthNum: nextMonth,
-        isToday: nextIsToday,
+      yahuahDay: nextDay,
+      gregorianDate: nextGregorianDate,
+      monthNum: nextMonth,
     });
   
-  }, [info, startDate, openModal]);
+  }, [monthNum, yahuahDay, startDate, openModal]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -537,6 +549,17 @@ export const DayDetailModal = ({ info }: ModalProps) => {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [closeAllModals, onNavigate]);
+
+  if (monthNum === undefined || yahuahDay === undefined) {
+    // This can happen briefly while calculated364Date is computed.
+    return (
+       <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-0 sm:p-4 z-50">
+         <div className="bg-card rounded-none sm:rounded-2xl w-full max-w-xl h-full sm:h-auto flex items-center justify-center">
+            <LoaderCircle className="w-8 h-8 animate-spin text-primary" />
+         </div>
+       </div>
+    );
+  }
 
   const monthContext = MONTH_CONTEXT[monthNum - 1];
   const isTekufahDay = TEKUFAH_MONTHS.includes(monthNum) && yahuahDay === 31;
