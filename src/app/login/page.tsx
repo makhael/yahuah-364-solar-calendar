@@ -43,10 +43,16 @@ function LoginFormComponent() {
   const { register, handleSubmit, formState: { errors, isSubmitting }, getValues, trigger } = form;
 
   const handlePasswordReset = async () => {
-    const emailIsValid = await trigger("email");
-    if (!emailIsValid) return;
-
     const email = getValues("email");
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      toast({
+        variant: 'destructive',
+        title: "Invalid Email",
+        description: "Please enter a valid email address to reset your password.",
+      });
+      return;
+    }
+
     try {
       await sendPasswordResetEmail(auth, email);
       toast({
