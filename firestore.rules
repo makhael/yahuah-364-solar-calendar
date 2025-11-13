@@ -70,8 +70,14 @@ service cloud.firestore {
         allow read, list, get, update, delete: if isAdmin();
     }
     
+    // This rule allows a query on the whole collection
+    match /scriptureReadings {
+      allow list: if isSignedIn();
+    }
+    
+    // This rule secures reads on individual documents
     match /scriptureReadings/{readingId} {
-      allow read: if true;
+      allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
