@@ -44,6 +44,11 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && isOwner(userId);
     }
     
+    // Rule for user's calendar presets subcollection
+    match /users/{userId}/calendarPresets/{presetId} {
+        allow read, write, list: if isSignedIn() && isOwner(userId);
+    }
+
     // This rule allows a user to read and write to any documents
     // in any subcollection under their own user document.
     match /users/{userId}/{document=**} {
