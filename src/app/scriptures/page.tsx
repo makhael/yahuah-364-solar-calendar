@@ -24,12 +24,6 @@ interface ScriptureReading {
   status: 'pending' | 'approved' | 'rejected';
 }
 
-interface UserData {
-  id: string;
-  role?: string;
-}
-
-
 const ScriptureCard = ({ submission }: { submission: ScriptureReading }) => {
     return (
         <div className="p-4 border rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -49,45 +43,16 @@ export default function CommunityScripturesPage() {
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
   const router = useRouter();
 
-  const [allScriptures, setAllScriptures] = useState<ScriptureReading[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const usersQuery = useMemoFirebase(() => {
+  const scripturesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'users'));
+    return query(
+      collection(firestore, 'scriptureReadings'),
+      where('status', '==', 'approved'),
+      orderBy('createdAt', 'desc')
+    );
   }, [firestore]);
 
-  const { data: users } = useCollection<UserData>(usersQuery);
-
-  useEffect(() => {
-    const fetchAllScriptures = async () => {
-      if (!firestore || !users) return;
-
-      setIsLoading(true);
-      let allSubmissions: ScriptureReading[] = [];
-
-      for (const user of users) {
-        try {
-          const submissionsQuery = query(
-              collection(firestore, 'scriptureReadings'), 
-              where('userId', '==', user.id),
-              where('status', '==', 'approved')
-            );
-          const submissionsSnapshot = await getDocs(submissionsQuery);
-          const userSubmissions = submissionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScriptureReading));
-          allSubmissions = [...allSubmissions, ...userSubmissions];
-        } catch (error) {
-          console.error(`Failed to fetch approved scriptures for user ${user.id}`, error);
-        }
-      }
-      
-      allSubmissions.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setAllScriptures(allSubmissions);
-      setIsLoading(false);
-    };
-
-    fetchAllScriptures();
-  }, [firestore, users]);
+  const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
   if (isLoading) {
     return (

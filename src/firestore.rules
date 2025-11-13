@@ -71,18 +71,11 @@ service cloud.firestore {
     }
     
     match /scriptureReadings/{readingId} {
-      // Admins can read any scripture for moderation.
-      // Users can read their own scriptures, or any approved scripture.
-      allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid) || resource.data.status == 'approved';
-      
-      // Admins can list all scriptures. Users can list scriptures they own or that are approved.
-      // NOTE: This rule requires queries to include a filter on 'userId' or 'status' unless the user is an admin.
-      allow list: if isAdmin() || (isSignedIn() && request.query.filters.map(f => f[0]).hasAny(['userId']));
-      
-      // Any signed-in user can create a submission.
+      allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      // Admins can list everything.
+      // Other signed-in users can list as long as they are filtering by 'status' or their own 'userId'.
+      allow list: if isAdmin() || (isSignedIn() && request.query.keys().hasAny(['status', 'userId']));
       allow create: if isSignedIn();
-      
-      // Only the owner or an admin can update or delete a submission.
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
@@ -92,5 +85,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
