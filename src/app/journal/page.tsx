@@ -1,8 +1,8 @@
 
 'use client';
 
-import React from 'react';
-import { useUser } from '@/firebase';
+import React, { useMemo } from 'react';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { LoaderCircle, Edit, ArrowLeft } from 'lucide-react';
@@ -11,16 +11,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MyJournal } from '@/components/auth/MyJournal';
 import { MyProposals } from '@/components/auth/MyProposals';
 import { MyBookmarks } from '@/components/auth/MyBookmarks';
+import { MyInvitations } from '@/components/auth/MyInvitations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { collection, query, where } from 'firebase/firestore';
+
+interface PendingInvitation {
+    id: string;
+}
 
 export default function JournalPage() {
     const { user, isUserLoading } = useUser();
     const router = useRouter();
     const { openModal } = useUI();
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
+    const firestore = useFirestore();
+
+    const pendingInvitationsQuery = useMemoFirebase(() => {
+        if (!user || user.isAnonymous || !firestore) return null;
+        return query(
+            collection(firestore, 'appointments'),
+            where('rsvps.pending', 'array-contains', user.uid)
+        );
+    }, [user, firestore]);
+
+    const { data: pendingInvitations } = useCollection<PendingInvitation>(pendingInvitationsQuery);
 
     if (isUserLoading) {
         return (
@@ -65,10 +82,18 @@ export default function JournalPage() {
                 </header>
 
                 <Tabs defaultValue="journal" className="w-full flex flex-col md:flex-row gap-6">
-                    <TabsList className="grid grid-cols-3 md:grid-cols-1 md:w-1/4">
+                    <TabsList className="grid grid-cols-1 md:w-1/4">
                         <TabsTrigger value="journal">My Journal</TabsTrigger>
                         <TabsTrigger value="bookmarks">My Bookmarks</TabsTrigger>
                         <TabsTrigger value="proposals">My Proposals</TabsTrigger>
+                         <TabsTrigger value="invitations" className="relative">
+                            My Invitations
+                             {pendingInvitations && pendingInvitations.length > 0 && (
+                                <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-xs text-white">
+                                    {pendingInvitations.length}
+                                </span>
+                            )}
+                        </TabsTrigger>
                     </TabsList>
                     <div className="w-full md:w-3/4">
                         <Card>
@@ -90,6 +115,9 @@ export default function JournalPage() {
                                         </button>
                                     </div>
                                     <MyProposals userId={user.uid} />
+                                </TabsContent>
+                                 <TabsContent value="invitations">
+                                    <MyInvitations userId={user.uid} />
                                 </TabsContent>
                             </CardContent>
                         </Card>

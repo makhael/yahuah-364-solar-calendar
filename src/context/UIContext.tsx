@@ -328,7 +328,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         return;
     }
 
-    const { recurrenceFrequency, recurrenceDay, startMonth, startDay, endMonth, endDay, isMultiDay, tags, ...rest } = appointmentData;
+    const { recurrenceFrequency, recurrenceDay, startMonth, startDay, endMonth, endDay, isMultiDay, tags, invitedUserIds, ...rest } = appointmentData;
 
     const gregorianStartDate = getGregorianDate(startDate, startMonth, startDay);
     const startDateString = gregorianStartDate.toISOString().split('T')[0];
@@ -359,6 +359,17 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
       payload.recurrence = null;
     }
     
+    // Set invited users and pending RSVPs for private events
+    if (appointmentData.inviteScope === 'private') {
+        payload.invitedUserIds = invitedUserIds || [];
+        payload.rsvps = {
+            ...payload.rsvps, // Keep existing rsvps
+            pending: invitedUserIds || []
+        };
+    } else {
+        payload.invitedUserIds = [];
+    }
+
     const batch = writeBatch(firestore);
 
     const datesToUpdate = [];
@@ -377,7 +388,10 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         batch.update(appointmentRef, payload);
     } else {
         payload.createdAt = serverTimestamp();
-        payload.rsvps = { going: [], notGoing: [], maybe: [], pending: [] };
+        payload.rsvps = payload.rsvps || { going: [], notGoing: [], maybe: [], pending: [] };
+        if (appointmentData.inviteScope === 'private') {
+            payload.rsvps.pending = invitedUserIds || [];
+        }
         const newAppointmentRef = doc(collection(firestore, 'appointments'));
         batch.set(newAppointmentRef, payload);
     }

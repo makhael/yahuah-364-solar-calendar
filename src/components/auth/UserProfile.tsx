@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from "@/firebase";
 import Link from "next/link";
 import { LoaderCircle, Edit, BookOpen, ShieldCheck, BookText, Terminal, LogOut } from "lucide-react";
 import { useUI } from "@/context/UIContext";
 import { getAuth, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { doc } from 'firebase/firestore';
+import { doc, collection, query, where } from 'firebase/firestore';
 
 interface UserProfileProps {
     onOpenInstructions: () => void;
@@ -26,6 +26,10 @@ interface UserProfileProps {
 
 interface UserProfileData {
   role?: 'admin' | 'leader' | 'member';
+}
+
+interface PendingInvitation {
+    id: string;
 }
 
 export function UserProfile({ onOpenInstructions }: UserProfileProps) {
@@ -39,6 +43,16 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
   }, [user?.uid, firestore]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfileData>(userProfileRef);
+  
+  const pendingInvitationsQuery = useMemoFirebase(() => {
+      if (!user || user.isAnonymous || !firestore) return null;
+      return query(
+          collection(firestore, 'appointments'),
+          where('rsvps.pending', 'array-contains', user.uid)
+      );
+  }, [user, firestore]);
+
+  const { data: pendingInvitations } = useCollection<PendingInvitation>(pendingInvitationsQuery);
 
   const { openModal } = useUI();
 
@@ -78,6 +92,9 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
               {user?.displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "A"}
             </AvatarFallback>
           </Avatar>
+           {pendingInvitations && pendingInvitations.length > 0 && (
+              <span className="absolute top-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-background" />
+           )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -113,6 +130,9 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
           <Link href="/journal">
             <BookText className="mr-2 h-4 w-4" />
             <span>Personal</span>
+            {pendingInvitations && pendingInvitations.length > 0 && (
+                <span className="ml-auto text-xs bg-green-500 text-white w-5 h-5 flex items-center justify-center rounded-full">{pendingInvitations.length}</span>
+            )}
           </Link>
         </DropdownMenuItem>
         

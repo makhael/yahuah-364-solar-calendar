@@ -67,10 +67,6 @@
         "displayName": {
           "type": "string",
           "description": "The display name of the user at the time of sending."
-        },
-        "text": {
-          "type": "string",
-          "description": "The content of the message."
         }
       },
       "required": ["userId", "displayName", "text"]
