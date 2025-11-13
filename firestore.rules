@@ -47,6 +47,10 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow write: if isOwner(userId) || isAdmin();
+
+      match /glossaryProposals/{proposalId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     match /users/{userId}/notes/{noteId} {

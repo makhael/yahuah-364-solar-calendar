@@ -37,8 +37,7 @@ export const MyProposals = ({ userId }: { userId: string }) => {
   const myProposalsQuery = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
     return query(
-      collection(firestore, 'glossaryProposals'),
-      where('userId', '==', userId),
+      collection(firestore, `users/${userId}/glossaryProposals`),
       orderBy('createdAt', 'desc')
     );
   }, [firestore, userId]);
@@ -47,7 +46,7 @@ export const MyProposals = ({ userId }: { userId: string }) => {
 
   const handleDelete = (id: string) => {
     if (!firestore || !userId) return;
-    deleteDocumentNonBlocking(doc(firestore, 'glossaryProposals', id));
+    deleteDocumentNonBlocking(doc(firestore, `users/${userId}/glossaryProposals`, id));
     toast({ title: 'Proposal Deleted' });
   };
   

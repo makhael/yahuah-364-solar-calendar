@@ -430,11 +430,11 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     };
     
     if (id) {
-        const proposalRef = doc(firestore, 'glossaryProposals', id);
+        const proposalRef = doc(firestore, 'users', user.uid, 'glossaryProposals', id);
         updateDocumentNonBlocking(proposalRef, { ...payload, updatedAt: serverTimestamp() });
         toast({ title: 'Proposal Updated!', description: 'Your changes have been submitted for review.' });
     } else {
-        const proposalRef = doc(collection(firestore, 'glossaryProposals'));
+        const proposalRef = doc(collection(firestore, 'users', user.uid, 'glossaryProposals'));
         addDocumentNonBlocking(proposalRef, { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
         toast({ title: 'Proposal Submitted!', description: 'Thank you for your contribution.' });
     }
