@@ -79,11 +79,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-      } else {
-        // No user signed in, sign in anonymously for guest access.
+      } else if (userAuthState.user === null && !userAuthState.isUserLoading) {
+        // Only trigger anonymous sign-in if we've already checked and there's definitely no user.
+        // This prevents a loop on initial load.
         initiateAnonymousSignIn(auth);
-        // We still set user to null here because the anonymous sign-in will trigger another state change.
-        setUserAuthState({ user: null, isUserLoading: false, userError: null });
+      } else {
+        // This handles the initial state where user is null but we are still loading.
+        setUserAuthState(prev => ({ ...prev, isUserLoading: false }));
       }
     }, (error) => {
       console.error("FirebaseProvider: Auth state listener error:", error);
@@ -91,7 +93,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     });
 
     return () => unsubscribe(); // Cleanup subscription on unmount
-  }, [auth]);
+  }, [auth, userAuthState.isUserLoading, userAuthState.user]);
 
 
   // Effect to create user document in Firestore on first login

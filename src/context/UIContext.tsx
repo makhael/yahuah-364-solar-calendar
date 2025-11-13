@@ -168,18 +168,16 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     if (isUserLoading || !firestore) {
       return null;
     }
-    // Admins see all appointments.
     if (isAdmin) {
       return query(collection(firestore, 'appointments'));
     }
-    // Signed-in users see public and community appointments.
     if (user && !user.isAnonymous) {
       return query(
         collection(firestore, 'appointments'),
         where('inviteScope', 'in', ['all', 'community'])
       );
     }
-    // Guests only see public appointments.
+    // This now correctly handles anonymous users as well, as they are "signed in" but not "admin" and not "not anonymous".
     return query(
       collection(firestore, 'appointments'),
       where('inviteScope', '==', 'all')
@@ -574,5 +572,3 @@ export const useUI = (): UIContextType => {
   }
   return context;
 };
-
-    
