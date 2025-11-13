@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Loader2, LogIn } from 'lucide-react';
+import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,6 +25,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginFormComponent() {
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const auth = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -112,12 +113,23 @@ function LoginFormComponent() {
                 Forgot password?
               </button>
             </div>
-            <Input
-              id="password"
-              type="password"
-              {...register('password')}
-              disabled={isSubmitting}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                {...register('password')}
+                disabled={isSubmitting}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                onClick={() => setShowPassword(prev => !prev)}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
             {errors.password && (
               <p className="text-xs text-destructive">{errors.password.message}</p>
             )}
