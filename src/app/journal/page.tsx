@@ -64,17 +64,15 @@ export default function JournalPage() {
                     </Button>
                 </header>
 
-                <Card>
-                    <Tabs defaultValue="journal" className="w-full">
-                         <CardHeader>
-                            <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="journal">My Journal</TabsTrigger>
-                                <TabsTrigger value="bookmarks">My Bookmarks</TabsTrigger>
-                                <TabsTrigger value="proposals">My Glossary Proposals</TabsTrigger>
-                            </TabsList>
-                        </CardHeader>
-                        <CardContent>
-                             <div className="pt-6">
+                <Tabs defaultValue="journal" className="w-full flex flex-col md:flex-row gap-6">
+                    <TabsList className="grid grid-cols-3 md:grid-cols-1 md:w-1/4">
+                        <TabsTrigger value="journal">My Journal</TabsTrigger>
+                        <TabsTrigger value="bookmarks">My Bookmarks</TabsTrigger>
+                        <TabsTrigger value="proposals">My Proposals</TabsTrigger>
+                    </TabsList>
+                    <div className="w-full md:w-3/4">
+                        <Card>
+                             <CardContent className="pt-6">
                                 <TabsContent value="journal">
                                     <MyJournal userId={user.uid} />
                                 </TabsContent>
@@ -93,10 +91,10 @@ export default function JournalPage() {
                                     </div>
                                     <MyProposals userId={user.uid} />
                                 </TabsContent>
-                            </div>
-                        </CardContent>
-                    </Tabs>
-                </Card>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </Tabs>
             </div>
         </div>
     );
