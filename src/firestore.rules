@@ -56,10 +56,6 @@ service cloud.firestore {
       match /glossaryProposals/{proposalId} {
         allow get, list, update, delete, create: if isOwner(userId);
       }
-      
-      match /chatBookmarks/{bookmarkId} {
-        allow read, write: if isOwner(userId);
-      }
     }
     
     match /users/{userId}/notes/{noteId} {
@@ -71,6 +67,10 @@ service cloud.firestore {
     }
 
     match /users/{userId}/calendarPreferences/{prefId} {
+        allow read, write: if isOwner(userId);
+    }
+    
+    match /users/{userId}/chatBookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId);
     }
 
