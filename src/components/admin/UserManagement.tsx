@@ -355,7 +355,15 @@ function CreateUserDialog() {
     },
   });
 
-  const { formState: { isSubmitting }, control, handleSubmit } = form;
+  const { formState: { isSubmitting, isSubmitSuccessful }, control, handleSubmit, reset } = form;
+
+  useEffect(() => {
+    if (isSubmitSuccessful) {
+        reset();
+        setOpen(false);
+    }
+  }, [isSubmitSuccessful, reset]);
+
 
   const onSubmit = async (data: CreateUserForm) => {
     if (!currentAdminUser || !currentAdminUser.email) {
@@ -367,18 +375,14 @@ function CreateUserDialog() {
         return;
     }
 
-    // This is a workaround since the client SDK doesn't support creating users without signing them in.
-    // 1. Create a temporary, secondary Firebase app instance.
     const tempAppName = `temp-user-creation-${Date.now()}`;
     const tempApp = initializeApp(firebaseConfig, tempAppName);
     const tempAuth = getAuthSecondary(tempApp);
 
     try {
-        // 2. Create the new user in the temporary app. This signs them in *within that app instance*.
         const userCredential = await createUserWithEmailAndPassword(tempAuth, data.email, data.password);
         const newUser = userCredential.user;
 
-        // 3. Create the user's document in Firestore.
         const userDocRef = doc(firestore, "users", newUser.uid);
         await setDoc(userDocRef, {
             displayName: data.displayName,
@@ -393,9 +397,6 @@ function CreateUserDialog() {
             description: `Account for ${data.displayName} has been successfully created.`,
         });
 
-        form.reset();
-        setOpen(false);
-
     } catch (error: any) {
         console.error("Error creating user:", error);
         let errorMessage = "An unexpected error occurred.";
@@ -409,19 +410,22 @@ function CreateUserDialog() {
             title: "Creation Failed",
             description: errorMessage,
         });
+        // Re-throw to prevent form reset on failure
+        throw error;
     } finally {
-        // 4. IMPORTANT: Re-authenticate the original admin user in the main app instance.
-        // This is necessary because the above process might affect the main auth state in some browser environments.
-        // This is a simplified re-authentication. A more robust solution for production
-        // might involve securely storing and retrieving admin credentials or using refresh tokens.
-        if (auth.currentUser?.email !== currentAdminUser.email) {
-           // The auth state was switched. We need to sign out of the new user and sign back in as admin.
-           // This is complex and usually requires the admin's password again.
-           // For this context, we will assume the session remains and just log a warning.
-           console.warn("Admin user was logged out during user creation. Manual re-login may be required if session is lost.");
-        }
-        // 5. Clean up the temporary app instance.
+        // Sign out the newly created user from the temporary auth instance
+        await firebaseSignOut(tempAuth);
+        // Clean up the temporary app
         await deleteApp(tempApp);
+
+        // Re-authenticate the admin if their state was affected.
+        // A robust solution may require the admin password again.
+        // For now, we rely on the main auth session persisting.
+        if (auth.currentUser?.uid !== currentAdminUser.uid) {
+            console.warn("Admin auth state may have been affected. A manual re-login might be needed if issues occur.");
+            // Ideally, re-authenticate admin here, e.g., by asking for password
+            // and calling `reauthenticateWithCredential`.
+        }
     }
   };
 
