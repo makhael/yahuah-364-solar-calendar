@@ -83,7 +83,19 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                 </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2 pt-4 mt-4 border-t">
-                <AlertDialog>
+                {proposal.status === 'pending' && (
+                    <>
+                        <Button variant="outline" size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
+                            <ThumbsDown className="w-4 h-4 mr-2" />
+                            Reject
+                        </Button>
+                        <Button variant="default" size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className="bg-green-600 hover:bg-green-700">
+                            <ThumbsUp className="w-4 h-4 mr-2" />
+                            Approve
+                        </Button>
+                    </>
+                )}
+                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                        <Button variant="destructive" size="sm">
                             <Trash2 className="w-4 h-4 mr-2" />
@@ -103,18 +115,6 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                       </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
-                {proposal.status === 'pending' && (
-                    <>
-                        <Button variant="outline" size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
-                            <ThumbsDown className="w-4 h-4 mr-2" />
-                            Reject
-                        </Button>
-                        <Button variant="default" size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className="bg-green-600 hover:bg-green-700">
-                            <ThumbsUp className="w-4 h-4 mr-2" />
-                            Approve
-                        </Button>
-                    </>
-                )}
             </CardFooter>
         </Card>
     );
