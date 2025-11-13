@@ -52,20 +52,20 @@ export const DailyChat = ({ dateId }: DailyChatProps) => {
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return doc(firestore, 'users', user.uid);
-  }, [user, firestore]);
+  }, [user?.uid, firestore]);
   
   const { data: userProfile } = useDoc<UserProfileData>(userProfileRef);
   const isAdmin = userProfile?.role === 'admin';
 
 
   const chatQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore) return null;
     const path = isDailyChat ? `dailyContent/${dateId}/chatMessages` : `communityTopics/${dateId}/messages`;
     return query(
       collection(firestore, path),
       orderBy('createdAt', 'asc')
     );
-  }, [firestore, user, dateId, isDailyChat]);
+  }, [firestore, dateId, isDailyChat]);
 
   const { data: messages, isLoading } = useCollection<ChatMessage>(chatQuery);
 

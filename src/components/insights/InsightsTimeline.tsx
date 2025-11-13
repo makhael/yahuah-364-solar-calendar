@@ -36,7 +36,7 @@ export const InsightsTimeline = () => {
       collection(firestore, 'users', user.uid, 'notes'),
       where('isRevelation', '==', true)
     );
-  }, [user, firestore, isUserLoading]);
+  }, [firestore, user?.uid, isUserLoading]);
 
   const { data: revelationNotes, isLoading } = useCollection<Note>(revelationNotesQuery);
   
@@ -86,7 +86,7 @@ export const InsightsTimeline = () => {
     toast({ title: "Note Deleted", description: "The revelation note has been removed from your journal." });
   };
 
-  if (!user || user.isAnonymous) {
+  if (isUserLoading || !user || user.isAnonymous) {
     return null;
   }
 

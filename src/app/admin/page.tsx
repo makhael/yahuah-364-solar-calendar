@@ -39,7 +39,7 @@ export default function AdminDashboardPage() {
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return doc(firestore, 'users', user.uid);
-  }, [user, firestore]);
+  }, [user?.uid, firestore]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfileData>(userProfileRef);
 

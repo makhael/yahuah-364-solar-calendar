@@ -42,9 +42,9 @@ export default function ForumManagement() {
   const [newTopicDescription, setNewTopicDescription] = useState('');
 
   const topicsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore) return null;
     return query(collection(firestore, 'communityTopics'), orderBy('lastActivity', 'desc'));
-  }, [firestore, user]);
+  }, [firestore]);
   const { data: topics, isLoading: areTopicsLoading } = useCollection<CommunityTopic>(topicsQuery);
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 

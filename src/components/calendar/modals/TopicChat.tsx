@@ -59,7 +59,7 @@ export const TopicChat = ({ topic }: TopicChatProps) => {
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return doc(firestore, 'users', user.uid);
-  }, [user, firestore]);
+  }, [user?.uid, firestore]);
   
   const { data: userProfile } = useDoc<UserProfileData>(userProfileRef);
   const isAdmin = userProfile?.role === 'admin';

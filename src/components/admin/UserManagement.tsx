@@ -222,7 +222,6 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
 
 export function UserManagement() {
   const firestore = useFirestore();
-  const { user } = useUser();
   const { toast } = useToast();
 
   const usersQuery = useMemoFirebase(() => {

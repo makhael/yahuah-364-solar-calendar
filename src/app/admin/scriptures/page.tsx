@@ -144,16 +144,16 @@ export default function ScriptureManagement() {
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
   const scripturesQuery = useMemoFirebase(() => {
-    if (!firestore || !currentUser) return null;
+    if (!firestore) return null;
     return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
-  }, [firestore, currentUser]);
+  }, [firestore]);
 
   const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
   
   const userProfileRef = useMemoFirebase(() => {
     if (!currentUser || !firestore) return null;
     return doc(firestore, 'users', currentUser.uid);
-  }, [currentUser, firestore]);
+  }, [currentUser?.uid, firestore]);
   
   const { data: userProfile } = useDoc<UserData>(userProfileRef);
   const isAdmin = userProfile?.role === 'admin';

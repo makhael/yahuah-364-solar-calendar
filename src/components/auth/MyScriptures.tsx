@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy, doc, deleteDoc, where } from 'firebase/firestore';
 import { BookOpen, LoaderCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -116,5 +116,3 @@ export const MyScriptures = ({ userId }: { userId: string }) => {
     </ScrollArea>
   );
 };
-
-    

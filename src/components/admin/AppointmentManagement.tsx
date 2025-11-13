@@ -34,7 +34,6 @@ type SortConfig = {
 };
 
 export default function AppointmentManagement() {
-  const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -44,9 +43,9 @@ export default function AppointmentManagement() {
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
 
   const appointmentsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore) return null;
     return query(collection(firestore, 'appointments'), orderBy('createdAt', 'desc'));
-  }, [firestore, user]);
+  }, [firestore]);
 
   const { data: appointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
   
