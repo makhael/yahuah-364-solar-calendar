@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useState } from 'react';
 import { useFirestore, useUser } from '@/firebase';
 import { collection, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoaderCircle, PlusCircle, ScrollText, Send, Edit, Trash2 } from 'lucide-react';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Label } from '../ui/label';
 
 const proposalSchema = z.object({
@@ -33,7 +31,7 @@ export const GlossaryProposalSubmission = () => {
     const [stagedProposal, setStagedProposal] = useState<ProposalFormData | null>(null);
     const [isSending, setIsSending] = useState(false);
 
-    const { control, register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ProposalFormData>({
+    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ProposalFormData>({
         resolver: zodResolver(proposalSchema),
         defaultValues: {
             term: '',

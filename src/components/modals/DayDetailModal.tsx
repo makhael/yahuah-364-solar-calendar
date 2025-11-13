@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useEffect, useCallback, useState, useMemo } from 'react';
@@ -23,7 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/context/UIContext';
 import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MarkdownRenderer } from '../common/MarkdownRenderer';
 import { add, isBefore, isEqual, startOfDay, isAfter } from 'date-fns';
 import { ScriptureSubmission } from '../scriptures/ScriptureSubmission';
@@ -180,11 +179,11 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         const updates: Record<string, any> = {};
 
         allStatuses.forEach(s => {
-            updates[`rsvps.${s}`] = arrayRemove(user.uid);
+             updates['rsvps.' + s] = arrayRemove(user.uid);
         });
 
         if (newStatus) {
-            updates[`rsvps.${newStatus}`] = arrayUnion(user.uid);
+            updates['rsvps.' + newStatus] = arrayUnion(user.uid);
         }
         
         updateDocumentNonBlocking(appointmentRef, updates);
