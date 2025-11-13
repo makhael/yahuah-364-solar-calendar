@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import React, { ReactNode } from 'react';
-import { AppProviders } from '@/components/AppProviders';
+import { AppProviders } from '../components/AppProviders';
 
 export const metadata: Metadata = {
   title: "Yahuah's 364-Day Solar Calendar",

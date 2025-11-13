@@ -259,9 +259,14 @@
         "userDisplayName": { "type": "string" },
         "date": { "type": "string", "format": "date" },
         "upvoters": { "type": "array", "items": { "type": "string" } },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "rejected"],
+            "description": "Moderation status of the scripture submission."
+        }
       },
-      "required": ["scripture", "userId", "date", "createdAt"]
+      "required": ["scripture", "userId", "date", "createdAt", "status"]
     },
     "GlossaryProposal": {
       "title": "Glossary Proposal",
@@ -413,5 +418,3 @@
     "reasoning": "The Firestore data structure is designed to store information related to the Yahuah 364-day solar calendar. Scripture readings are stored in a root-level collection to simplify admin queries, with each document containing a 'userId' to link back to the submitter. User-submitted content like glossary proposals are stored in subcollections under the user's document to allow for efficient querying and user-specific views, which is a secure and scalable approach."
   }
 }
-
-    
