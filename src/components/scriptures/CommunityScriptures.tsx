@@ -31,30 +31,24 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
   const { closeAllModals } = useUI();
   const router = useRouter();
 
-  const isUserFullyAuthenticated = user && !user.isAnonymous;
-
   const scripturesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(
       collection(firestore, 'scriptureReadings'),
-      where('status', '==', 'approved')
+      where('status', '==', 'approved'),
+      where('date', '==', dateId)
     );
-  }, [firestore]);
+  }, [firestore, dateId]);
 
-  const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
+  const { data: scripturesForDay, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
-  const scripturesForDay = useMemo(() => {
-    if (!allScriptures) return [];
-    return allScriptures.filter(s => s.date === dateId);
-  }, [allScriptures, dateId]);
-  
   const sortedScriptures = useMemo(() => {
     if (!scripturesForDay) return [];
     return scripturesForDay.sort((a, b) => (b.upvoters?.length || 0) - (a.upvoters?.length || 0));
   }, [scripturesForDay]);
 
   const handleUpvote = (id: string) => {
-    if (!isUserFullyAuthenticated) {
+    if (!user) {
       toast({ variant: 'destructive', title: 'Please sign in to upvote.' });
       return;
     }
@@ -65,26 +59,6 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
       upvoters: isUpvoted ? arrayRemove(user.uid) : arrayUnion(user.uid)
     });
   };
-
-  const handleSignIn = () => {
-    closeAllModals();
-    router.push('/login');
-  };
-
-  if (!isUserFullyAuthenticated) {
-     return (
-        <div className="bg-secondary/50 p-4 rounded-lg border">
-          <h3 className="text-base font-semibold text-foreground mb-2 flex items-center gap-2">
-            <BookOpen className="w-5 h-5"/> Community Scriptures
-          </h3>
-          <p className="text-sm text-muted-foreground">Sign in to view and upvote scripture submissions for this day.</p>
-          <Button onClick={handleSignIn} className="mt-3" size="sm">
-              <LogIn className="w-4 h-4 mr-2" />
-              Sign In to View
-          </Button>
-      </div>
-     )
-  }
 
   if (isLoading) {
     return (

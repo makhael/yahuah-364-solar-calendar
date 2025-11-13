@@ -81,12 +81,10 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const { openModal, closeAllModals } = useUI();
     const { toast } = useToast();
 
-    const isUserFullyAuthenticated = user && !user.isAnonymous;
-    
     const userProfileRef = useMemoFirebase(() => {
-        if (!isUserFullyAuthenticated || !firestore) return null;
+        if (!user || !firestore) return null;
         return doc(firestore, 'users', user.uid);
-    }, [isUserFullyAuthenticated, user?.uid, firestore]);
+    }, [user?.uid, firestore]);
 
     const { data: userProfile } = useDoc<{ role?: string }>(userProfileRef);
     const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
@@ -98,13 +96,10 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         if (isAdmin) {
             return baseQuery;
         }
-        if (isUserFullyAuthenticated) {
-            return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
-        }
-        // Guest
-        return query(baseQuery, where('inviteScope', '==', 'all'));
+        // For signed-in users, get both community and public events.
+        return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
 
-    }, [firestore, isAdmin, isUserFullyAuthenticated]);
+    }, [firestore, isAdmin]);
 
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
@@ -143,17 +138,15 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
             }
         });
         
-        if (!isUserFullyAuthenticated) {
-            return combined.filter(app => app.inviteScope === 'all');
-        }
-        
+        // Final filter based on user role (already pre-filtered by query)
         return combined.filter(app => 
+            isAdmin ||
             app.inviteScope === 'all' || 
             app.inviteScope === 'community' ||
             (app.inviteScope === 'private' && app.creatorId === user?.uid)
         );
 
-    }, [dateId, dayOfWeek, allAppointments, user, isUserFullyAuthenticated]);
+    }, [dateId, dayOfWeek, allAppointments, user, isAdmin]);
     
     const [optimisticRsvps, setOptimisticRsvps] = useState<Record<string, 'going' | 'notGoing' | 'maybe' | null>>({});
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -213,11 +206,6 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
       } finally {
         setIsDeleting(null);
       }
-    };
-
-    const handleSignIn = () => {
-        closeAllModals();
-        router.push('/login');
     };
 
     if (areAppointmentsLoading) {
@@ -330,23 +318,17 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
                                 </div>
                             )}
                              <div className="mt-3 pt-3 border-t">
-                                {!isUserFullyAuthenticated ? (
-                                    <Button size="sm" variant="outline" onClick={handleSignIn} className="w-full sm:w-auto">
-                                        <LogIn className="w-4 h-4 mr-2"/> Please sign in to RSVP
+                                <div className="flex flex-col items-stretch gap-2">
+                                    <Button size="sm" variant={userStatus === 'going' ? 'default' : 'outline'} onClick={() => handleRsvp(appointment.id, 'going')} className={cn("justify-center", userStatus === 'going' && 'bg-green-600 hover:bg-green-500 text-white')}>
+                                        <CheckCircle2 className="w-4 h-4 mr-2"/> Attending
                                     </Button>
-                                ) : (
-                                    <div className="flex flex-col items-stretch gap-2">
-                                        <Button size="sm" variant={userStatus === 'going' ? 'default' : 'outline'} onClick={() => handleRsvp(appointment.id, 'going')} className={cn("justify-center", userStatus === 'going' && 'bg-green-600 hover:bg-green-500 text-white')}>
-                                            <CheckCircle2 className="w-4 h-4 mr-2"/> Attending
-                                        </Button>
-                                        <Button size="sm" variant={userStatus === 'maybe' ? 'secondary' : 'outline'} onClick={() => handleRsvp(appointment.id, 'maybe')} className={cn("justify-center", userStatus === 'maybe' && 'bg-amber-500 hover:bg-amber-400 text-white')}>
-                                            <HelpCircle className="w-4 h-4 mr-2"/> Maybe
-                                        </Button>
-                                        <Button size="sm" variant={userStatus === 'notGoing' ? 'destructive' : 'outline'} onClick={() => handleRsvp(appointment.id, 'notGoing')} className="justify-center">
-                                            <X className="w-4 h-4 mr-2"/> Not Going
-                                        </Button>
-                                    </div>
-                                )}
+                                    <Button size="sm" variant={userStatus === 'maybe' ? 'secondary' : 'outline'} onClick={() => handleRsvp(appointment.id, 'maybe')} className={cn("justify-center", userStatus === 'maybe' && 'bg-amber-500 hover:bg-amber-400 text-white')}>
+                                        <HelpCircle className="w-4 h-4 mr-2"/> Maybe
+                                    </Button>
+                                    <Button size="sm" variant={userStatus === 'notGoing' ? 'destructive' : 'outline'} onClick={() => handleRsvp(appointment.id, 'notGoing')} className="justify-center">
+                                        <X className="w-4 h-4 mr-2"/> Not Going
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     )

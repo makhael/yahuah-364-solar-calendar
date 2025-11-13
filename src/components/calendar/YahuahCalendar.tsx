@@ -5,10 +5,12 @@
 
 
 
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { FilterControls } from './FilterControls';
 import { CalendarControls } from './CalendarControls';
 import { Card, CardContent } from '@/components/ui/card';
@@ -47,6 +49,7 @@ export default function YahuahCalendar() {
     } = useUI();
     const { user, isUserLoading } = useUser();
     const { theme } = useTheme();
+    const router = useRouter();
 
     const [today, setToday] = useState<Date | null>(null);
 
@@ -74,8 +77,12 @@ export default function YahuahCalendar() {
     }, [navigationTarget, clearNavigationTarget]);
 
     const onDayClick = useCallback(async (dayInfo: any) => {
-        openModal('dayDetail', { ...dayInfo });
-    }, [openModal]);
+        if (user && !user.isAnonymous) {
+            openModal('dayDetail', { ...dayInfo });
+        } else {
+            router.push('/login');
+        }
+    }, [openModal, user, router]);
     
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
@@ -137,7 +144,7 @@ export default function YahuahCalendar() {
                         <InsightsTimeline />
                     )}
 
-                    {visibleSections.scripture && (
+                    {visibleSections.scripture && user && !user.isAnonymous && (
                         <Card className="border shadow-lg" id="scripture-section">
                              <CardContent className="p-4 sm:p-6">
                                 <ScriptureSubmission dateId={today ? today.toISOString().split('T')[0] : ''} />
