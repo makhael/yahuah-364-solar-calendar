@@ -36,16 +36,7 @@ function LoginCore({ prefilledEmail }: { prefilledEmail: string | null }) {
     },
   });
 
-  const { formState: { isSubmitting }, reset } = form;
-
-  // This useEffect hook is the key fix.
-  // It watches for changes to prefilledEmail and resets the form when it becomes available.
-  useEffect(() => {
-    if (prefilledEmail) {
-      reset({ email: prefilledEmail, password: '' });
-    }
-  }, [prefilledEmail, reset]);
-
+  const { formState: { isSubmitting } } = form;
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
@@ -125,6 +116,8 @@ function LoginCore({ prefilledEmail }: { prefilledEmail: string | null }) {
 function LoginPageWrapper() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
+  // By waiting for searchParams to be available, we ensure `email` is not undefined.
+  // Then we can safely render LoginCore with the correct prop from the start.
   return <LoginCore prefilledEmail={email} />;
 }
 
