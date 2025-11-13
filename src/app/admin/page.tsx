@@ -94,10 +94,10 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-12 flex justify-between items-start">
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2 text-left flex items-center gap-3">
-                <Shield className="w-6 h-6 text-destructive"/>
+            <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2 text-left flex items-center gap-3">
+                <Shield className="w-6 h-6 text-primary"/>
                 <div>
-                    <h1 className="text-base font-bold text-destructive tracking-wide">Admin Dashboard</h1>
+                    <h1 className="text-base font-bold text-primary tracking-wide">Admin Dashboard</h1>
                     <p className="text-xs text-muted-foreground mt-0.5">Manage users, events, and content.</p>
                 </div>
             </div>
@@ -108,7 +108,7 @@ export default function AdminDashboardPage() {
                  {menuItems.map(item => (
                     <Button
                         key={item.id}
-                        variant={activeView === item.id ? 'destructive' : 'outline'}
+                        variant={activeView === item.id ? 'default' : 'outline'}
                         onClick={() => setActiveView(item.id)}
                         className="w-full justify-start h-auto py-2 px-3 text-left transition-all duration-200"
                     >

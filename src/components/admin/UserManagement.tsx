@@ -16,6 +16,7 @@ import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Separator } from '../ui/separator';
+import { cn } from '@/lib/utils';
 
 
 interface User {
@@ -33,22 +34,9 @@ interface UserProfileData {
 const getRoleVariant = (role: User['role']) => {
   switch (role) {
     case 'admin':
-      return 'destructive';
+      return 'default'; // Was 'destructive'
     case 'leader':
-      return 'default';
-    default:
-      return 'outline';
-  }
-};
-
-const getStatusVariant = (status: User['status']) => {
-  switch (status) {
-    case 'approved':
-      return 'destructive';
-    case 'pending':
       return 'secondary';
-    case 'denied':
-      return 'destructive';
     default:
       return 'outline';
   }
@@ -76,7 +64,11 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
               </div>
               <div className="flex justify-between items-center">
                 <p className="text-sm font-medium">Status</p>
-                <Badge variant={getStatusVariant(user.status)} className="capitalize">{user.status}</Badge>
+                 <Badge className={cn("capitalize", {
+                    'bg-green-600 hover:bg-green-700': user.status === 'approved',
+                    'bg-amber-500 hover:bg-amber-600': user.status === 'pending',
+                    'bg-destructive hover:bg-destructive/90': user.status === 'denied',
+                })}>{user.status}</Badge>
               </div>
 
               <Separator />
@@ -160,7 +152,11 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                   <Badge variant={getRoleVariant(user.role)} className="capitalize">{user.role}</Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusVariant(user.status)} className="capitalize">{user.status}</Badge>
+                  <Badge className={cn("capitalize", {
+                      'bg-green-600 hover:bg-green-700': user.status === 'approved',
+                      'bg-amber-500 hover:bg-amber-600': user.status === 'pending',
+                      'bg-destructive hover:bg-destructive/90': user.status === 'denied',
+                  })}>{user.status}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   {updatingUsers[user.id] ? (
