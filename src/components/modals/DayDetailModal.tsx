@@ -81,24 +81,18 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const { openModal, closeAllModals } = useUI();
     const { toast } = useToast();
 
+    const isUserFullyAuthenticated = user && !user.isAnonymous;
+
     const appointmentsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !isUserFullyAuthenticated) return null;
         
         let q = query(
             collection(firestore, 'appointments'),
-            where('startDate', '<=', dateId)
+            where('startDate', '<=', dateId),
+            where('inviteScope', 'in', ['all', 'community'])
         );
-
-        if (user && !user.isAnonymous) {
-            // Logged-in users can see 'all' and 'community' events
-             q = query(q, where('inviteScope', 'in', ['all', 'community']));
-        } else {
-            // Guests can only see 'all' events
-            q = query(q, where('inviteScope', '==', 'all'));
-        }
-
         return q;
-    }, [firestore, dateId, user]);
+    }, [firestore, dateId, isUserFullyAuthenticated]);
     
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
@@ -137,17 +131,17 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
             }
         });
         
-        if (!user || user.isAnonymous) {
+        if (!isUserFullyAuthenticated) {
             return combined.filter(app => app.inviteScope === 'all');
         }
 
         return combined.filter(app => 
             app.inviteScope === 'all' || 
             app.inviteScope === 'community' ||
-            (app.inviteScope === 'private' && app.creatorId === user.uid)
+            (app.inviteScope === 'private' && app.creatorId === user?.uid)
         );
 
-    }, [dateId, dayOfWeek, allAppointments, user]);
+    }, [dateId, dayOfWeek, allAppointments, user, isUserFullyAuthenticated]);
     
     const [optimisticRsvps, setOptimisticRsvps] = useState<Record<string, 'going' | 'notGoing' | 'maybe' | null>>({});
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -217,27 +211,17 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
       }
     };
 
-    const isGuest = !user || user.isAnonymous;
+    const handleSignIn = () => {
+        closeAllModals();
+        router.push('/login');
+    };
 
-    if (areAppointmentsLoading && !isGuest) {
-        return (
-            <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
-                <LoaderCircle className="animate-spin" />
-            </div>
-        )
-    }
-
-    if (isGuest && areAppointmentsLoading) {
-      // Don't show loader for guests, wait for query to return empty or with public events
-      return null;
-    }
-    
-    if (isGuest && appointmentsForDay.length === 0) {
+    if (!isUserFullyAuthenticated) {
       return (
           <div className="bg-secondary/50 p-4 rounded-lg border">
               <h3 className="text-base font-semibold text-foreground mb-2 flex items-center gap-2"><CalendarDays className="w-5 h-5"/> Community Appointments</h3>
               <p className="text-sm text-muted-foreground">Sign in to view and RSVP to community events for this day.</p>
-              <Button onClick={() => { closeAllModals(); router.push('/login')}} className="mt-3" size="sm">
+              <Button onClick={handleSignIn} className="mt-3" size="sm">
                   <LogIn className="w-4 h-4 mr-2" />
                   Sign In
               </Button>
@@ -245,14 +229,17 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
       )
     }
 
+    if (areAppointmentsLoading) {
+        return (
+            <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
+                <LoaderCircle className="animate-spin" />
+            </div>
+        )
+    }
+
     if (!appointmentsForDay || appointmentsForDay.length === 0) {
         return null;
     }
-    
-    const handleSignIn = () => {
-        closeAllModals();
-        router.push('/login');
-    };
 
     return (
         <div className="bg-secondary/50 p-4 rounded-lg border">
@@ -351,7 +338,7 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
                                 </div>
                             )}
                              <div className="mt-3 pt-3 border-t">
-                                {isGuest ? (
+                                {!isUserFullyAuthenticated ? (
                                     <Button size="sm" variant="outline" onClick={handleSignIn} className="w-full sm:w-auto">
                                         <LogIn className="w-4 h-4 mr-2"/> Please sign in to RSVP
                                     </Button>
