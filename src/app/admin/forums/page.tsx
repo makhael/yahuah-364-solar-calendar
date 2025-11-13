@@ -146,6 +146,9 @@ export default function ForumManagement() {
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-grow cursor-pointer" onClick={() => setSelectedTopic(topic)}>
                       <h4 className="font-semibold text-foreground hover:text-primary transition-colors">{topic.title}</h4>
+                       <p className="text-xs text-muted-foreground mt-1">
+                        By {topic.creatorDisplayName} • Last active: {topic.lastActivity ? new Date(topic.lastActivity.seconds * 1000).toLocaleString() : 'Just now'}
+                      </p>
                     </div>
                     <div className="flex-shrink-0">
                       {isDeleting === topic.id ? (
@@ -173,9 +176,6 @@ export default function ForumManagement() {
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1 cursor-pointer" onClick={() => setSelectedTopic(topic)}>
-                    By {topic.creatorDisplayName} • Last active: {topic.lastActivity ? new Date(topic.lastActivity.seconds * 1000).toLocaleString() : 'Just now'}
-                  </p>
                 </div>
               ))}
               {topics && topics.length === 0 && (
@@ -200,15 +200,15 @@ export default function ForumManagement() {
                       This will create a new forum where users can have discussions.
                   </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
+              <div className="space-y-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="title" className="text-right">
                           Title
                       </Label>
                       <Input id="title" value={newTopicTitle} onChange={(e) => setNewTopicTitle(e.target.value)} className="col-span-3" />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="description" className="text-right">
+                  <div className="grid grid-cols-4 items-start gap-4">
+                      <Label htmlFor="description" className="text-right pt-2">
                           Description
                       </Label>
                       <Textarea id="description" value={newTopicDescription} onChange={(e) => setNewTopicDescription(e.target.value)} className="col-span-3" />
