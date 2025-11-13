@@ -70,16 +70,14 @@ service cloud.firestore {
         allow read, list, get, update, delete: if isAdmin();
     }
     
-    match /scriptureReadings/{readingId} {
-      // Allow anyone to read a specific document if it's approved.
-      // Admins and owners can read it regardless of status.
-      allow get: if resource.data.status == 'approved' || 
-                   (isSignedIn() && resource.data.userId == request.auth.uid) || 
-                   isAdmin();
-
-      // Allow anyone to LIST documents, but ONLY if they are querying for approved ones.
+    // This rule allows a query on the whole collection
+    match /scriptureReadings {
       allow list: if request.query.get("status") == "approved";
-
+    }
+    
+    // This rule secures reads on individual documents
+    match /scriptureReadings/{readingId} {
+      allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
