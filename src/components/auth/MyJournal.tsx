@@ -97,7 +97,7 @@ export const MyJournal = ({ userId }: { userId: string }) => {
                <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => openModal('dayDetail', { dateId: note.date } as any)}
+                  onClick={() => openModal('dayDetail', { dateId: note.date })}
                 >
                   <Edit className="w-3 h-3 mr-2" /> View/Edit
                 </Button>

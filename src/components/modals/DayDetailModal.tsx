@@ -92,20 +92,23 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
 
     const appointmentsQuery = useMemoFirebase(() => {
-        if (!firestore || !isUserFullyAuthenticated) return null;
+        if (!firestore) return null;
         
-        const baseQuery = query(
-            collection(firestore, 'appointments'),
-            where('startDate', '<=', dateId)
-        );
+        let baseQuery = query(collection(firestore, 'appointments'));
 
-        if (isAdmin) {
-            return baseQuery;
+        // Guests and anonymous users should only ever see 'all' scope.
+        if (!isUserFullyAuthenticated) {
+             return query(baseQuery, where('inviteScope', '==', 'all'));
         }
 
-        return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
+        // Admins can see all. Regular signed-in users can see 'all' and 'community'.
+        if (!isAdmin) {
+             return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
+        }
+        
+        return baseQuery; // Admins get the unfiltered query
 
-    }, [firestore, dateId, isUserFullyAuthenticated, isAdmin]);
+    }, [firestore, isUserFullyAuthenticated, isAdmin]);
     
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
@@ -462,11 +465,25 @@ const NoteSection = ({ dateId }: { dateId: string }) => {
 
 
 export const DayDetailModal = ({ info }: ModalProps) => {
-  const { yahuahDay, gregorianDate, dayOfWeek, isSabbath, special, monthNum, isToday } = info;
+  const { yahuahDay, gregorianDate: initialGregorianDate, dayOfWeek, isSabbath, special, monthNum, isToday, dateId: dateIdFromNote } = info;
   const { toast } = useToast();
   const { user } = useUser();
   const { closeAllModals, openModal, startDate, openChatModal } = useUI();
   const router = useRouter();
+
+  // Create a robust gregorianDate object
+  const gregorianDate = useMemo(() => {
+    if (initialGregorianDate) {
+      return initialGregorianDate;
+    }
+    if (dateIdFromNote) {
+      // The date string from Firestore is 'YYYY-MM-DD'. Adding 'T00:00:00' ensures it's parsed in the local timezone
+      // consistently, avoiding potential off-by-one day errors.
+      return new Date(dateIdFromNote + 'T00:00:00');
+    }
+    return new Date(); // Fallback, should not be reached in normal flow
+  }, [initialGregorianDate, dateIdFromNote]);
+
   const dateId = gregorianDate.toISOString().split('T')[0]; // YYYY-MM-DD format
   
   const onNavigate = useCallback(async (direction: number) => {
