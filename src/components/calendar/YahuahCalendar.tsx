@@ -2,6 +2,7 @@
 
 
 
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -136,6 +137,14 @@ export default function YahuahCalendar() {
 
                     {visibleSections.intro && (
                        <IntroSection openGlossaryModal={(termKey) => openModal('glossary', { termKey })} />
+                    )}
+
+                    {visibleSections.scripture && (
+                        <Card className="border shadow-lg" id="scripture-section">
+                             <CardContent className="p-4 sm:p-6">
+                                <ScriptureSubmission dateId={today ? today.toISOString().split('T')[0] : ''} />
+                            </CardContent>
+                        </Card>
                     )}
 
                     {visibleSections.podcast && (
