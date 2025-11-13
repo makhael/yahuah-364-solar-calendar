@@ -18,6 +18,7 @@ import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { TopicChat } from '@/components/calendar/modals/TopicChat';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Separator } from '@/components/ui/separator';
 
 interface CommunityTopic {
   id: string;
@@ -125,19 +126,20 @@ export default function ForumManagement() {
 
     return (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
+            <CardHeader>
                 <CardTitle>Forum Management</CardTitle>
                 <CardDescription>
-                  {topics ? `${topics.length} topics found.` : 'Loading topics...'} Click a topic to view and moderate its messages.
+                {topics ? `${topics.length} topics found.` : 'Loading topics...'} Click a topic to view and moderate its messages.
                 </CardDescription>
+            </CardHeader>
+            <div className="px-6 pb-4">
+                <Button onClick={() => setCreateTopicOpen(true)} className="w-full sm:w-auto">
+                    <PlusCircle className="w-4 h-4 mr-2"/>
+                    Create Topic
+                </Button>
             </div>
-            <Button onClick={() => setCreateTopicOpen(true)}>
-                <PlusCircle className="w-4 h-4 mr-2"/>
-                Create Topic
-            </Button>
-          </CardHeader>
-          <CardContent>
+            <Separator />
+            <CardContent className="pt-6">
             <div className="space-y-4">
               {topics && topics.map(topic => (
                 <div key={topic.id} className="p-4 border bg-background/50 rounded-lg flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
