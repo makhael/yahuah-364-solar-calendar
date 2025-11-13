@@ -4,13 +4,15 @@
 import React, { useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, doc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { LoaderCircle, BookOpen, ThumbsUp, Trash2, User } from 'lucide-react';
+import { LoaderCircle, BookOpen, ThumbsUp, Trash2, User, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Badge } from '../ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
+import { useUI } from '@/context/UIContext';
+import { useRouter } from 'next/navigation';
 
 interface ScriptureReading {
   id: string;
@@ -24,15 +26,19 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+  const { closeAllModals } = useUI();
+  const router = useRouter();
+
+  const isUserFullyAuthenticated = user && !user.isAnonymous;
 
   const scripturesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !isUserFullyAuthenticated) return null;
     return query(
       collection(firestore, 'scriptureReadings'),
       where('date', '==', dateId),
       where('status', '==', 'approved')
     );
-  }, [firestore, dateId]);
+  }, [firestore, dateId, isUserFullyAuthenticated]);
 
   const { data: scriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
@@ -42,7 +48,7 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
   }, [scriptures]);
 
   const handleUpvote = (id: string) => {
-    if (!user || user.isAnonymous) {
+    if (!isUserFullyAuthenticated) {
       toast({ variant: 'destructive', title: 'Please sign in to upvote.' });
       return;
     }
@@ -54,10 +60,25 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
     });
   };
 
-  const handleDelete = (id: string) => {
-    deleteDocumentNonBlocking(doc(firestore, 'scriptureReadings', id));
-    toast({ title: "Submission Deleted" });
+  const handleSignIn = () => {
+    closeAllModals();
+    router.push('/login');
   };
+
+  if (!isUserFullyAuthenticated) {
+     return (
+        <div className="bg-secondary/50 p-4 rounded-lg border">
+          <h3 className="text-base font-semibold text-foreground mb-2 flex items-center gap-2">
+            <BookOpen className="w-5 h-5"/> Community Scriptures
+          </h3>
+          <p className="text-sm text-muted-foreground">Sign in to view and upvote scripture submissions for this day.</p>
+          <Button onClick={handleSignIn} className="mt-3" size="sm">
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign In to View
+          </Button>
+      </div>
+     )
+  }
 
   if (isLoading) {
     return (
@@ -68,7 +89,7 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
   }
 
   if (!sortedScriptures || sortedScriptures.length === 0) {
-    return null;
+    return null; // Don't show the component if there are no scriptures for the day
   }
 
   return (
@@ -78,7 +99,6 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
       </h3>
       <div className="space-y-3">
         {sortedScriptures.map(scripture => {
-          const canDelete = user && (user.uid === scripture.userId); // Simplified for now, add admin check later
           const isUpvoted = user && scripture.upvoters?.includes(user.uid);
           
           return (
@@ -95,25 +115,6 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
                   <ThumbsUp className="w-4 h-4 mr-2" />
                   {scripture.upvoters?.length || 0}
                 </Button>
-                {canDelete && (
-                  <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive/70 hover:text-destructive hover:bg-destructive/10">
-                              <Trash2 className="w-4 h-4" />
-                          </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
-                              <AlertDialogDescription>Are you sure you want to delete your submission of "{scripture.scripture}"?</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(scripture.id)}>Yes, Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
-                )}
               </div>
             </div>
           )
