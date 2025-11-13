@@ -1,14 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 import React, { ReactNode } from 'react';
-import { ThemeProvider } from '@/context/ThemeContext';
-import { UIProvider } from '@/context/UIContext';
-import { ModalRenderer } from '@/components/modals/ModalRenderer';
-import { CalendarFooter } from '@/components/calendar/CalendarFooter';
-import { CalendarHeader } from '@/components/calendar/CalendarHeader';
-import { initializeFirebase } from '@/firebase';
+import { AppProviders } from '@/components/AppProviders.ts';
 
 export const metadata: Metadata = {
   title: "Yahuah's 364-Day Solar Calendar",
@@ -36,27 +29,10 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const firebaseServices = initializeFirebase();
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider>
-          <FirebaseClientProvider {...firebaseServices}>
-            <UIProvider>
-              <div className="flex min-h-screen w-full flex-col bg-background">
-                <div className="container mx-auto p-4 sm:p-6 md:p-8">
-                  <CalendarHeader />
-                </div>
-                <main className="flex-1">
-                  {children}
-                </main>
-                <CalendarFooter />
-              </div>
-              <ModalRenderer />
-            </UIProvider>
-          </FirebaseClientProvider>
-          <Toaster />
-        </ThemeProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
