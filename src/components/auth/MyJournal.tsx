@@ -1,10 +1,10 @@
 
 "use client";
 
-import React from 'react';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import React, { useMemo, useState } from 'react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc } from 'firebase/firestore';
-import { LoaderCircle, BookText, Trash2, Edit } from 'lucide-react';
+import { LoaderCircle, BookText, Trash2, Edit, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,6 +15,7 @@ import { useUI } from '@/context/UIContext';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
+import { Input } from '@/components/ui/input';
 
 interface Note {
   id: string;
@@ -30,6 +31,7 @@ export const MyJournal = ({ userId }: { userId: string }) => {
   const { toast } = useToast();
   const { openModal, handleGoToDate } = useUI();
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const notesQuery = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
@@ -37,6 +39,16 @@ export const MyJournal = ({ userId }: { userId: string }) => {
   }, [firestore, userId]);
 
   const { data: notes, isLoading } = useCollection<Note>(notesQuery);
+
+  const filteredNotes = useMemo(() => {
+    if (!notes) return [];
+    if (!searchTerm) return notes;
+    const lowercasedSearch = searchTerm.toLowerCase();
+    return notes.filter(note => 
+      note.content.toLowerCase().includes(lowercasedSearch) ||
+      (note.tags && note.tags.some(tag => tag.toLowerCase().includes(lowercasedSearch)))
+    );
+  }, [notes, searchTerm]);
 
   const handleDelete = (noteId: string) => {
     if (!firestore || !userId) return;
@@ -79,51 +91,73 @@ export const MyJournal = ({ userId }: { userId: string }) => {
   }
   
   return (
-    <ScrollArea className="h-96">
-      <div className="space-y-4 pr-4">
-        {notes.map(note => (
-          <div key={note.id} className="p-4 rounded-lg border bg-background/50 flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-primary">
-                {new Date(note.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
-              </p>
-              {note.isRevelation && <Badge className="mt-1 bg-amber-500 text-white">Revelation</Badge>}
-              <MarkdownRenderer content={note.content.substring(0, 150) + (note.content.length > 150 ? '...' : '')} className="mt-2 text-sm text-muted-foreground" />
-              <Button variant="link" className="p-0 h-auto text-xs mt-1" onClick={() => handleGoToDate(note.date)}>
-                View Day
-              </Button>
-            </div>
-            <div className="flex flex-shrink-0 self-end sm:self-start sm:flex-col gap-2">
-               <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openModal('dayDetail', { dateId: note.date })}
-                >
-                  <Edit className="w-3 h-3 mr-2" /> View/Edit
-                </Button>
-                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="w-3 h-3 mr-2" /> Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete this note?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently delete this journal entry. Are you sure?
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDelete(note.id)}>Yes, Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-            </div>
-          </div>
-        ))}
+    <div className="space-y-4">
+      <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+              placeholder="Search your notes..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+          />
       </div>
-    </ScrollArea>
+
+      <ScrollArea className="h-96">
+        {filteredNotes.length > 0 ? (
+            <div className="space-y-4 pr-4">
+                {filteredNotes.map(note => (
+                <div key={note.id} className="p-4 rounded-lg border bg-background/50 flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                    <div className="flex-1">
+                    <p className="text-sm font-semibold text-primary">
+                        {new Date(note.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
+                    </p>
+                    {note.isRevelation && <Badge className="mt-1 bg-amber-500 text-white">Revelation</Badge>}
+                    <MarkdownRenderer content={note.content.substring(0, 150) + (note.content.length > 150 ? '...' : '')} className="mt-2 text-sm text-muted-foreground" />
+                    <Button variant="link" className="p-0 h-auto text-xs mt-1" onClick={() => handleGoToDate(note.date)}>
+                        View Day
+                    </Button>
+                    </div>
+                    <div className="flex flex-shrink-0 self-end sm:self-start sm:flex-col gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openModal('dayDetail', { dateId: note.date })}
+                        >
+                        <Edit className="w-3 h-3 mr-2" /> View/Edit
+                        </Button>
+                        <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                            <Trash2 className="w-3 h-3 mr-2" /> Delete
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this note?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete this journal entry. Are you sure?
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(note.id)}>Yes, Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                </div>
+                ))}
+            </div>
+        ) : (
+             <div className="text-center p-8 bg-secondary/30 rounded-lg h-full flex flex-col justify-center items-center">
+                <Search className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 font-semibold">No Notes Found</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    No entries match your search for "{searchTerm}".
+                </p>
+            </div>
+        )}
+      </ScrollArea>
+    </div>
   );
 };
