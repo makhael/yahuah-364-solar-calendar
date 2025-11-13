@@ -26,10 +26,9 @@ type CalendarDayProps = {
   isToday: boolean;
   theme: string;
   hasAppointment: boolean;
-  appointmentTheme?: string;
 };
 
-export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick, isSabbath, special, monthNum, highlightFilter, isToday, theme, hasAppointment, appointmentTheme }: CalendarDayProps) => {
+export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick, isSabbath, special, monthNum, highlightFilter, isToday, theme, hasAppointment }: CalendarDayProps) => {
   
   const isTekufahDay = TEKUFAH_MONTHS.includes(monthNum) && day === 31;
   const isTransitional = (day >= 29 && day <= 30) || isTekufahDay;
@@ -59,15 +58,6 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
   
   let { bg, border, shadow: currentShadow, text: dayNumberColor, dayName: dayNameColor, date: currentDateText, badge: badgeTextColor } = dayStyles[dayType];
   
-  // Per user request: Only apply appointment theme to normal "work" days.
-  if (dayType === 'work' && hasAppointment && appointmentTheme && appointmentTheme !== 'default') {
-      bg = `appointment-bg-${appointmentTheme}`;
-      dayNumberColor = 'text-white';
-      dayNameColor = 'text-white/90';
-      currentDateText = 'text-white/70';
-      badgeTextColor = 'text-white';
-  }
-
   if (isToday) {
     border = 'border-2 border-yellow-400';
     currentShadow = 'shadow-2xl shadow-yellow-500/50';
@@ -167,7 +157,7 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
       <div className="h-6 flex items-end justify-between w-full">
          <div className="flex items-center justify-start min-w-[24px]">
             {hasAppointment && (
-              <CalendarDays className={cn("w-4 h-4", (dayType !== 'work' || (appointmentTheme && appointmentTheme !== 'default')) ? "text-white/80" : "text-primary")} />
+              <CalendarDays className={cn("w-4 h-4", dayType !== 'work' ? "text-white/80" : "text-primary")} />
             )}
         </div>
         <div className="flex items-center justify-center gap-1.5">

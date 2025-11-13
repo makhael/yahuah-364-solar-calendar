@@ -78,21 +78,26 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const firestore = useFirestore();
     const { user } = useUser();
     const router = useRouter();
-    const { openModal, closeAllModals, allAppointments } = useUI();
+    const { openModal, closeAllModals } = useUI();
     const { toast } = useToast();
 
-    if (dayOfWeek === undefined || dayOfWeek === null) {
-        return null;
-    }
+    const appointmentsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(
+            collection(firestore, 'appointments'),
+            where('startDate', '<=', dateId)
+        );
+    }, [firestore, dateId]);
     
-    const appointments = useMemo(() => {
+    const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
+
+    const appointmentsForDay = useMemo(() => {
         if (!allAppointments) return [];
         
         const targetDate = startOfDay(new Date(dateId + 'T00:00:00'));
         
         const nonRecurring = allAppointments.filter(app => {
-            if (!app.startDate) return false;
-            if (app.recurrence && app.recurrence.frequency !== 'none') return false;
+            if (!app.startDate || (app.recurrence && app.recurrence.frequency !== 'none')) return false;
             
             const appStartDate = startOfDay(new Date(app.startDate + 'T00:00:00'));
             
@@ -120,8 +125,19 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
                 combined.push(recApp);
             }
         });
-        return combined;
-    }, [dateId, dayOfWeek, allAppointments]);
+
+        // Final filter based on user role and inviteScope
+        if (!user || user.isAnonymous) {
+            return combined.filter(app => app.inviteScope === 'all');
+        }
+        
+        return combined.filter(app => 
+            app.inviteScope === 'all' || 
+            app.inviteScope === 'community' ||
+            (app.inviteScope === 'private' && app.creatorId === user.uid)
+        );
+
+    }, [dateId, dayOfWeek, allAppointments, user]);
     
     const [optimisticRsvps, setOptimisticRsvps] = useState<Record<string, 'going' | 'notGoing' | 'maybe' | null>>({});
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -136,8 +152,8 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
 
     useEffect(() => {
         const initialState: Record<string, 'going' | 'notGoing' | 'maybe' | null> = {};
-        if (user && appointments) {
-            appointments.forEach(app => {
+        if (user && appointmentsForDay) {
+            appointmentsForDay.forEach(app => {
                 const userStatus = 
                     (app.rsvps?.going?.includes(user.uid) && 'going') ||
                     (app.rsvps?.maybe?.includes(user.uid) && 'maybe') ||
@@ -147,7 +163,7 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
             });
         }
         setOptimisticRsvps(initialState);
-    }, [appointments, user]);
+    }, [appointmentsForDay, user]);
     
     const handleRsvp = (appointmentId: string, status: 'going' | 'notGoing' | 'maybe') => {
         if (!user || user.isAnonymous || !firestore) return;
@@ -192,7 +208,15 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     };
 
 
-    if (!appointments || appointments.length === 0) {
+    if (areAppointmentsLoading) {
+        return (
+            <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
+                <LoaderCircle className="animate-spin" />
+            </div>
+        )
+    }
+
+    if (!appointmentsForDay || appointmentsForDay.length === 0) {
         return null;
     }
     
@@ -207,7 +231,7 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         <div className="bg-secondary/50 p-4 rounded-lg border">
             <h3 className="text-base font-semibold text-foreground mb-3">Appointments for this Day</h3>
             <div className="space-y-4">
-                {appointments.map(appointment => {
+                {appointmentsForDay.map(appointment => {
                     const isCreator = user && user.uid === appointment.creatorId;
                     const canModerate = isCreator || isAdmin;
                     const userStatus = optimisticRsvps[appointment.id];

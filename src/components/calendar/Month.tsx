@@ -212,7 +212,7 @@ type MonthProps = {
 }
 
 export const Month = ({ monthNum, startDate, onDayClick, today, theme }: MonthProps) => {
-  const { openModal, appointmentThemesByDate } = useUI();
+  const { openModal, appointmentDates } = useUI();
   const [highlightFilter, setHighlightFilter] = useState<string | null>(null);
   const [hoveredFilter, setHoveredFilter] = useState<string | null>(null);
 
@@ -231,12 +231,11 @@ export const Month = ({ monthNum, startDate, onDayClick, today, theme }: MonthPr
       const key = `${monthNum}-${dayNum}`;
       const special = APPOINTMENTS[key as keyof typeof APPOINTMENTS];
       const dateId = gregorianDate.toISOString().split('T')[0];
-      const appointmentTheme = appointmentThemesByDate[dateId];
-      const hasAppointment = !!appointmentTheme;
+      const hasAppointment = appointmentDates.includes(dateId);
       
-      return { dayNum, gregorianDate, dayOfWeek, isSabbath, special, key, hasAppointment, appointmentTheme };
+      return { dayNum, gregorianDate, dayOfWeek, isSabbath, special, key, hasAppointment };
     });
-  }, [days, startDate, monthNum, appointmentThemesByDate]);
+  }, [days, startDate, monthNum, appointmentDates]);
   
   const openMonthModal = (month: number) => {
       openModal('monthInfo', { monthNum: month });
@@ -306,7 +305,6 @@ export const Month = ({ monthNum, startDate, onDayClick, today, theme }: MonthPr
                     isToday={isToday}
                     theme={theme}
                     hasAppointment={dayData.hasAppointment}
-                    appointmentTheme={dayData.appointmentTheme}
                   />
                 );
             })}
