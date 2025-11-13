@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 interface CommunityTopic {
   id: string;
   title:string;
+  description: string;
   creatorId: string;
   creatorDisplayName: string;
   createdAt: { seconds: number };
@@ -119,8 +120,11 @@ export default function ForumManagement() {
                       <ArrowLeft className="w-4 h-4 mr-2" />
                       Back to All Topics
                   </Button>
+                  <CardTitle>{selectedTopic.title}</CardTitle>
+                  <CardDescription>{selectedTopic.description}</CardDescription>
                </CardHeader>
-              <CardContent className="p-6 pt-0">
+               <Separator/>
+              <CardContent className="p-6">
                   <TopicChat topic={selectedTopic} />
               </CardContent>
             </Card>
