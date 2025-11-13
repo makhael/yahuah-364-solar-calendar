@@ -120,7 +120,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   const [modalState, setModalState] = useState<ModalState>(initialModalState);
   const router = useRouter();
   
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -160,14 +160,14 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   const isGuest = !user || user.isAnonymous;
   
   const allAppointmentsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (isUserLoading || !firestore) return null;
     return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', isGuest ? '' : 'community']));
-  }, [firestore, isGuest]);
+  }, [firestore, isGuest, isUserLoading]);
 
   const myAppointmentsQuery = useMemoFirebase(() => {
-      if (!firestore || isGuest) return null;
+      if (isUserLoading || !firestore || isGuest) return null;
       return query(collection(firestore, 'appointments'), where('creatorId', '==', user.uid));
-  }, [firestore, user, isGuest]);
+  }, [firestore, user, isGuest, isUserLoading]);
   
   const { data: publicAppointmentsData } = useCollection<any>(allAppointmentsQuery);
   const { data: privateAppointmentsData } = useCollection<any>(myAppointmentsQuery);
