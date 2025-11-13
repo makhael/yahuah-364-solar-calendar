@@ -54,17 +54,19 @@ const Highlight = ({ text, highlight }: { text: string; highlight: string }) => 
 export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const firestore = useFirestore();
-    const { user } = useUser();
+    const { user, isUserLoading } = useUser();
     const { startDate, handleGoToDate, closeAllModals } = useUI();
 
     const scripturesQuery = useMemoFirebase(() => {
-        if (!firestore || !user || user.isAnonymous) return null;
+        // Prevent query from running while auth is loading or if user is a guest.
+        if (isUserLoading || !user || user.isAnonymous) return null;
+        
         return query(
             collection(firestore, 'scriptureReadings'), 
             where('status', '==', 'approved'),
             orderBy('date', 'desc')
         );
-    }, [firestore, user]);
+    }, [firestore, user, isUserLoading]);
 
     const { data: allScriptures, isLoading: areScripturesLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
@@ -99,6 +101,14 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
     const isGuest = !user || user.isAnonymous;
 
     const Content = () => {
+        if (isUserLoading) {
+             return (
+                <div className="flex justify-center items-center p-8 h-full">
+                    <LoaderCircle className="animate-spin w-8 h-8 text-primary" />
+                </div>
+            )
+        }
+
         if (isGuest) {
             return (
                 <div className="flex flex-col items-center justify-center p-8 text-center h-full">
