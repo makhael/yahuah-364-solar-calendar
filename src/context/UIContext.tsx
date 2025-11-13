@@ -158,15 +158,16 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   // -- APPOINTMENT LOGIC -- //
   
   const allAppointmentsQuery = useMemoFirebase(() => {
-    if (isUserLoading || !firestore) {
-        return null; // Strictly wait for auth and firestore to be ready
+    if (isUserLoading) {
+      return null;
+    }
+    if (!firestore) {
+      return null;
     }
 
     if (user && !user.isAnonymous) {
-        // User is logged in, fetch public and community appointments
         return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', 'community']));
     } else {
-        // Guest user, only fetch public appointments
         return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
     }
   }, [isUserLoading, firestore, user]);
