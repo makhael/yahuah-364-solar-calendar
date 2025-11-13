@@ -1,9 +1,9 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, doc, orderBy, where, getDocs } from 'firebase/firestore';
+import React, { useMemo } from 'react';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, User, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

@@ -71,8 +71,15 @@ service cloud.firestore {
     }
     
     match /scriptureReadings/{readingId} {
-      allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
-      allow list: if isSignedIn(); // Allow any signed-in user to list. Client will filter for 'approved'.
+      // Allow anyone to read a specific document if it's approved.
+      // Admins and owners can read it regardless of status.
+      allow get: if resource.data.status == 'approved' || 
+                   (isSignedIn() && resource.data.userId == request.auth.uid) || 
+                   isAdmin();
+
+      // Allow anyone to LIST documents, but ONLY if they are querying for approved ones.
+      allow list: if request.query.get("status") == "approved";
+
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
