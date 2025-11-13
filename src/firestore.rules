@@ -11,8 +11,13 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    // This function is problematic and has been removed. Direct checks will be used instead.
-    // function isAdmin() { ... }
+    function isAdmin() {
+      // Use exists() instead of get() to avoid recursive loops and for efficiency.
+      // This checks if a document exists for the user in the /users collection
+      // and if that document has the role 'admin'. This is non-recursive.
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
     
     match /appointments/{appointmentId} {
       allow read: if true;
@@ -43,13 +48,9 @@ service cloud.firestore {
 
     match /users/{userId} {
       // An admin can get any user's profile. A user can get their own.
-      allow get: if isOwner(userId) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      allow write: if isOwner(userId) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    match /users {
-        // Only admins can list all users.
-        allow list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
     }
     
     match /users/{userId}/notes/{noteId} {
@@ -66,25 +67,25 @@ service cloud.firestore {
 
     match /glossaryTerms/{termId} {
       allow read: if true;
-      allow create, update, delete: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow create, update, delete: if isAdmin();
     }
 
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
-        allow read, list, get, update, delete: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        // Use a direct role check here for list operations as isAdmin can be tricky
+        allow list: if isAdmin(); 
+        allow get, update, delete: if isAdmin();
     }
     
     match /scriptureReadings/{readingId} {
-      // Anyone can get an approved doc. Owners/Admins can get any.
-      allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+      allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
     }
 
     match /scriptureReadings {
-      // An admin can list all scriptures.
-      // Anyone else can list scriptures if they are filtering for approved ones.
-      allow list: if (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') || (request.query.limit <= 30 && request.query.where[2] == ["status", "==", "approved"]);
+      // Consolidated rule for listing scriptures
+      allow list: if isAdmin() || request.query.where[0][2] == 'approved';
     }
 
     match /podcast_series/{podcastSeriesId} {

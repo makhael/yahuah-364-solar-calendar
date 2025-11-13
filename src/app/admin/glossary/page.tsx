@@ -166,7 +166,7 @@ export default function GlossaryManagement() {
                 tags: proposal.tags || [],
                 style: 'custom'
             };
-            setDoc(glossaryTermRef, newTermData).then(() => {
+            addDocumentNonBlocking(glossaryTermRef, newTermData).then(() => {
                 toast({
                     title: 'Proposal Approved & Published',
                     description: `The term "${proposal.term}" has been added to the main glossary.`
