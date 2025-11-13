@@ -96,17 +96,18 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         
         let baseQuery = query(collection(firestore, 'appointments'));
         
-        if (!isUserFullyAuthenticated) {
-             return query(baseQuery, where('inviteScope', '==', 'all'));
+        if (isAdmin) {
+            return baseQuery;
         }
 
-        if (!isAdmin) {
+        if (user) { // This covers both fully authenticated and anonymous users
              return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
         }
         
-        return baseQuery;
+        // This case handles when user is null (completely logged out)
+        return query(baseQuery, where('inviteScope', '==', 'all'));
 
-    }, [firestore, isUserFullyAuthenticated, isAdmin]);
+    }, [firestore, user, isAdmin]);
     
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
@@ -222,6 +223,14 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         router.push('/login');
     };
 
+    if (areAppointmentsLoading) {
+        return (
+            <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
+                <LoaderCircle className="animate-spin" />
+            </div>
+        )
+    }
+
     if (!isUserFullyAuthenticated) {
       return (
           <div className="bg-secondary/50 p-4 rounded-lg border">
@@ -233,14 +242,6 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
               </Button>
           </div>
       )
-    }
-
-    if (areAppointmentsLoading) {
-        return (
-            <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
-                <LoaderCircle className="animate-spin" />
-            </div>
-        )
     }
 
     if (!appointmentsForDay || appointmentsForDay.length === 0) {
@@ -475,7 +476,7 @@ export const DayDetailModal = ({ info }: ModalProps) => {
     if (info.dateId) {
       return new Date(info.dateId + 'T00:00:00');
     }
-    // This should not happen in normal flow
+    // This should not happen in normal flow, but provides a fallback
     return new Date();
   }, [info.gregorianDate, info.dateId]);
 
@@ -513,7 +514,7 @@ export const DayDetailModal = ({ info }: ModalProps) => {
   }, [info.isToday, gregorianDate]);
 
   const onNavigate = useCallback(async (direction: number) => {
-    if (!monthNum || yahuahDay === undefined) return;
+    if (monthNum === undefined || yahuahDay === undefined) return;
   
     let nextDay = yahuahDay + direction;
     let nextMonth = monthNum;
