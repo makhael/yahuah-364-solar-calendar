@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Calendar as CalendarIcon, Book, Mic, Compass, Search as SearchIcon, XCircle } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Book, Mic, Compass, Search as SearchIcon, XCircle, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GLOSSARY_SECTIONS, GLOSSARY_TERM_KEYS } from '@/lib/glossary-data';
@@ -19,7 +19,7 @@ interface SearchModalProps {
 
 type SearchResult = {
     id: string;
-    type: 'month' | 'feast' | 'glossary' | 'podcast' | 'date' | 'day' | 'gregorian_date' | 'appointment' | 'note';
+    type: 'month' | 'feast' | 'glossary' | 'podcast' | 'date' | 'day' | 'gregorian_date' | 'appointment' | 'note' | 'tag';
     label: string;
     description: string;
     action: () => void;
@@ -209,6 +209,29 @@ const parseDateQuery = (query: string): { type: 'date' | 'month' | 'day' | 'greg
     const lowercasedTerm = searchTerm.toLowerCase();
 
     let specialResults: SearchResult[] = [];
+    
+    // Tag search
+    if (lowercasedTerm.startsWith('#')) {
+        const tag = lowercasedTerm.substring(1);
+        if (tag) {
+            const taggedAppointments = (allAppointments || []).filter(app => 
+                app.tags?.some(t => t.toLowerCase().includes(tag))
+            );
+            specialResults = taggedAppointments.map(app => ({
+                id: `tag-appointment-${app.id}`,
+                type: 'tag',
+                label: app.title,
+                description: `Appointment with tag #${tag}`,
+                action: () => {
+                    const start364 = get364DateFromGregorian(new Date(app.startDate + 'T00:00:00'), startDate);
+                    if (start364) handleGoToDate(`day-${start364.month}-${start364.day}`);
+                },
+            }));
+            setResults(specialResults);
+            return;
+        }
+    }
+
     const dateQuery = parseDateQuery(searchTerm);
 
     if (dateQuery) {
@@ -251,7 +274,7 @@ const parseDateQuery = (query: string): { type: 'date' | 'month' | 'day' | 'greg
 
     setResults([...specialResults, ...filtered]);
 
-  }, [searchTerm, searchIndex, handleGoToDate, startDate]);
+  }, [searchTerm, searchIndex, handleGoToDate, startDate, allAppointments]);
 
   useEffect(() => {
     if (isOpen) {
@@ -273,6 +296,7 @@ const parseDateQuery = (query: string): { type: 'date' | 'month' | 'day' | 'greg
       case 'gregorian_date': return <CalendarIcon className="w-4 h-4 text-blue-500" />;
       case 'day': return <CalendarIcon className="w-4 h-4 text-muted-foreground" />;
       case 'appointment': return <CalendarIcon className="w-4 h-4 text-purple-500" />;
+      case 'tag': return <Tag className="w-4 h-4 text-cyan-500" />;
       case 'glossary': return <Book className="w-4 h-4 text-muted-foreground" />;
       case 'podcast': return <Mic className="w-4 h-4 text-muted-foreground" />;
       default: return <Compass className="w-4 h-4 text-muted-foreground" />;
@@ -292,7 +316,7 @@ const parseDateQuery = (query: string): { type: 'date' | 'month' | 'day' | 'greg
             <Input
                 id="global-search-input"
                 type="text"
-                placeholder="Search... (e.g., 'm1d17', 'Nov 25', '#feast')"
+                placeholder="Search... (e.g., 'm1d17', 'Nov 25', '#teaching')"
                 className="w-full h-14 pl-12 pr-12 text-base rounded-t-2xl rounded-b-none border-x-transparent border-t-transparent border-b-border bg-transparent focus-visible:ring-0"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -322,10 +346,10 @@ const parseDateQuery = (query: string): { type: 'date' | 'month' | 'day' | 'greg
                     <div className="flex-shrink-0">{getIconForType(result.type)}</div>
                     <div className="flex-grow overflow-hidden">
                         <p className="font-medium truncate">
-                        <Highlight text={result.label} highlight={searchTerm} />
+                        <Highlight text={result.label} highlight={searchTerm.startsWith('#') ? searchTerm.substring(1) : searchTerm} />
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
-                        <Highlight text={result.description} highlight={searchTerm} />
+                        <Highlight text={result.description} highlight={searchTerm.startsWith('#') ? searchTerm.substring(1) : searchTerm} />
                         </p>
                     </div>
                     </button>
