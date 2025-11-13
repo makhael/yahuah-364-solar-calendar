@@ -34,25 +34,24 @@ function LoginFormComponent() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    mode: 'onTouched', // Important for getFieldState to work correctly
+    mode: 'onTouched', 
     defaultValues: {
       email: prefilledEmail || '',
       password: '',
     },
   });
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues, getFieldState } = form;
+  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues, trigger } = form;
 
   const handlePasswordReset = async () => {
-    // Manually check the field state without triggering UI validation
-    const emailState = getFieldState('email');
-    if (emailState.invalid) {
-      toast({
-        variant: 'destructive',
-        title: "Invalid Email",
-        description: "Please enter a valid email address to reset your password.",
-      });
-      return;
+    const isEmailValid = await trigger("email");
+    if (!isEmailValid) {
+        toast({
+            variant: "destructive",
+            title: "Invalid Email",
+            description: "Please enter a valid email address to reset your password.",
+        });
+        return;
     }
     const email = getValues("email");
 
