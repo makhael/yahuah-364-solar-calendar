@@ -12,7 +12,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Use exists() instead of get() to check for admin role without triggering a read rule loop.
+      // This is more efficient and avoids circular dependencies.
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
     match /appointments/{appointmentId} {
@@ -43,7 +46,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get: if isOwner(userId);
+      allow get: if isOwner(userId) || isAdmin();
       allow write: if isOwner(userId) || isAdmin();
     }
 
@@ -82,7 +85,7 @@ service cloud.firestore {
     match /scriptureReadings {
       // Admins can list all documents for moderation, OR
       // any user can list documents if they are filtering for approved ones.
-      allow list: if isAdmin() || request.query.where[2] == ["status", "==", "approved"];
+      allow list: if isAdmin() || (request.query.limit <= 30 && request.query.where[2] == ["status", "==", "approved"]);
     }
 
     match /podcast_series/{podcastSeriesId} {

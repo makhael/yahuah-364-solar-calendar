@@ -142,16 +142,70 @@ export default function ScriptureManagement() {
   const { toast } = useToast();
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
-  const allScripturesQuery = useMemoFirebase(() => {
+  const [allScriptures, setAllScriptures] = useState<ScriptureReading[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
+    return collection(firestore, 'users');
   }, [firestore]);
 
-  const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(allScripturesQuery);
+  const { data: users, isLoading: areUsersLoading } = useCollection<UserData>(usersQuery);
+
+  useEffect(() => {
+    const fetchAllScriptures = async () => {
+        if (!firestore || !users) return;
+
+        setIsLoading(true);
+        const allFetchedScriptures: ScriptureReading[] = [];
+        for (const user of users) {
+            const scripturesColRef = collection(firestore, 'users', user.id, 'scriptureReadings');
+            // This part is problematic as scriptures are not stored under users.
+            // The logic should query the main 'scriptureReadings' collection.
+            // Reverting to a direct query approach which failed before, but let's re-examine rules.
+        }
+
+        // The correct logic as per user request to revert: Admin gets all, then filters.
+        const scripturesColRef = collection(firestore, 'scriptureReadings');
+        const q = query(scripturesColRef, orderBy('createdAt', 'desc'));
+        
+        try {
+            const querySnapshot = await getDocs(q);
+            const scriptures = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScriptureReading));
+            setAllScriptures(scriptures);
+        } catch (error) {
+            console.error("Failed to fetch all scriptures for admin:", error);
+            toast({ variant: 'destructive', title: 'Fetch Failed', description: 'Could not load scriptures.'});
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    // Reworking this due to permission issues. Let's use the query that works for public but without filters for admin.
+    const fetchScripturesDirectly = async () => {
+      if (!firestore) return;
+      setIsLoading(true);
+      try {
+        const q = query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const scripturesData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ScriptureReading));
+        setAllScriptures(scripturesData);
+      } catch (error: any) {
+        console.error("Admin scripture fetch error", error);
+        toast({variant: 'destructive', title: "Error fetching scriptures", description: error.message});
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchScripturesDirectly();
+
+  }, [firestore, toast]);
 
   const handleDelete = (scriptureId: string) => {
     if (!firestore) return;
     deleteDocumentNonBlocking(doc(firestore, 'scriptureReadings', scriptureId));
+    setAllScriptures(prev => prev.filter(s => s.id !== scriptureId));
     toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
   };
   
@@ -159,6 +213,7 @@ export default function ScriptureManagement() {
     if (!firestore) return;
     const docRef = doc(firestore, 'scriptureReadings', scriptureId);
     updateDocumentNonBlocking(docRef, { status: status });
+    setAllScriptures(prev => prev.map(s => s.id === scriptureId ? {...s, status} : s));
     toast({ title: 'Status Updated', description: `Submission marked as ${status}.` });
   };
 
