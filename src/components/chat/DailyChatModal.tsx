@@ -1,12 +1,14 @@
 
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DailyChat } from './DailyChat';
 import { CommunityForums } from './CommunityForums';
 import { MessageSquare, XCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useUI } from '@/context/UIContext';
+import { get364DateFromGregorian } from '@/lib/calendar-utils';
 
 interface DailyChatModalProps {
   dateId: string;
@@ -14,6 +16,21 @@ interface DailyChatModalProps {
 }
 
 export const DailyChatModal = ({ dateId, onClose }: DailyChatModalProps) => {
+  const { startDate } = useUI();
+
+  const { yahuahDate, gregorianDate } = useMemo(() => {
+    const gregDate = new Date(dateId + 'T00:00:00Z');
+    const yahDate = get364DateFromGregorian(gregDate, startDate);
+    return { yahuahDate: yahDate, gregorianDate: gregDate };
+  }, [dateId, startDate]);
+
+  const gregorianDateString = gregorianDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC'
+  });
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
@@ -32,8 +49,13 @@ export const DailyChatModal = ({ dateId, onClose }: DailyChatModalProps) => {
            <div className="flex items-start gap-4 pr-8">
                <MessageSquare className="w-8 h-8 text-primary flex-shrink-0 mt-1" />
               <div>
-                   <h2 className="text-xl font-bold text-foreground">Community Hub</h2>
-                  <p className="text-sm text-muted-foreground">Join the daily discussion or browse community forums.</p>
+                  <div className="flex items-baseline gap-3">
+                     <h2 className="text-xl font-bold text-foreground">Community Hub</h2>
+                     {yahuahDate && (
+                       <span className="text-lg font-bold text-primary">M{yahuahDate.month} D{yahuahDate.day}</span>
+                     )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{gregorianDateString}</p>
               </div>
           </div>
         </div>
