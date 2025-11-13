@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,7 +14,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Loader2, LogIn } from 'lucide-react';
 import Link from 'next/link';
-import { firebaseConfig } from '@/firebase/config';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -23,7 +22,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-function LoginCore({ prefilledEmail }: { prefilledEmail: string | null }) {
+function LoginFormComponent({ prefilledEmail }: { prefilledEmail: string | null }) {
   const [error, setError] = useState<string | null>(null);
   const auth = useAuth();
   const router = useRouter();
@@ -46,11 +45,8 @@ function LoginCore({ prefilledEmail }: { prefilledEmail: string | null }) {
     } catch (err: any) {
       switch (err.code) {
         case 'auth/user-not-found':
-          setError("No account found with this email address.");
-          break;
-        case 'auth/wrong-password':
         case 'auth/invalid-credential':
-          setError("Incorrect password. Please try again.");
+          setError("Incorrect email or password. Please try again.");
           break;
         default:
           setError("An unexpected error occurred. Please try again.");
@@ -65,7 +61,8 @@ function LoginCore({ prefilledEmail }: { prefilledEmail: string | null }) {
         <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      {/* The key forces a remount when the prefilledEmail changes from null to its actual value */}
+      <form key={prefilledEmail || 'initial'} onSubmit={form.handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -112,21 +109,18 @@ function LoginCore({ prefilledEmail }: { prefilledEmail: string | null }) {
   );
 }
 
-
-function LoginPageWrapper() {
+function LoginPageContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
-  // By waiting for searchParams to be available, we ensure `email` is not undefined.
-  // Then we can safely render LoginCore with the correct prop from the start.
-  return <LoginCore prefilledEmail={email} />;
+  
+  return <LoginFormComponent prefilledEmail={email} />;
 }
-
 
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Suspense fallback={<Card className="w-full max-w-sm h-[450px] animate-pulse" />}>
-        <LoginPageWrapper />
+        <LoginPageContent />
       </Suspense>
     </div>
   );
