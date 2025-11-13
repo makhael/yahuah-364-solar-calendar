@@ -21,7 +21,7 @@ service cloud.firestore {
     
     match /appointments/{appointmentId} {
       allow get: if true;
-      allow list: if isAdmin() || (isSignedIn() && request.query.filters[0].field == 'inviteScope' && request.query.filters[0].value.toSet().hasAll(['all', 'community']));
+      allow list: if isSignedIn();
       allow write: if isSignedIn();
     }
 
@@ -56,6 +56,10 @@ service cloud.firestore {
       match /glossaryProposals/{proposalId} {
         allow get, list, update, delete, create: if isOwner(userId);
       }
+      
+      match /chatBookmarks/{bookmarkId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     match /users/{userId}/notes/{noteId} {
@@ -84,7 +88,7 @@ service cloud.firestore {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-      allow list: if request.query.filters.size() > 0 && request.query.filters[0].field == 'status' && request.query.filters[0].value == 'approved';
+      allow list: if isSignedIn();
     }
 
     match /podcast_series/{podcastSeriesId} {

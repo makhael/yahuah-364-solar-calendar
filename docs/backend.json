@@ -71,14 +71,35 @@
         "text": {
           "type": "string",
           "description": "The content of the message."
+        }
+      },
+      "required": ["userId", "displayName", "text"]
+    },
+    "ChatBookmark": {
+      "title": "Chat Bookmark",
+      "description": "A user's saved bookmark for a specific daily chat.",
+      "type": "object",
+      "properties": {
+        "dateId": {
+          "type": "string",
+          "format": "date",
+          "description": "The YYYY-MM-DD date of the bookmarked chat."
+        },
+        "yahuahDateString": {
+          "type": "string",
+          "description": "The formatted 364-day calendar date (e.g., 'Month 1, Day 1')."
+        },
+        "gregorianDateString": {
+          "type": "string",
+          "description": "The formatted Gregorian date string."
         },
         "createdAt": {
           "type": "string",
           "format": "date-time",
-          "description": "The server timestamp when the message was created."
+          "description": "Timestamp when the bookmark was created."
         }
       },
-      "required": ["userId", "displayName", "text", "createdAt"]
+      "required": ["dateId", "yahuahDateString", "gregorianDateString", "createdAt"]
     },
     "Appointment": {
       "title": "Appointment",
@@ -190,6 +211,12 @@
         "$ref": "#/entities/GlossaryProposal"
       },
       "description": "User-specific collection of their glossary proposals."
+    },
+    "/users/{userId}/chatBookmarks/{bookmarkId}": {
+        "schema": {
+          "$ref": "#/entities/ChatBookmark"
+        },
+        "description": "User-specific collection of their chat bookmarks."
     },
     "/glossaryTerms/{termId}": {
       "schema": {

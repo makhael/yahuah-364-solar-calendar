@@ -10,6 +10,7 @@ import { useUI } from '@/context/UIContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MyJournal } from '@/components/auth/MyJournal';
 import { MyProposals } from '@/components/auth/MyProposals';
+import { MyBookmarks } from '@/components/auth/MyBookmarks';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
@@ -53,7 +54,7 @@ export default function JournalPage() {
                 <header className="mb-6 flex flex-wrap gap-4 justify-between items-center">
                     <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2 text-left">
                         <h1 className="text-base font-bold text-primary tracking-wide">Personal</h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">Manage your journal entries and glossary proposals.</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Manage your journal, bookmarks, and glossary proposals.</p>
                     </div>
                      <Button variant="outline" asChild>
                         <Link href="/">
@@ -66,8 +67,9 @@ export default function JournalPage() {
                 <Card>
                     <Tabs defaultValue="journal" className="w-full">
                          <CardHeader>
-                            <TabsList className="grid w-full grid-cols-2">
+                            <TabsList className="grid w-full grid-cols-3">
                                 <TabsTrigger value="journal">My Journal</TabsTrigger>
+                                <TabsTrigger value="bookmarks">My Bookmarks</TabsTrigger>
                                 <TabsTrigger value="proposals">My Glossary Proposals</TabsTrigger>
                             </TabsList>
                         </CardHeader>
@@ -75,6 +77,9 @@ export default function JournalPage() {
                              <div className="pt-6">
                                 <TabsContent value="journal">
                                     <MyJournal userId={user.uid} />
+                                </TabsContent>
+                                <TabsContent value="bookmarks">
+                                    <MyBookmarks userId={user.uid} />
                                 </TabsContent>
                                 <TabsContent value="proposals">
                                     <div className="flex justify-end mb-4">
