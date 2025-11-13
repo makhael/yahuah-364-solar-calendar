@@ -147,21 +147,7 @@ export default function ScriptureManagement() {
     return query(collection(firestore, 'scriptureReadings'), where('status', '==', 'pending'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
-  const approvedQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'scriptureReadings'), where('status', '==', 'approved'), orderBy('createdAt', 'desc'));
-  }, [firestore]);
-
-  const rejectedQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'scriptureReadings'), where('status', '==', 'rejected'), orderBy('createdAt', 'desc'));
-  }, [firestore]);
-
-  const { data: pendingScriptures, isLoading: pendingLoading } = useCollection<ScriptureReading>(pendingQuery);
-  const { data: approvedScriptures, isLoading: approvedLoading } = useCollection<ScriptureReading>(approvedQuery);
-  const { data: rejectedScriptures, isLoading: rejectedLoading } = useCollection<ScriptureReading>(rejectedQuery);
-
-  const isLoading = pendingLoading || approvedLoading || rejectedLoading;
+  const { data: pendingScriptures, isLoading } = useCollection<ScriptureReading>(pendingQuery);
 
   const handleDelete = (scriptureId: string) => {
     if (!firestore) return;
@@ -251,20 +237,12 @@ export default function ScriptureManagement() {
       </CardHeader>
       <CardContent>
           <Tabs defaultValue="pending">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList>
                   <TabsTrigger value="pending">Pending ({pendingScriptures?.length || 0})</TabsTrigger>
-                  <TabsTrigger value="approved">Approved ({approvedScriptures?.length || 0})</TabsTrigger>
-                  <TabsTrigger value="rejected">Rejected ({rejectedScriptures?.length || 0})</TabsTrigger>
               </TabsList>
               <div className="pt-6">
                   <TabsContent value="pending">
                       <ScriptureList submissions={pendingScriptures} />
-                  </TabsContent>
-                  <TabsContent value="approved">
-                      <ScriptureList submissions={approvedScriptures} />
-                  </TabsContent>
-                  <TabsContent value="rejected">
-                      <ScriptureList submissions={rejectedScriptures} />
                   </TabsContent>
               </div>
           </Tabs>
