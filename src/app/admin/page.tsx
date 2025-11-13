@@ -23,30 +23,36 @@ interface UserProfileData {
 
 type AdminView = 'users' | 'appointments' | 'forums' | 'glossary' | 'scriptures';
 
-const menuItems: { id: AdminView; label: string; icon: React.ReactNode }[] = [
-    { id: 'users', label: 'User Management', icon: <Users className="w-5 h-5" /> },
-    { id: 'appointments', label: 'Appointments', icon: <CalendarClock className="w-5 h-5" /> },
-    { id: 'forums', label: 'Forums', icon: <MessageSquare className="w-5 h-5" /> },
-    { id: 'glossary', label: 'Glossary', icon: <ScrollText className="w-5 h-5" /> },
-    { id: 'scriptures', label: 'Scriptures', icon: <BookOpen className="w-5 h-5" /> },
+const allMenuItems: { id: AdminView; label: string; icon: React.ReactNode; adminOnly: boolean }[] = [
+    { id: 'users', label: 'User Management', icon: <Users className="w-5 h-5" />, adminOnly: true },
+    { id: 'appointments', label: 'Appointments', icon: <CalendarClock className="w-5 h-5" />, adminOnly: false },
+    { id: 'forums', label: 'Forums', icon: <MessageSquare className="w-5 h-5" />, adminOnly: false },
+    { id: 'glossary', label: 'Glossary', icon: <ScrollText className="w-5 h-5" />, adminOnly: false },
+    { id: 'scriptures', label: 'Scriptures', icon: <BookOpen className="w-5 h-5" />, adminOnly: false },
 ];
 
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
-  const [activeView, setActiveView] = useState<AdminView>('users');
-
+  
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return doc(firestore, 'users', user.uid);
   }, [user?.uid, firestore]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfileData>(userProfileRef);
-
   const isLoading = isUserLoading || isProfileLoading;
+
+  const isLeader = userProfile?.role === 'leader';
+  const isAdmin = userProfile?.role === 'admin';
+  const canAccess = isAdmin || isLeader;
+
+  const visibleMenuItems = allMenuItems.filter(item => !item.adminOnly || isAdmin);
+  
+  const [activeView, setActiveView] = useState<AdminView>(isAdmin ? 'users' : 'appointments');
+
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
 
   if (isLoading) {
     return (
@@ -74,7 +80,7 @@ export default function AdminDashboardPage() {
     return null;
   }
   
-  if (!isAdmin) {
+  if (!canAccess) {
     return (
         <div className="min-h-screen p-4 sm:p-8 flex items-center justify-center">
             <Card className="max-w-md w-full">
@@ -100,7 +106,7 @@ export default function AdminDashboardPage() {
   const renderContent = () => {
     switch (activeView) {
       case 'users':
-        return <UserManagement />;
+        return isAdmin ? <UserManagement /> : null;
       case 'appointments':
         return <AppointmentManagement />;
       case 'forums':
@@ -110,7 +116,7 @@ export default function AdminDashboardPage() {
       case 'scriptures':
         return <ScriptureManagement />;
       default:
-        return <UserManagement />;
+        return isAdmin ? <UserManagement /> : <AppointmentManagement />;
     }
   }
 
@@ -135,7 +141,7 @@ export default function AdminDashboardPage() {
 
         <div className="w-full">
             <div className="mb-6 flex flex-wrap gap-2">
-                 {menuItems.map(item => (
+                 {visibleMenuItems.map(item => (
                     <Button
                         key={item.id}
                         variant={activeView === item.id ? 'default' : 'outline'}

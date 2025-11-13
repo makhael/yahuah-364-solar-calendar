@@ -61,7 +61,9 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
       )
   }
 
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
+  const isLeader = userProfile?.role === 'leader';
+  const isAdmin = userProfile?.role === 'admin';
+  const canAccessAdmin = isAdmin || isLeader;
 
   return (
     <DropdownMenu>
@@ -89,21 +91,22 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
+        {canAccessAdmin && (
+            <DropdownMenuItem asChild>
+                <Link href="/admin">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                <span>Admin Dashboard</span>
+                </Link>
+            </DropdownMenuItem>
+        )}
+
         {isAdmin && (
-            <>
-                <DropdownMenuItem asChild>
-                    <Link href="/admin">
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    <span>Admin Dashboard</span>
-                    </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    <Link href="/tools">
-                    <Terminal className="mr-2 h-4 w-4" />
-                    <span>Developer Tools</span>
-                    </Link>
-                </DropdownMenuItem>
-            </>
+            <DropdownMenuItem asChild>
+                <Link href="/tools">
+                <Terminal className="mr-2 h-4 w-4" />
+                <span>Developer Tools</span>
+                </Link>
+            </DropdownMenuItem>
         )}
 
         <DropdownMenuItem asChild>
