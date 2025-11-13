@@ -35,9 +35,11 @@ service cloud.firestore {
       }
     }
     
-    match /dailyContent/{dateId}/chatMessages/{messageId} {
+    match /dailyContent/{dateId} {
+      match /chatMessages/{messageId} {
         allow get, list: if true;
         allow create, update, delete: if isSignedIn();
+      }
     }
 
     match /users/{userId} {
@@ -61,10 +63,14 @@ service cloud.firestore {
     }
     
     match /scriptureReadings/{readingId} {
-      allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
-      allow list: if isAdmin();
+      // Admins can read any scripture. Users can read their own, or any approved scripture.
+      allow get: if isAdmin() || (isSignedIn() && isOwner(resource.data.userId)) || resource.data.status == 'approved';
+      
+      // Admins can list scriptures if they are querying by status. Users can list their own.
+      allow list: if (isAdmin() && request.query.keys().hasAny(['status'])) || (isSignedIn() && request.query.userId == request.auth.uid);
+      
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.userId));
     }
 
     match /podcast_series/{podcastSeriesId} {

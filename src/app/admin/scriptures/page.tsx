@@ -140,35 +140,28 @@ const ScriptureCard = ({ submission, onEdit, onDelete, onUpdateStatus }: { submi
 export default function ScriptureManagement() {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { user: currentUser } = useUser();
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
-  const scripturesQuery = useMemoFirebase(() => {
+  const pendingQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
+    return query(collection(firestore, 'scriptureReadings'), where('status', '==', 'pending'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
-  const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
-  
-  const userProfileRef = useMemoFirebase(() => {
-    if (!currentUser || !firestore) return null;
-    return doc(firestore, 'users', currentUser.uid);
-  }, [currentUser?.uid, firestore]);
-  
-  const { data: userProfile } = useDoc<UserData>(userProfileRef);
-  const isAdmin = userProfile?.role === 'admin';
+  const approvedQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'scriptureReadings'), where('status', '==', 'approved'), orderBy('createdAt', 'desc'));
+  }, [firestore]);
 
-  const groupedByDate = React.useMemo(() => {
-    if (!allScriptures) return {};
-    return allScriptures.reduce((acc, scripture) => {
-      const date = scripture.date;
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(scripture);
-      return acc;
-    }, {} as Record<string, ScriptureReading[]>);
-  }, [allScriptures]);
+  const rejectedQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'scriptureReadings'), where('status', '==', 'rejected'), orderBy('createdAt', 'desc'));
+  }, [firestore]);
+
+  const { data: pendingScriptures, isLoading: pendingLoading } = useCollection<ScriptureReading>(pendingQuery);
+  const { data: approvedScriptures, isLoading: approvedLoading } = useCollection<ScriptureReading>(approvedQuery);
+  const { data: rejectedScriptures, isLoading: rejectedLoading } = useCollection<ScriptureReading>(rejectedQuery);
+
+  const isLoading = pendingLoading || approvedLoading || rejectedLoading;
 
   const handleDelete = (scriptureId: string) => {
     if (!firestore) return;
@@ -183,9 +176,6 @@ export default function ScriptureManagement() {
     toast({ title: 'Status Updated', description: `Submission marked as ${status}.` });
   };
 
-  const pendingScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'pending' || !s.status) || [], [allScriptures]);
-  const approvedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'approved') || [], [allScriptures]);
-  const rejectedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'rejected') || [], [allScriptures]);
 
   if (isLoading) {
     return (
@@ -208,8 +198,8 @@ export default function ScriptureManagement() {
     );
   }
 
-  const ScriptureList = ({ submissions }: { submissions: ScriptureReading[] }) => {
-    if (submissions.length === 0) {
+  const ScriptureList = ({ submissions }: { submissions: ScriptureReading[] | null }) => {
+    if (!submissions || submissions.length === 0) {
       return (
           <div className="flex flex-col items-center justify-center p-8 text-center bg-background/50 rounded-md border">
               <BookOpen className="w-12 h-12 text-muted-foreground mb-4" />
@@ -262,9 +252,9 @@ export default function ScriptureManagement() {
       <CardContent>
           <Tabs defaultValue="pending">
               <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="pending">Pending ({pendingScriptures.length})</TabsTrigger>
-                  <TabsTrigger value="approved">Approved ({approvedScriptures.length})</TabsTrigger>
-                  <TabsTrigger value="rejected">Rejected ({rejectedScriptures.length})</TabsTrigger>
+                  <TabsTrigger value="pending">Pending ({pendingScriptures?.length || 0})</TabsTrigger>
+                  <TabsTrigger value="approved">Approved ({approvedScriptures?.length || 0})</TabsTrigger>
+                  <TabsTrigger value="rejected">Rejected ({rejectedScriptures?.length || 0})</TabsTrigger>
               </TabsList>
               <div className="pt-6">
                   <TabsContent value="pending">
