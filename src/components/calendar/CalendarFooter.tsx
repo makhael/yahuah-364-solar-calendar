@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useUI } from '@/context/UIContext';
 import { cn } from '@/lib/utils';
 import { BookOpen, ScrollText } from 'lucide-react';
+import Link from 'next/link';
 
 export const CalendarFooter = () => {
     const { openModal } = useUI();
@@ -29,9 +30,11 @@ export const CalendarFooter = () => {
                                 <ScrollText className="font-sans mr-2 h-4 w-4" />
                                 Full Glossary
                             </Button>
-                            <Button variant="outline" onClick={() => openModal('fullScriptures')} className="w-full sm:w-auto flex-shrink-0">
-                                <BookOpen className="font-sans mr-2 h-4 w-4" />
-                                My Scriptures
+                            <Button variant="outline" asChild className="w-full sm:w-auto flex-shrink-0">
+                                <Link href="/scriptures">
+                                    <BookOpen className="font-sans mr-2 h-4 w-4" />
+                                    Community Scriptures
+                                </Link>
                             </Button>
                         </div>
                     </div>

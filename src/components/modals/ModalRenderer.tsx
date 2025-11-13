@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -16,7 +15,6 @@ import { SearchModal } from '../search/SearchModal';
 import { InstructionsModal } from './InstructionsModal';
 import { useUser } from '@/firebase';
 import { AppointmentModal } from './AppointmentModal';
-import { FullScripturesModal } from '../scriptures/FullScripturesModal';
 import { EditProfileModal } from './EditProfileModal';
 
 
@@ -49,12 +47,6 @@ export const ModalRenderer = () => {
           onOpenGlossary={handleOpenGlossaryFromFull} 
           user={user} 
           {...modalState.fullGlossary.data} 
-        />
-      )}
-      {modalState.fullScriptures.isOpen && (
-        <FullScripturesModal 
-            isOpen={true}
-            onClose={closeAllModals}
         />
       )}
       {modalState.series.isOpen && (

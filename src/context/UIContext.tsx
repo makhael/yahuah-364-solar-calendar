@@ -23,8 +23,7 @@ type ModalType =
   | 'search' 
   | 'instructions'
   | 'appointment'
-  | 'editProfile'
-  | 'fullScriptures';
+  | 'editProfile';
 
 // Data shapes for modals that require it
 type ModalDataPayloads = {
@@ -38,7 +37,6 @@ type ModalDataPayloads = {
   appointment: { appointment: any | null, date?: string };
   glossaryProposal: { proposal?: any | null };
   editProfile: {};
-  fullScriptures: {};
 };
 
 type ModalState = {
@@ -61,7 +59,6 @@ const initialModalState: ModalState = {
   instructions: { isOpen: false },
   appointment: { isOpen: false },
   editProfile: { isOpen: false },
-  fullScriptures: { isOpen: false },
 };
 
 type VisibleSections = {
