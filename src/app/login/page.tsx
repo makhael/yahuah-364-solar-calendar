@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Loader2, LogIn } from 'lucide-react';
 import Link from 'next/link';
+import { firebaseConfig } from '@/firebase/config';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -35,7 +36,16 @@ function LoginCore({ prefilledEmail }: { prefilledEmail: string | null }) {
     },
   });
 
-  const { formState: { isSubmitting } } = form;
+  const { formState: { isSubmitting }, reset } = form;
+
+  // This useEffect hook is the key fix.
+  // It watches for changes to prefilledEmail and resets the form when it becomes available.
+  useEffect(() => {
+    if (prefilledEmail) {
+      reset({ email: prefilledEmail, password: '' });
+    }
+  }, [prefilledEmail, reset]);
+
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
