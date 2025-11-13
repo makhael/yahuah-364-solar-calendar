@@ -142,38 +142,40 @@ export default function ForumManagement() {
             <CardContent className="pt-6">
             <div className="space-y-4">
               {topics && topics.map(topic => (
-                <div key={topic.id} className="p-4 border bg-background/50 rounded-lg flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-grow cursor-pointer" onClick={() => setSelectedTopic(topic)}>
-                    <h4 className="font-semibold text-foreground hover:text-primary transition-colors">{topic.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      By {topic.creatorDisplayName} • Last active: {topic.lastActivity ? new Date(topic.lastActivity.seconds * 1000).toLocaleString() : 'Just now'}
-                    </p>
+                <div key={topic.id} className="p-4 border bg-background/50 rounded-lg">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-grow cursor-pointer" onClick={() => setSelectedTopic(topic)}>
+                      <h4 className="font-semibold text-foreground hover:text-primary transition-colors">{topic.title}</h4>
+                    </div>
+                    <div className="flex-shrink-0">
+                      {isDeleting === topic.id ? (
+                          <LoaderCircle className="animate-spin h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this topic?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently remove the topic "{topic.title}". Messages within the topic will become orphaned but can be managed by a database administrator. Are you sure?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteTopic(topic.id)}>Yes, Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-shrink-0 self-end sm:self-start">
-                    {isDeleting === topic.id ? (
-                        <LoaderCircle className="animate-spin h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete this topic?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently remove the topic "{topic.title}". Messages within the topic will become orphaned but can be managed by a database administrator. Are you sure?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteTopic(topic.id)}>Yes, Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 cursor-pointer" onClick={() => setSelectedTopic(topic)}>
+                    By {topic.creatorDisplayName} • Last active: {topic.lastActivity ? new Date(topic.lastActivity.seconds * 1000).toLocaleString() : 'Just now'}
+                  </p>
                 </div>
               ))}
               {topics && topics.length === 0 && (
