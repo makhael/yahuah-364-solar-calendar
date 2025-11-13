@@ -54,24 +54,24 @@ service cloud.firestore {
       allow write: if isOwner(userId) || isAdmin();
 
       match /glossaryProposals/{proposalId} {
-        allow get, list, update, delete, create: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
-    }
-    
-    match /users/{userId}/notes/{noteId} {
-      allow read, write: if isOwner(userId);
-    }
-    
-    match /users/{userId}/calendarPresets/{presetId} {
+      
+      match /notes/{noteId} {
         allow read, write: if isOwner(userId);
-    }
+      }
+      
+      match /calendarPresets/{presetId} {
+          allow read, write: if isOwner(userId);
+      }
 
-    match /users/{userId}/calendarPreferences/{prefId} {
-        allow read, write: if isOwner(userId);
-    }
-    
-    match /users/{userId}/chatBookmarks/{bookmarkId} {
-        allow read, write: if isOwner(userId);
+      match /calendarPreferences/{prefId} {
+          allow read, write: if isOwner(userId);
+      }
+
+      match /chatBookmarks/{bookmarkId} {
+          allow read, write: if isOwner(userId);
+      }
     }
 
     match /glossaryTerms/{termId} {
