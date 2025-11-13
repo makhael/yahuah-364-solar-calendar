@@ -5,9 +5,10 @@ import React, { useState, useMemo } from 'react';
 import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, doc, deleteDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { LoaderCircle, Trash2 } from 'lucide-react';
+import { LoaderCircle, Trash2, Edit, Save, X } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,14 +28,16 @@ interface User {
   status: 'pending' | 'approved' | 'denied';
 }
 
-interface UserProfileData {
-  role?: string;
+interface EditingUserState {
+    id: string;
+    displayName: string;
+    email: string;
 }
 
 const getRoleVariant = (role: User['role']) => {
   switch (role) {
     case 'admin':
-      return 'default'; // Was 'destructive'
+      return 'default';
     case 'leader':
       return 'secondary';
     default:
@@ -43,6 +46,29 @@ const getRoleVariant = (role: User['role']) => {
 };
 
 const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUsers }: { users: User[], onRoleChange: Function, onStatusChange: Function, onDelete: Function, updatingUsers: Record<string, boolean> }) => {
+  const [editingUser, setEditingUser] = useState<EditingUserState | null>(null);
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const handleEditClick = (user: User) => {
+    setEditingUser({ id: user.id, displayName: user.displayName, email: user.email });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUser(null);
+  };
+  
+  const handleSaveEdit = () => {
+    if (!editingUser || !firestore) return;
+
+    const userRef = doc(firestore, 'users', editingUser.id);
+    setDocumentNonBlocking(userRef, { displayName: editingUser.displayName, email: editingUser.email }, { merge: true });
+
+    toast({ title: 'User Updated', description: `Details for ${editingUser.displayName} have been saved.` });
+    setEditingUser(null);
+  };
+
+
   if (users.length === 0) {
     return <p className="text-center text-muted-foreground p-8">No users in this category.</p>
   }
@@ -51,84 +77,105 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
     <>
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
-        {users.map(user => (
-          <Card key={user.id} className="bg-background/50">
-            <CardHeader>
-              <CardTitle className="text-lg">{user.displayName}</CardTitle>
-              <CardDescription>{user.email}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-medium">Role</p>
-                <Badge variant={getRoleVariant(user.role)} className="capitalize">{user.role}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-medium">Status</p>
-                 <Badge className={cn("capitalize", {
-                    'bg-green-600 hover:bg-green-700': user.status === 'approved',
-                    'bg-amber-500 hover:bg-amber-600': user.status === 'pending',
-                    'bg-destructive hover:bg-destructive/90': user.status === 'denied',
-                })}>{user.status}</Badge>
-              </div>
-
-              <Separator />
-
-              {updatingUsers[user.id] ? (
-                <div className="flex justify-center py-4">
-                  <LoaderCircle className="animate-spin h-5 w-5" />
+        {users.map(user => {
+          const isEditing = editingUser?.id === user.id;
+          return (
+            <Card key={user.id} className="bg-background/50">
+              <CardHeader>
+                {isEditing ? (
+                  <Input value={editingUser.displayName} onChange={(e) => setEditingUser({...editingUser, displayName: e.target.value})} className="text-lg font-bold p-0 border-0 shadow-none focus-visible:ring-0" />
+                ) : (
+                  <CardTitle className="text-lg">{user.displayName}</CardTitle>
+                )}
+                {isEditing ? (
+                  <Input value={editingUser.email} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="text-sm p-0 border-0 shadow-none focus-visible:ring-0" />
+                ) : (
+                  <CardDescription>{user.email}</CardDescription>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-medium">Role</p>
+                  <Badge variant={getRoleVariant(user.role)} className="capitalize">{user.role}</Badge>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-muted-foreground">Change Role</Label>
-                    <Select
-                      value={user.role}
-                      onValueChange={(value) => onRoleChange(user.id, value as User['role'])}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Change role" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="leader">Leader</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Change Status</Label>
-                    <Select
-                      value={user.status}
-                      onValueChange={(value) => onStatusChange(user.id, value as User['status'])}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Change status" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="denied">Denied</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" className="w-full">Delete User</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the user '{user.displayName}' and all of their associated data.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(user.id)}>Yes, delete user</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-medium">Status</p>
+                  <Badge className={cn("capitalize", {
+                      'bg-green-600 hover:bg-green-700': user.status === 'approved',
+                      'bg-amber-500 hover:bg-amber-600': user.status === 'pending',
+                      'bg-destructive hover:bg-destructive/90': user.status === 'denied',
+                  })}>{user.status}</Badge>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+
+                <Separator />
+                
+                {isEditing ? (
+                     <div className="flex justify-end gap-2">
+                        <Button variant="ghost" onClick={handleCancelEdit}>Cancel</Button>
+                        <Button onClick={handleSaveEdit}>Save</Button>
+                    </div>
+                ) : (
+                    <div className="flex justify-end">
+                        <Button variant="outline" size="sm" onClick={() => handleEditClick(user)}>
+                            <Edit className="w-4 h-4 mr-2"/>
+                            Edit User
+                        </Button>
+                    </div>
+                )}
+
+
+                {updatingUsers[user.id] && !isEditing ? (
+                  <div className="flex justify-center py-4">
+                    <LoaderCircle className="animate-spin h-5 w-5" />
+                  </div>
+                ) : (
+                  !isEditing && 
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-muted-foreground">Change Role</Label>
+                      <Select value={user.role} onValueChange={(value) => onRoleChange(user.id, value as User['role'])} >
+                        <SelectTrigger><SelectValue placeholder="Change role" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="member">Member</SelectItem>
+                          <SelectItem value="leader">Leader</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Change Status</Label>
+                      <Select value={user.status} onValueChange={(value) => onStatusChange(user.id, value as User['status'])} >
+                        <SelectTrigger><SelectValue placeholder="Change status" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="approved">Approved</SelectItem>
+                          <SelectItem value="denied">Denied</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full">Delete User</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the user '{user.displayName}' and all of their associated data.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onDelete(user.id)}>Yes, delete user</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       {/* Desktop Table View */}
@@ -144,10 +191,20 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map(user => (
+            {users.map(user => {
+              const isEditing = editingUser?.id === user.id;
+              return (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.displayName}</TableCell>
-                <TableCell>{user.email}</TableCell>
+                <TableCell className="font-medium">
+                  {isEditing ? (
+                    <Input value={editingUser.displayName} onChange={(e) => setEditingUser({...editingUser, displayName: e.target.value})} />
+                  ) : user.displayName}
+                </TableCell>
+                <TableCell>
+                  {isEditing ? (
+                    <Input value={editingUser.email} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} />
+                  ) : user.email}
+                </TableCell>
                 <TableCell>
                   <Badge variant={getRoleVariant(user.role)} className="capitalize">{user.role}</Badge>
                 </TableCell>
@@ -159,60 +216,62 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                   })}>{user.status}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  {updatingUsers[user.id] ? (
+                  {updatingUsers[user.id] && !isEditing ? (
                     <LoaderCircle className="animate-spin h-5 w-5 ml-auto" />
                   ) : (
                     <div className="flex gap-2 justify-end">
-                      <Select
-                        value={user.role}
-                        onValueChange={(value) => onRoleChange(user.id, value as User['role'])}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue placeholder="Change role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="member">Member</SelectItem>
-                          <SelectItem value="leader">Leader</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Select
-                        value={user.status}
-                        onValueChange={(value) => onStatusChange(user.id, value as User['status'])}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue placeholder="Change status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="approved">Approved</SelectItem>
-                          <SelectItem value="denied">Denied</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="icon">
-                            <Trash2 className="h-4 w-4" />
+                      {isEditing ? (
+                        <>
+                          <Button variant="ghost" size="icon" onClick={handleCancelEdit}> <X className="h-4 w-4" /> </Button>
+                          <Button variant="default" size="icon" onClick={handleSaveEdit}> <Save className="h-4 w-4" /> </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Select value={user.role} onValueChange={(value) => onRoleChange(user.id, value as User['role'])} >
+                            <SelectTrigger className="w-[120px]"> <SelectValue placeholder="Change role" /> </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="member">Member</SelectItem>
+                              <SelectItem value="leader">Leader</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Select value={user.status} onValueChange={(value) => onStatusChange(user.id, value as User['status'])} >
+                            <SelectTrigger className="w-[120px]"> <SelectValue placeholder="Change status" /> </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="approved">Approved</SelectItem>
+                              <SelectItem value="denied">Denied</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button variant="outline" size="icon" onClick={() => handleEditClick(user)}>
+                            <Edit className="h-4 w-4" />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the user '{user.displayName}' and all of their associated data. This does NOT delete their Firebase Auth record.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(user.id)}>Yes, delete user</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="icon">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the user '{user.displayName}' and all of their associated data. This does NOT delete their Firebase Auth record.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDelete(user.id)}>Yes, delete user</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
                     </div>
                   )}
                 </TableCell>
               </TableRow>
-            ))}
+            )})}
           </TableBody>
         </Table>
       </div>
@@ -277,7 +336,7 @@ export function UserManagement() {
   };
 
   const approvedUsers = users?.filter(u => u.status === 'approved') || [];
-  const pendingUsers = users?.filter(u => u.status === 'pending') || [];
+  const pendingUsers = users?.filter(u => u.status === 'pending' || !u.status) || [];
   const deniedUsers = users?.filter(u => u.status === 'denied') || [];
 
   return (
