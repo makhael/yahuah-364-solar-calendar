@@ -158,7 +158,6 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   // -- APPOINTMENT LOGIC -- //
   
   const allAppointmentsQuery = useMemoFirebase(() => {
-    // THIS IS THE FIX: Do not create the query until authentication check is complete.
     if (isUserLoading || !firestore) {
       return null;
     }
@@ -166,7 +165,6 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     if (user && !user.isAnonymous) {
         return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', 'community']));
     } else {
-        // For guests, only show public appointments.
         return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
     }
   }, [isUserLoading, firestore, user]);
