@@ -1,18 +1,19 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { Suspense, useState, useCallback } from 'react';
+import { useForm, get } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -28,6 +29,7 @@ function LoginFormComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefilledEmail = searchParams.get('email');
+  const { toast } = useToast();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -38,7 +40,7 @@ function LoginFormComponent() {
     },
   });
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
+  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues } = form;
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
@@ -121,9 +123,14 @@ function LoginFormComponent() {
             )}
             Sign In
           </Button>
-           <p className="text-xs text-muted-foreground">
-              Don't have an account? <Link href="/signup" className="text-primary hover:underline">Sign Up</Link>
-          </p>
+           <div className="text-center text-xs text-muted-foreground space-y-1">
+              <p>
+                  Don't have an account? <Link href="/signup" className="text-primary hover:underline">Sign Up</Link>
+              </p>
+              <p>
+                  or <Link href="/" className="text-primary hover:underline">Return to Calendar</Link>
+              </p>
+          </div>
         </CardFooter>
       </form>
     </Card>

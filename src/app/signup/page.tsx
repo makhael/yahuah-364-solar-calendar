@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -133,9 +132,14 @@ export default function SignupPage() {
               )}
               Sign Up
             </Button>
-            <p className="text-xs text-muted-foreground">
-                Already have an account? <Link href="/login" className="text-primary hover:underline">Sign In</Link>
-            </p>
+            <div className="text-center text-xs text-muted-foreground space-y-1">
+                <p>
+                    Already have an account? <Link href="/login" className="text-primary hover:underline">Sign In</Link>
+                </p>
+                 <p>
+                    or <Link href="/" className="text-primary hover:underline">Return to Calendar</Link>
+                </p>
+            </div>
           </CardFooter>
         </form>
       </Card>

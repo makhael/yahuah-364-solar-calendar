@@ -10,9 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Loader2, Mail } from 'lucide-react';
+import { Loader2, Mail, Home } from 'lucide-react';
 import Link from 'next/link';
-import { useToast } from '@/hooks/use-toast';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -22,8 +21,8 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const auth = useAuth();
-  const { toast } = useToast();
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -35,6 +34,7 @@ export default function ForgotPasswordPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
 
   const onSubmit = async (data: ForgotPasswordFormValues) => {
+    setError(null);
     try {
       await sendPasswordResetEmail(auth, data.email);
       setIsSubmitted(true);
@@ -55,12 +55,15 @@ export default function ForgotPasswordPage() {
               <CardTitle className="text-2xl">Check Your Email</CardTitle>
               <CardDescription>If an account exists for the email you entered, a password reset link has been sent.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Mail className="mx-auto h-16 w-16 text-primary" />
+            <CardContent className="flex flex-col items-center justify-center text-center">
+              <Mail className="mx-auto h-16 w-16 text-primary mb-4" />
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex-col gap-2">
               <Button asChild className="w-full">
                 <Link href="/login">Return to Sign In</Link>
+              </Button>
+              <Button asChild variant="link" className="w-full">
+                <Link href="/">Return to Calendar</Link>
               </Button>
             </CardFooter>
           </>
@@ -84,6 +87,7 @@ export default function ForgotPasswordPage() {
                   {errors.email && (
                     <p className="text-xs text-destructive">{errors.email.message}</p>
                   )}
+                  {error && <p className="text-sm text-destructive text-center pt-2">{error}</p>}
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
@@ -95,9 +99,14 @@ export default function ForgotPasswordPage() {
                   )}
                   Send Reset Link
                 </Button>
-                <p className="text-xs text-muted-foreground">
-                  Remember your password? <Link href="/login" className="text-primary hover:underline">Sign In</Link>
-                </p>
+                <div className="text-center text-xs text-muted-foreground space-y-1">
+                    <p>
+                        Remember your password? <Link href="/login" className="text-primary hover:underline">Sign In</Link>
+                    </p>
+                    <p>
+                        or <Link href="/" className="text-primary hover:underline">Return to Calendar</Link>
+                    </p>
+                </div>
               </CardFooter>
             </form>
           </>
