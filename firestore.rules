@@ -88,11 +88,8 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
     }
 
-    // Corrected rule for listing scripture readings
     match /scriptureReadings {
-       allow list: if isAdmin() ||
-                     (request.query.where[0] == 'status' && request.query.where[2] == 'approved') ||
-                     (isSignedIn() && request.query.where[0] == 'userId' && request.query.where[2] == request.auth.uid);
+       allow list: if isAdmin() || (request.query.where[0] == 'status' && request.query.where[2] == 'approved') || (isSignedIn() && request.query.where[0] == 'userId' && request.query.where[2] == request.auth.uid);
     }
 
     match /podcast_series/{podcastSeriesId} {
