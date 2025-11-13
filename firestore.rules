@@ -28,13 +28,13 @@ service cloud.firestore {
     match /communityTopics/{topicId} {
       allow get, list: if true;
       allow create, update, delete: if isSignedIn();
+
+      match /messages/{messageId} {
+        allow get, list: if true;
+        allow create, update, delete: if isSignedIn();
+      }
     }
     
-    match /communityTopics/{topicId}/messages/{messageId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
-    }
-
     match /dailyContent/{dateId} {
       match /chatMessages/{messageId} {
         allow get, list: if true;
@@ -43,9 +43,9 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow write: if isOwner(userId) || isAdmin();
+      allow get, read: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
     }
     
     match /users/{userId}/{document=**} {
@@ -64,7 +64,7 @@ service cloud.firestore {
 
     match /scriptureReadings/{readingId} {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
-      allow list: if true;
+      allow list: if isSignedIn();
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
