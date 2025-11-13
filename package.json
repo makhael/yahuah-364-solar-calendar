@@ -43,7 +43,8 @@
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-progress": "^1.0.3",
     "genkit": "^1.0.0",
-    "@genkit-ai/google-genai": "^1.0.0"
+    "@genkit-ai/google-genai": "^1.0.0",
+    "cmdk": "^1.0.0"
   },
   "devDependencies": {
     "typescript": "^5",
