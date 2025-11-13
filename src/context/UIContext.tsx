@@ -159,8 +159,8 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   // -- APPOINTMENT LOGIC -- //
   
   const allAppointmentsQuery = useMemoFirebase(() => {
-    if (isUserLoading) return null; // Guard: Wait for auth state to be resolved
-    if (!firestore) return null;
+    // THIS IS THE FIX: Strictly guard the query. Do NOT create it if auth is loading.
+    if (isUserLoading || !firestore) return null;
 
     if (user && !user.isAnonymous) {
       // User is logged in, fetch public and community appointments
