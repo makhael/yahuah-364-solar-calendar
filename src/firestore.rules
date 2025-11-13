@@ -20,8 +20,8 @@ service cloud.firestore {
     }
     
     match /appointments/{appointmentId} {
-      allow list: if isSignedIn();
       allow get: if true;
+      allow list: if isSignedIn();
       allow write: if isSignedIn();
     }
 
