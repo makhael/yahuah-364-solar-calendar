@@ -1,10 +1,11 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
+import { Firestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -88,6 +89,41 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     );
     return () => unsubscribe(); // Cleanup
   }, [auth]); // Depends on the auth instance
+
+  // Effect to create user document in Firestore on first login
+  useEffect(() => {
+    const createUserDocument = async (user: User) => {
+      if (!firestore || user.isAnonymous) return;
+
+      const userRef = doc(firestore, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        const { displayName, email, photoURL } = user;
+        
+        // Assign admin role to specific user, member to others.
+        const role = email === 'sheldonharding@gmail.com' ? 'admin' : 'member';
+
+        const userData = {
+          displayName,
+          email,
+          photoURL,
+          role,
+          status: 'approved', // Automatically approve new users
+        };
+
+        try {
+          await setDoc(userRef, userData);
+        } catch (error) {
+          console.error("Error creating user document:", error);
+        }
+      }
+    };
+
+    if (userAuthState.user) {
+      createUserDocument(userAuthState.user);
+    }
+  }, [userAuthState.user, firestore]);
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
