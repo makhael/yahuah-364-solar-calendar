@@ -44,8 +44,11 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin();
       allow write: if isOwner(userId) || isAdmin();
+    }
+
+    match /users {
+        allow list: if isAdmin();
     }
     
     match /users/{userId}/notes/{noteId} {
@@ -70,16 +73,14 @@ service cloud.firestore {
         allow read, list, get, update, delete: if isAdmin();
     }
     
-    // This rule allows a query on the whole collection
-    match /scriptureReadings {
-      allow list: if request.query.get("status") == "approved";
-    }
-    
-    // This rule secures reads on individual documents
     match /scriptureReadings/{readingId} {
-      allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+    }
+
+    match /scriptureReadings {
+      allow list: if request.query.where.get("status")[2] == "approved";
     }
 
     match /podcast_series/{podcastSeriesId} {
