@@ -158,7 +158,6 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   // -- APPOINTMENT LOGIC -- //
   
   const allAppointmentsQuery = useMemoFirebase(() => {
-    // CRITICAL FIX: Do not create the query until authentication check is complete.
     if (isUserLoading || !firestore) {
       return null;
     }
