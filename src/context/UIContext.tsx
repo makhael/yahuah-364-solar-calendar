@@ -346,8 +346,8 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   
   const handleSaveGlossaryProposal = useCallback(async (proposalData: any, id?: string) => {
     if (!user || user.isAnonymous || !firestore) {
-      toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be signed in to submit a proposal.' });
-      return;
+        toast({ variant: 'destructive', title: 'Authentication Error', description: 'You must be signed in to submit a proposal.' });
+        return;
     }
 
     const { term, definition, context, scripturalWitness, restorationNote, tags } = proposalData;
@@ -365,36 +365,40 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         userDisplayName: user.displayName || user.email,
     };
     
-    if (id) {
-        // This is an update to an existing proposal
-        const proposalRef = doc(firestore, 'users', user.uid, 'glossaryProposals', id);
-        updateDocumentNonBlocking(proposalRef, { ...payload, updatedAt: serverTimestamp() });
-        toast({ title: 'Proposal Updated!', description: 'Your changes have been submitted for review.' });
-    } else {
-        // This is a new proposal
-        const userProposalsCol = collection(firestore, 'users', user.uid, 'glossaryProposals');
-        // Let addDoc generate the ID, which we will use in both documents
-        const newProposalRef = doc(userProposalsCol);
-        
-        // This is a reference to the global proposals collection that admins see
-        const globalProposalsCol = collection(firestore, 'glossaryProposals');
-        const newGlobalProposalRef = doc(globalProposalsCol, newProposalRef.id); // Use same ID
+    try {
+        if (id) {
+            // This is an update to an existing proposal in the user's subcollection
+            const proposalRef = doc(firestore, 'users', user.uid, 'glossaryProposals', id);
+            await updateDocumentNonBlocking(proposalRef, { ...payload, updatedAt: serverTimestamp() });
+            
+            // Also update the global proposal
+            const globalProposalRef = doc(firestore, 'glossaryProposals', id);
+            await updateDocumentNonBlocking(globalProposalRef, { ...payload, updatedAt: serverTimestamp() });
 
-        const batch = writeBatch(firestore);
+            toast({ title: 'Proposal Updated!', description: 'Your changes have been submitted for review.' });
+        } else {
+            // This is a new proposal
+            const userProposalsCol = collection(firestore, 'users', user.uid, 'glossaryProposals');
+            const newProposalRef = doc(userProposalsCol);
+            
+            const globalProposalsCol = collection(firestore, 'glossaryProposals');
+            const newGlobalProposalRef = doc(globalProposalsCol, newProposalRef.id);
 
-        const dataWithTimestamp = { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+            const batch = writeBatch(firestore);
+            const dataWithTimestamp = { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
 
-        // 1. Write to the user-specific collection
-        batch.set(newProposalRef, dataWithTimestamp);
-        // 2. Write to the global collection for admin review
-        batch.set(newGlobalProposalRef, dataWithTimestamp);
+            batch.set(newProposalRef, dataWithTimestamp);
+            batch.set(newGlobalProposalRef, dataWithTimestamp);
 
-        await batch.commit();
+            await batch.commit();
 
-        toast({ title: 'Proposal Submitted!', description: 'Thank you for your contribution.' });
+            toast({ title: 'Proposal Submitted!', description: 'Thank you for your contribution.' });
+        }
+        closeAllModals();
+    } catch (error) {
+        console.error("Error saving proposal: ", error);
+        toast({ variant: 'destructive', title: 'Save Failed', description: 'There was an error submitting your proposal.' });
     }
-    
-    closeAllModals();
   }, [user, firestore, toast, closeAllModals]);
 
 
@@ -409,7 +413,11 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     let targetDateId = dateId;
     if (!targetDateId) {
       const today = new Date();
-      targetDateId = today.toISOString().split('T')[0];
+      // Use local date parts to prevent timezone shifts
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      targetDateId = `${year}-${month}-${day}`;
     }
     openModal('dailyChat', { dateId: targetDateId });
   }, [openModal]);
