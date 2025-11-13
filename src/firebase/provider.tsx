@@ -70,49 +70,44 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
-    if (!auth) { // If no Auth service instance, cannot determine user state
+    if (!auth) {
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      async (firebaseUser) => { // Auth state determined
-        if (firebaseUser) {
-          // If a user is found, update the state and we're done.
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-        } else {
-          // No user logged in, so attempt to log in the admin user.
-          try {
-            await signInWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
-            // onAuthStateChanged will be triggered again by this, so we don't need to set user state here.
-          } catch (error: any) {
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-              // The user doesn't exist, so create it.
-              try {
-                const userCredential = await createUserWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
-                // After creation, onAuthStateChanged will fire with the new user.
-                // We can optionally set state here to be faster, but the listener will handle it.
-                setUserAuthState({ user: userCredential.user, isUserLoading: false, userError: null });
-              } catch (createUserError: any) {
-                 console.error("FirebaseProvider: Auto user creation failed:", createUserError);
-                 setUserAuthState({ user: null, isUserLoading: false, userError: createUserError });
-              }
-            } else {
-              // Some other sign-in error occurred.
-              console.error("FirebaseProvider: Auto sign-in failed:", error);
-              setUserAuthState({ user: null, isUserLoading: false, userError: error });
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+      } else {
+        // No user is logged in, initiate the auto-login sequence.
+        try {
+          // Attempt to sign in first.
+          await signInWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
+          // `onAuthStateChanged` will be called again upon successful login, so we don't set state here.
+        } catch (signInError: any) {
+          // If sign-in fails because the user doesn't exist, create the account.
+          if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
+            try {
+              await createUserWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
+              // `onAuthStateChanged` will be called again upon successful creation and sign-in.
+            } catch (createError: any) {
+              console.error("FirebaseProvider: Auto user creation failed:", createError);
+              setUserAuthState({ user: null, isUserLoading: false, userError: createError });
             }
+          } else {
+            // Another sign-in error occurred.
+            console.error("FirebaseProvider: Auto sign-in failed:", signInError);
+            setUserAuthState({ user: null, isUserLoading: false, userError: signInError });
           }
         }
-      },
-      (error) => { // Auth listener error
-        console.error("FirebaseProvider: onAuthStateChanged error:", error);
-        setUserAuthState({ user: null, isUserLoading: false, userError: error });
       }
-    );
-    return () => unsubscribe(); // Cleanup
-  }, [auth]); // Depends on the auth instance
+    }, (error) => {
+      console.error("FirebaseProvider: Auth state listener error:", error);
+      setUserAuthState({ user: null, isUserLoading: false, userError: error });
+    });
+
+    return () => unsubscribe(); // Cleanup subscription on unmount
+  }, [auth]);
 
   // Effect to create user document in Firestore on first login
   useEffect(() => {
