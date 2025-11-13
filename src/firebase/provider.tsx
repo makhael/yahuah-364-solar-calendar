@@ -1,12 +1,10 @@
-
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
-import { initiateAnonymousSignIn } from './non-blocking-login';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener'
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -65,35 +63,31 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 }) => {
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
     user: null,
-    isUserLoading: true, 
+    isUserLoading: true, // Start loading until first auth event
     userError: null,
   });
 
+  // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
-    // DEVELOPMENT OVERRIDE: Simulate a specific admin user login
-    const mockAdminUser = {
-      uid: 'mock-admin-uid-sheldon',
-      email: 'sheldonharding@gmail.com',
-      displayName: 'Sheldon Harding (Admin)',
-      photoURL: null,
-      emailVerified: true,
-      isAnonymous: false,
-      // Add other necessary properties from the User type with dummy values
-      providerData: [],
-      metadata: {},
-      tenantId: null,
-      providerId: 'password',
-      delete: async () => {},
-      getIdToken: async () => 'mock-token',
-      getIdTokenResult: async () => ({ token: 'mock-token', claims: {}, authTime: '', expirationTime: '', issuedAtTime: '', signInProvider: null, signInSecondFactor: null }),
-      reload: async () => {},
-      toJSON: () => ({}),
-    } as User;
-    
-    // Set ONLY the mock user and stop loading. Do not perform any real auth.
-    setUserAuthState({ user: mockAdminUser, isUserLoading: false, userError: null });
+    if (!auth) { // If no Auth service instance, cannot determine user state
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
+      return;
+    }
 
-  }, [auth]);
+    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (firebaseUser) => { // Auth state determined
+        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+      },
+      (error) => { // Auth listener error
+        console.error("FirebaseProvider: onAuthStateChanged error:", error);
+        setUserAuthState({ user: null, isUserLoading: false, userError: error });
+      }
+    );
+    return () => unsubscribe(); // Cleanup
+  }, [auth]); // Depends on the auth instance
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
@@ -166,13 +160,7 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
   const memoized = useMemo(factory, deps);
   
   if(typeof memoized !== 'object' || memoized === null) return memoized;
-  if (!('__memo' in memoized)) {
-    try {
-        (memoized as MemoFirebase<T>).__memo = true;
-    } catch (e) {
-        // This might fail if the object is frozen, but we'll try.
-    }
-  }
+  (memoized as MemoFirebase<T>).__memo = true;
   
   return memoized;
 }

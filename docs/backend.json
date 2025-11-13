@@ -1,199 +1,111 @@
-
 {
   "entities": {
-    "MonthInfo": {
+    "CalendarEvent": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "MonthInfo",
+      "title": "CalendarEvent",
       "type": "object",
-      "description": "Stores information about each month in the Yahuah 364-day calendar.",
+      "description": "Represents an event in the 364-day calendar, including appointed times, sabbaths, and other significant days.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the month (1-12).  Acts as the primary key."
+          "description": "Unique identifier for the calendar event."
         },
-        "name": {
-          "type": "string",
-          "description": "Name of the month (e.g., Aviv, Ziv, Sivan)."
+        "month": {
+          "type": "number",
+          "description": "The month of the event (1-12)."
         },
-        "significance": {
-          "type": "string",
-          "description": "Biblical significance of the month."
+        "day": {
+          "type": "number",
+          "description": "The day of the event (1-31)."
         },
-        "torahName": {
-          "type": "string",
-          "description": "The Torah name of the month, if applicable."
+        "year": {
+          "type": "number",
+          "description": "The Gregorian year the event occurs in."
         },
-        "prophetic": {
+        "title": {
           "type": "string",
-          "description": "Prophetic fulfillment associated with the month."
-        },
-        "deception": {
-          "type": "string",
-          "description": "Deception or teaching point related to the month."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "significance"
-      ]
-    },
-    "Appointment": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Appointment",
-      "type": "object",
-      "description": "Stores information about specific appointed times (Moedim) within the calendar.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the appointment, in the format 'month-day' (e.g., '1-14' for Passover). Acts as the primary key."
-        },
-        "label": {
-          "type": "string",
-          "description": "Label or name of the appointment (e.g., Passover, Yom Teruah)."
-        },
-        "shortLabel": {
-          "type": "string",
-          "description": "Short label for the appointment (e.g., Pesach, Trumpets)."
+          "description": "Title of the event (e.g., Passover, Weekly Sabbath)."
         },
         "type": {
           "type": "string",
-          "description": "Type of the appointment (e.g., moedim, high-sabbath)."
+          "description": "Type of the event (e.g., moedim, high-sabbath, tekufah, transitional, work)."
         },
-        "refs": {
+        "description": {
           "type": "string",
-          "description": "Scriptural references for the appointment."
+          "description": "Detailed description of the event, including its meaning and prophetic significance."
         },
-        "microcopy": {
-          "type": "string",
-          "description": "Microcopy or short description of the appointment."
+        "scripturalReferences": {
+          "type": "array",
+          "description": "Array of scriptural references related to the event.",
+          "items": {
+            "type": "string"
+          }
         },
-        "meaning": {
-          "type": "string",
-          "description": "Meaning or significance of the appointment."
-        },
-        "prophetic": {
-          "type": "string",
-          "description": "Prophetic fulfillment related to the appointment."
-        },
-        "hebrewName": {
-          "type": "string",
-          "description": "Hebrew name of the appointment."
-        },
-        "dayCycle": {
-          "type": "string",
-          "description": "Indicates whether the date goes from Sunrise to Sunrise, or Evening to Evening"
-        },
-        "instructions": {
-          "type": "string",
-          "description": "Instructions or observances for the appointment."
+        "isSabbath": {
+          "type": "boolean",
+          "description": "Indicates whether the event is a Sabbath day."
         }
       },
       "required": [
         "id",
-        "label",
+        "month",
+        "day",
+        "year",
+        "title",
         "type",
-        "refs",
-        "meaning"
+        "description",
+        "scripturalReferences",
+        "isSabbath"
       ]
     },
-    "Tekufah": {
+    "Settings": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Tekufah",
+      "title": "Settings",
       "type": "object",
-      "description": "Stores details about the Tekufot (seasonal turning points) in the calendar.",
+      "description": "Represents user-specific settings for the calendar application.",
       "properties": {
         "id": {
+          "type": "string",
+          "description": "Unique identifier for the settings."
+        },
+        "startYear": {
           "type": "number",
-          "description": "Unique identifier for the Tekufah, corresponding to the month number (3, 6, 9, 12). Acts as the primary key."
+          "description": "The gregorian year the calendar starts."
         },
-        "label": {
+        "gregorianStart": {
           "type": "string",
-          "description": "Label or name of the Tekufah (e.g., Vernal Tekufah)."
-        },
-        "position": {
-          "type": "string",
-          "description": "Position of the Tekufah in the year (e.g., End of Month 3)."
-        },
-        "function": {
-          "type": "string",
-          "description": "Function or purpose of the Tekufah."
-        },
-        "refs": {
-          "type": "string",
-          "description": "Scriptural references for the Tekufah."
-        },
-        "result": {
-          "type": "string",
-          "description": "Result or outcome of the Tekufah."
+          "description": "User-selected Gregorian start date (M1D1) in YYYY-MM-DD format.",
+          "format": "date"
         }
       },
       "required": [
         "id",
-        "label",
-        "position",
-        "function",
-        "refs",
-        "result"
-      ]
-    },
-    "WeekdayOrigin": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "WeekdayOrigin",
-      "type": "object",
-      "description": "Stores the origin information for each day of the week.",
-      "properties": {
-        "id": {
-          "type": "number",
-          "description": "Unique identifier for the weekday (0-6, Sunday to Saturday). Acts as the primary key."
-        },
-        "en": {
-          "type": "string",
-          "description": "English name of the weekday."
-        },
-        "deity": {
-          "type": "string",
-          "description": "Deity associated with the weekday."
-        },
-        "culture": {
-          "type": "string",
-          "description": "Culture of origin for the weekday name."
-        },
-        "note": {
-          "type": "string",
-          "description": "Additional note or explanation about the weekday's origin."
-        }
-      },
-      "required": [
-        "id",
-        "en",
-        "deity",
-        "culture",
-        "note"
+        "startYear",
+        "gregorianStart"
       ]
     },
     "GlossaryTerm": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "GlossaryTerm",
       "type": "object",
-      "description": "Stores definitions for glossary terms used within the calendar application.",
+      "description": "Represents a term and its definition used within the calendar application's glossary.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the glossary term."
+        },
         "term": {
           "type": "string",
-          "description": "The glossary term itself (e.g., Babylonian, Roman). Acts as the primary key."
-        },
-        "style": {
-          "type": "string",
-          "description": "CSS style for the term, used for formatting in the UI."
+          "description": "The glossary term itself (e.g., Babylonian, Roman)."
         },
         "definition": {
           "type": "string",
-          "description": "Definition or explanation of the glossary term."
+          "description": "The definition of the term."
         }
       },
       "required": [
+        "id",
         "term",
-        "style",
         "definition"
       ]
     },
@@ -201,90 +113,50 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "PodcastSeries",
       "type": "object",
-      "description": "Stores information about different podcast series related to the calendar's themes.",
+      "description": "Represents a podcast series available for listening, including its episodes and status.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the podcast series."
+        },
         "code": {
           "type": "string",
-          "description": "Unique code for the podcast series (e.g., SC, LD). Acts as the primary key."
+          "description": "A short code identifying the series (e.g., SC, LD)."
         },
         "title": {
           "type": "string",
-          "description": "Title of the podcast series."
-        },
-        "status": {
-          "type": "string",
-          "description": "Status of the series (e.g., Done, In Progress, Coming Soon)."
+          "description": "The title of the podcast series."
         },
         "description": {
           "type": "string",
-          "description": "Description of the podcast series."
+          "description": "A brief description of the series' content."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the series (e.g., Done, In Progress, Coming Soon)."
         },
         "episodes": {
           "type": "array",
-          "description": "Array of episode titles for the series (if status is 'Done').",
+          "description": "Array of episode titles in the series.",
           "items": {
             "type": "string"
           }
-        },
-        "episodesPlanned": {
-          "type": "array",
-          "description": "Array of planned episode titles for the series (if status is not 'Done').",
-          "items": {
-            "type": "string"
-          }
-        },
-        "nextUp": {
-          "type": "string",
-          "description": "Information about what is coming next for the series."
         },
         "listenUrl": {
           "type": "string",
-          "description": "URL to listen to the podcast series."
+          "description": "URL where the podcast series can be listened to.",
+          "format": "uri"
         }
       },
       "required": [
+        "id",
         "code",
         "title",
+        "description",
         "status",
-        "description"
+        "episodes",
+        "listenUrl"
       ]
-    },
-     "ScriptureReading": {
-      "title": "Scripture Reading",
-      "description": "A user-submitted scripture reading for a specific day.",
-      "type": "object",
-      "properties": {
-        "scripture": { "type": "string" },
-        "userId": { "type": "string" },
-        "userDisplayName": { "type": "string" },
-        "date": { "type": "string", "format": "date" },
-        "upvoters": { "type": "array", "items": { "type": "string" } },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "status": {
-            "type": "string",
-            "enum": ["pending", "approved", "rejected"],
-            "description": "Moderation status of the scripture submission."
-        }
-      },
-      "required": ["scripture", "userId", "date", "createdAt", "status"]
-    },
-    "GlossaryProposal": {
-      "title": "Glossary Proposal",
-      "description": "A user's proposal for a new or updated glossary term.",
-      "type": "object",
-      "properties": {
-        "term": { "type": "string" },
-        "definition": { "type": "string" },
-        "context": { "type": "string" },
-        "scripturalWitness": { "type": "string" },
-        "restorationNote": { "type": "string" },
-        "tags": { "type": "array", "items": { "type": "string" } },
-        "userId": { "type": "string" },
-        "userDisplayName": { "type": "string" },
-        "status": { "enum": ["pending", "approved", "rejected"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["term", "definition", "userId", "userDisplayName", "status", "createdAt"]
     }
   },
   "auth": {
@@ -296,125 +168,74 @@
   "firestore": {
     "structure": [
       {
-        "path": "/monthInfos/{monthInfoId}",
+        "path": "/users/{userId}/settings/{settingsId}",
         "definition": {
-          "entityName": "MonthInfo",
+          "entityName": "Settings",
           "schema": {
-            "$ref": "#/backend/entities/MonthInfo"
+            "$ref": "#/backend/entities/Settings"
           },
-          "description": "Stores information about each month in the Yahuah 364-day calendar.",
+          "description": "Stores user-specific settings. Path-based ownership ensures only the user can access their own settings.",
           "params": [
             {
-              "name": "monthInfoId",
-              "description": "The unique identifier for the month (1-12)."
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "settingsId",
+              "description": "The unique identifier for settings object."
             }
           ]
         }
       },
       {
-        "path": "/appointments/{appointmentId}",
+        "path": "/calendar_events/{calendarEventId}",
         "definition": {
-          "entityName": "Appointment",
+          "entityName": "CalendarEvent",
           "schema": {
-            "$ref": "#/backend/entities/Appointment"
+            "$ref": "#/backend/entities/CalendarEvent"
           },
-          "description": "Stores information about specific appointed times (Moedim) within the calendar.",
+          "description": "Stores calendar events. No authorization dependencies.",
           "params": [
             {
-              "name": "appointmentId",
-              "description": "The unique identifier for the appointment (e.g., '1-14' for Passover)."
+              "name": "calendarEventId",
+              "description": "The unique identifier for the calendar event."
             }
           ]
         }
       },
       {
-        "path": "/tekufot/{tekufahId}",
-        "definition": {
-          "entityName": "Tekufah",
-          "schema": {
-            "$ref": "#/backend/entities/Tekufah"
-          },
-          "description": "Stores details about the Tekufot (seasonal turning points) in the calendar.",
-          "params": [
-            {
-              "name": "tekufahId",
-              "description": "The unique identifier for the Tekufah (3, 6, 9, 12)."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/weekdayOrigins/{weekdayOriginId}",
-        "definition": {
-          "entityName": "WeekdayOrigin",
-          "schema": {
-            "$ref": "#/backend/entities/WeekdayOrigin"
-          },
-          "description": "Stores the origin information for each day of the week.",
-          "params": [
-            {
-              "name": "weekdayOriginId",
-              "description": "The unique identifier for the weekday (0-6, Sunday to Saturday)."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/glossaryTerms/{glossaryTermId}",
+        "path": "/glossary_terms/{glossaryTermId}",
         "definition": {
           "entityName": "GlossaryTerm",
           "schema": {
             "$ref": "#/backend/entities/GlossaryTerm"
           },
-          "description": "Stores definitions for glossary terms used within the calendar application.",
+          "description": "Stores glossary terms. No authorization dependencies.",
           "params": [
             {
               "name": "glossaryTermId",
-              "description": "The glossary term itself (e.g., Babylonian, Roman)."
+              "description": "The unique identifier for the glossary term."
             }
           ]
         }
       },
       {
-        "path": "/podcastSeries/{podcastSeriesId}",
+        "path": "/podcast_series/{podcastSeriesId}",
         "definition": {
           "entityName": "PodcastSeries",
           "schema": {
             "$ref": "#/backend/entities/PodcastSeries"
           },
-          "description": "Stores information about different podcast series related to the calendar's themes.",
+          "description": "Stores podcast series. No authorization dependencies.",
           "params": [
             {
               "name": "podcastSeriesId",
-              "description": "Unique code for the podcast series (e.g., SC, LD)."
+              "description": "The unique identifier for the podcast series."
             }
           ]
         }
-      },
-      {
-        "path": "/scriptureReadings/{readingId}",
-        "definition": {
-            "entityName": "ScriptureReading",
-            "schema": { "$ref": "#/entities/ScriptureReading" },
-            "description": "A root-level collection for all user-submitted scripture readings.",
-            "params": [
-                { "name": "readingId", "description": "The unique ID for the scripture reading." }
-            ]
-        }
-      },
-      {
-        "path": "/users/{userId}/glossaryProposals/{proposalId}",
-        "definition": {
-            "entityName": "GlossaryProposal",
-            "schema": { "$ref": "#/entities/GlossaryProposal" },
-            "description": "User-specific collection of their glossary proposals.",
-            "params": [
-                { "name": "userId", "description": "The user's unique ID." },
-                { "name": "proposalId", "description": "The unique ID for the proposal." }
-            ]
-        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to store information related to the Yahuah 364-day solar calendar. Scripture readings are stored in a root-level collection to simplify admin queries, with each document containing a 'userId' to link back to the submitter. User-submitted content like glossary proposals are stored in subcollections under the user's document to allow for efficient querying and user-specific views, which is a secure and scalable approach."
+    "reasoning": "The Firestore data structure is designed to store calendar events, user settings, glossary terms, and podcast series. User-specific data (settings) are stored under the `/users/{userId}` path, ensuring private data is isolated. Calendar events, glossary terms, and podcast series are stored in top-level collections as they are global and not user-specific.\n\n**Authorization Independence:** All collections, including user settings, rely on simple path-based authorization (user-owned data). No `get()` calls are needed in the security rules.\n\n**QAPs Support:**\n*   `users/{userId}/settings`:  Secure `list` operations are supported because only the user with the matching `userId` can access their settings. This uses Path-Based Ownership.\n*   `calendar_events`, `glossary_terms`, `podcast_series`: These collections do not store any personal information and can be made publicly readable (if desired) or restricted to admin access. Secure `list` operations are naturally supported because of Structural Segregation. All documents share the same security posture."
   }
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -53,13 +52,13 @@ export interface InternalQuery extends Query<DocumentData> {
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
-  memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & { __memo?: boolean }) | null | undefined,
+    memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
 ): UseCollectionResult<T> {
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
@@ -73,6 +72,7 @@ export function useCollection<T = any>(
     setIsLoading(true);
     setError(null);
 
+    // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {
@@ -84,23 +84,12 @@ export function useCollection<T = any>(
         setError(null);
         setIsLoading(false);
       },
-      (snapshotError: FirestoreError) => {
+      (error: FirestoreError) => {
         // This logic extracts the path from either a ref or a query
         const path: string =
           memoizedTargetRefOrQuery.type === 'collection'
             ? (memoizedTargetRefOrQuery as CollectionReference).path
             : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
-
-        // GRACEFUL HANDLING: If we get a permission error, it's likely because the user is not yet authenticated
-        // on initial load. Instead of crashing, we'll set the data to an empty array. The hook will re-run
-        // once auth state changes.
-        if (snapshotError.code === 'permission-denied') {
-          console.warn(`Firestore permission denied for path: "${path}". This can happen on initial load before authentication is complete. Treating as empty array for now.`);
-          setData([]); // Set data to empty array to allow UI to render
-          setIsLoading(false);
-          setError(null); // Set local error to null to prevent crash.
-          return; // Stop further error propagation for this specific case.
-        }
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
@@ -118,10 +107,8 @@ export function useCollection<T = any>(
 
     return () => unsubscribe();
   }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
-
-  if (memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error('useCollection query was not properly memoized using useMemoFirebase. This will cause infinite loops.');
+  if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
+    throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
   }
-
   return { data, isLoading, error };
 }
