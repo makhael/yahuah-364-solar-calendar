@@ -54,7 +54,7 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
 
   const { user } = useUser();
   const { toast } = useToast();
-  const { handleSaveGlossaryProposal } = useUI();
+  const { handleSaveGlossaryProposal, closeAllModals } = useUI();
 
   const handleSave = async (data: ProposalFormData) => {
     if (!user || user.isAnonymous) {
@@ -62,7 +62,13 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
       return;
     }
 
-    await handleSaveGlossaryProposal(data, proposal?.id);
+    try {
+        await handleSaveGlossaryProposal(data, proposal?.id);
+        // Do not close modal here, it's handled in the context now
+    } catch (error) {
+        console.error("Failed to save proposal:", error);
+        // Toast is handled in context
+    }
   }
   
   useEffect(() => {

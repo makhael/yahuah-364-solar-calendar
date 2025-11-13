@@ -366,12 +366,31 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     };
     
     if (id) {
+        // This is an update to an existing proposal
         const proposalRef = doc(firestore, 'users', user.uid, 'glossaryProposals', id);
         updateDocumentNonBlocking(proposalRef, { ...payload, updatedAt: serverTimestamp() });
         toast({ title: 'Proposal Updated!', description: 'Your changes have been submitted for review.' });
     } else {
-        const proposalRef = doc(collection(firestore, 'users', user.uid, 'glossaryProposals'));
-        addDocumentNonBlocking(proposalRef, { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+        // This is a new proposal
+        const userProposalsCol = collection(firestore, 'users', user.uid, 'glossaryProposals');
+        // Let addDoc generate the ID, which we will use in both documents
+        const newProposalRef = doc(userProposalsCol);
+        
+        // This is a reference to the global proposals collection that admins see
+        const globalProposalsCol = collection(firestore, 'glossaryProposals');
+        const newGlobalProposalRef = doc(globalProposalsCol, newProposalRef.id); // Use same ID
+
+        const batch = writeBatch(firestore);
+
+        const dataWithTimestamp = { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+
+        // 1. Write to the user-specific collection
+        batch.set(newProposalRef, dataWithTimestamp);
+        // 2. Write to the global collection for admin review
+        batch.set(newGlobalProposalRef, dataWithTimestamp);
+
+        await batch.commit();
+
         toast({ title: 'Proposal Submitted!', description: 'Thank you for your contribution.' });
     }
     
