@@ -75,10 +75,13 @@ service cloud.firestore {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+      // Admin list permission restored here
+      allow list: if isAdmin();
     }
 
     match /scriptureReadings {
-      allow list: if (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') || request.query.where[0][2] == 'approved';
+      // Public list permission restored here
+      allow list: if request.query.where[0][2] == 'approved';
     }
 
     match /podcast_series/{podcastSeriesId} {
