@@ -20,8 +20,8 @@ service cloud.firestore {
     }
     
     match /appointments/{appointmentId} {
-      allow get: if true;
-      allow list: if isAdmin() || (isSignedIn() && request.query.filters[0].field == 'inviteScope' && request.query.filters[0].value.toSet().hasAll(['all', 'community']));
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow write: if isSignedIn();
     }
 
@@ -81,10 +81,10 @@ service cloud.firestore {
     }
     
     match /scriptureReadings/{readingId} {
-      allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-      allow list: if request.query.filters.size() > 0 && request.query.filters[0].field == 'status' && request.query.filters[0].value == 'approved';
     }
 
     match /podcast_series/{podcastSeriesId} {
