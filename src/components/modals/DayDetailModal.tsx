@@ -92,7 +92,7 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
 
     const appointmentsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !isUserFullyAuthenticated) return null;
         
         let baseQuery = query(collection(firestore, 'appointments'));
         
@@ -100,14 +100,13 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
             return baseQuery;
         }
 
-        if (user) { // This covers both fully authenticated and anonymous users
+        if (user) {
              return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
         }
         
-        // This case handles when user is null (completely logged out)
         return query(baseQuery, where('inviteScope', '==', 'all'));
 
-    }, [firestore, user, isAdmin]);
+    }, [firestore, user, isAdmin, isUserFullyAuthenticated]);
     
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
