@@ -142,9 +142,9 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   }, [user, firestore]);
   
   const presetsQuery = useMemoFirebase(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
+    if (isUserLoading || !user || !user.uid || user.isAnonymous || !firestore) return null;
     return query(collection(firestore, 'users', user.uid, 'calendarPresets'), orderBy('createdAt', 'asc'));
-  }, [user, firestore]);
+  }, [isUserLoading, user, firestore]);
 
   const { data: preferenceData } = useDoc<{ equinoxStart: string; activePresetId?: string }>(preferenceRef);
   const { data: presets, isLoading: arePresetsLoading } = useCollection<any>(presetsQuery);
