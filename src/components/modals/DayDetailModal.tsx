@@ -22,7 +22,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/context/UIContext';
 import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MarkdownRenderer } from '../common/MarkdownRenderer';
 import { add, isBefore, isEqual, startOfDay, isAfter } from 'date-fns';
 import { ScriptureSubmission } from '../scriptures/ScriptureSubmission';
@@ -431,16 +431,15 @@ export const DayDetailModal = ({ info }: ModalProps) => {
   const { toast } = useToast();
   const { user } = useUser();
   const router = useRouter();
+  const [showProposalSection, setShowProposalSection] = useState(false);
 
   const gregorianDate = useMemo(() => {
     if (info.gregorianDate) {
       return info.gregorianDate;
     }
     if (info.dateId) {
-      // Interpret the date string in the local timezone by not adding 'Z'
       return new Date(info.dateId + 'T00:00:00');
     }
-    // This should not happen in normal flow, but provides a fallback
     return new Date();
   }, [info.gregorianDate, info.dateId]);
 
@@ -458,7 +457,6 @@ export const DayDetailModal = ({ info }: ModalProps) => {
   
   const dayOfWeek = useMemo(() => {
       if (yahuahDay === undefined) return 0;
-      // Day 1 is Yom Rishon (index 0), so we subtract 1
       return (yahuahDay - 1) % 7;
   }, [yahuahDay]);
 
@@ -620,8 +618,21 @@ export const DayDetailModal = ({ info }: ModalProps) => {
         <div className="overflow-y-auto flex-grow p-6 pt-2 space-y-4">
             <CommunityAppointments dateId={dateId} dayOfWeek={dayOfWeek} />
             <CommunityScriptures dateId={dateId} />
+            
             <ScriptureSubmission dateId={dateId} />
-            <GlossaryProposalSubmission />
+            
+            {user && !user.isAnonymous && (
+                <div className="bg-secondary/50 p-4 rounded-lg border">
+                    <Button variant="outline" className="w-full" onClick={() => setShowProposalSection(!showProposalSection)}>
+                        {showProposalSection ? 'Hide' : 'Show'} Glossary Proposal
+                    </Button>
+                    {showProposalSection && (
+                        <div className="mt-4">
+                            <GlossaryProposalSubmission />
+                        </div>
+                    )}
+                </div>
+            )}
             
             {meaningText && (
               <div className="bg-secondary/50 p-4 rounded-lg border">
