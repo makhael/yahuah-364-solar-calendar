@@ -60,9 +60,10 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
     const scripturesQuery = useMemoFirebase(() => {
         if (isUserLoading || !user || user.isAnonymous || !firestore) return null;
         
+        // Query for the user's own scriptures
         return query(
             collection(firestore, 'scriptureReadings'), 
-            where('status', '==', 'approved'),
+            where('userId', '==', user.uid),
             orderBy('date', 'desc')
         );
     }, [firestore, user, isUserLoading]);
@@ -112,9 +113,9 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
             return (
                 <div className="flex flex-col items-center justify-center p-8 text-center h-full">
                     <LogIn className="w-12 h-12 text-muted-foreground mb-4" />
-                    <h3 className="font-semibold text-foreground text-lg">Sign In to View Scriptures</h3>
+                    <h3 className="font-semibold text-foreground text-lg">Sign In to View Your Scriptures</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                        The community scripture library is available to signed-in members.
+                        Your personal scripture submission library is available when you are signed in.
                     </p>
                 </div>
             )
@@ -133,10 +134,10 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
                  <div className="flex flex-col items-center justify-center p-8 text-center h-full">
                     <BookOpen className="w-12 h-12 text-muted-foreground mb-4" />
                     <h3 className="font-semibold text-foreground text-lg">
-                        {searchTerm ? `No Results for "${searchTerm}"` : "No Scriptures Yet"}
+                        {searchTerm ? `No Results for "${searchTerm}"` : "No Submissions Yet"}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                        {searchTerm ? "Try searching for a different term." : "No community scriptures have been approved yet."}
+                        {searchTerm ? "Try searching for a different term." : "You have not submitted any scriptures yet."}
                     </p>
                 </div>
             )
@@ -211,9 +212,9 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
                     <BookOpen className="w-8 h-8 text-primary mt-1 flex-shrink-0" />
                     <div>
                         <h2 className="text-2xl font-bold text-foreground">
-                            Community Scripture Library
+                            My Scripture Submissions
                         </h2>
-                        <p className="text-sm text-muted-foreground">An archive of all approved scripture submissions.</p>
+                        <p className="text-sm text-muted-foreground">An archive of all scriptures you have submitted.</p>
                     </div>
                 </div>
             </div>
@@ -224,7 +225,7 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
                         <Input 
                             type="text"
-                            placeholder="Search by scripture reference or user..."
+                            placeholder="Search your submitted scriptures..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-10 bg-background/50"

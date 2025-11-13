@@ -31,7 +31,7 @@ export const CalendarFooter = () => {
                             </Button>
                             <Button variant="outline" onClick={() => openModal('fullScriptures')} className="w-full sm:w-auto flex-shrink-0">
                                 <BookOpen className="font-sans mr-2 h-4 w-4" />
-                                All Scriptures
+                                My Scriptures
                             </Button>
                         </div>
                     </div>
