@@ -64,10 +64,10 @@ service cloud.firestore {
     
     match /scriptureReadings/{readingId} {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
-      // Admins can list any scriptures. Users can list their own submissions.
-      allow list: if isAdmin() || (isSignedIn() && request.query.userId == request.auth.uid);
+      // Allow any authenticated user to list scriptures. This will be refined later.
+      allow list: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.userId));
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     match /podcast_series/{podcastSeriesId} {
