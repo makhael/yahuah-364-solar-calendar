@@ -132,7 +132,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                           <AlertDialogTrigger asChild>
                              <Button variant="secondary" size="sm">
                                 <LogIn className="w-4 h-4 mr-2"/>
-                                Switch
+                                Switch User
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -273,7 +273,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                           </Select>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                               <Button variant="ghost" size="icon">
+                               <Button variant="ghost" size="icon" title="Switch User">
                                 <LogIn className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
