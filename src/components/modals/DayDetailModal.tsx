@@ -23,11 +23,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useRouter } from 'next/navigation';
 import { useUI } from '@/context/UIContext';
 import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { MarkdownRenderer } from '../common/MarkdownRenderer';
 import { add, isBefore, isEqual, startOfDay, isAfter } from 'date-fns';
 import { ScriptureSubmission } from '../scriptures/ScriptureSubmission';
 import { CommunityScriptures } from '../scriptures/CommunityScriptures';
+import { GlossaryProposalSubmission } from '../glossary/GlossaryProposalSubmission';
 
 
 const noteSchema = z.object({
@@ -621,6 +622,7 @@ export const DayDetailModal = ({ info }: ModalProps) => {
             <CommunityAppointments dateId={dateId} dayOfWeek={dayOfWeek} />
             <CommunityScriptures dateId={dateId} />
             <ScriptureSubmission dateId={dateId} />
+            <GlossaryProposalSubmission />
             
             {meaningText && (
               <div className="bg-secondary/50 p-4 rounded-lg border">
