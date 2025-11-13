@@ -63,12 +63,9 @@ service cloud.firestore {
     }
     
     match /scriptureReadings/{readingId} {
-      // Admins can read any scripture. Users can read their own, or any approved scripture.
-      allow get: if isAdmin() || (isSignedIn() && isOwner(resource.data.userId)) || resource.data.status == 'approved';
-      
-      // Admins can list scriptures if they are querying by status. Users can list their own.
-      allow list: if (isAdmin() && request.query.keys().hasAny(['status'])) || (isSignedIn() && request.query.userId == request.auth.uid);
-      
+      allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      // Admins can list any scriptures. Users can list their own submissions.
+      allow list: if isAdmin() || (isSignedIn() && request.query.userId == request.auth.uid);
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.userId));
     }
