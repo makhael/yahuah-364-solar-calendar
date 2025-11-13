@@ -63,7 +63,10 @@ export default function ForumManagement() {
   };
 
   const handleCreateTopic = () => {
-    if (!firestore || !user || !user.displayName) return;
+    if (!firestore || !user || !user.displayName) {
+        toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide a title and description.' });
+        return;
+    }
     if (!newTopicTitle || !newTopicDescription) {
         toast({ variant: 'destructive', title: 'Missing Information', description: 'Please provide a title and description.' });
         return;
@@ -225,5 +228,3 @@ export default function ForumManagement() {
     </>
   );
 }
-
-    
