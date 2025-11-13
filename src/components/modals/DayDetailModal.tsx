@@ -91,23 +91,30 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const { data: userProfile } = useDoc<{ role?: string }>(userProfileRef);
     const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
 
-    const appointmentsQuery = useMemoFirebase(() => {
+    // Query for public appointments, safe for all users
+    const publicAppointmentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
+        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
+    }, [firestore]);
 
-        const baseQuery = collection(firestore, 'appointments');
-        
-        // Admins can see all appointments without filtering.
-        if (isAdmin) {
-            return baseQuery;
-        }
-
-        // For all other users (signed-in members and anonymous guests),
-        // we must apply a filter to comply with security rules.
-        return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
-
-    }, [firestore, isAdmin]);
+    // Query for community appointments, only runs for signed-in users
+    const communityAppointmentsQuery = useMemoFirebase(() => {
+        if (!firestore || !isUserFullyAuthenticated) return null;
+        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'community'));
+    }, [firestore, isUserFullyAuthenticated]);
     
-    const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
+    const { data: publicAppointments, isLoading: isLoadingPublic } = useCollection<Appointment>(publicAppointmentsQuery);
+    const { data: communityAppointments, isLoading: isLoadingCommunity } = useCollection<Appointment>(communityAppointmentsQuery);
+
+    const allAppointments = useMemo(() => {
+        const appointments = publicAppointments || [];
+        if (isUserFullyAuthenticated && communityAppointments) {
+            return [...appointments, ...communityAppointments];
+        }
+        return appointments;
+    }, [publicAppointments, communityAppointments, isUserFullyAuthenticated]);
+
+    const areAppointmentsLoading = isLoadingPublic || (isUserFullyAuthenticated && isLoadingCommunity);
 
     const appointmentsForDay = useMemo(() => {
         if (!allAppointments) return [];
@@ -147,7 +154,9 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         if (!isUserFullyAuthenticated) {
             return combined.filter(app => app.inviteScope === 'all');
         }
-
+        
+        // For signed-in users, private events must be fetched and added separately if we support them.
+        // For now, this logic correctly filters public and community.
         return combined.filter(app => 
             app.inviteScope === 'all' || 
             app.inviteScope === 'community' ||
@@ -221,36 +230,16 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         router.push('/login');
     };
 
-    if (areAppointmentsLoading && !isUserFullyAuthenticated) {
+    if (areAppointmentsLoading) {
         return (
             <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
                 <LoaderCircle className="animate-spin" />
             </div>
         )
     }
-
-    if (!isUserFullyAuthenticated) {
-      return (
-          <div className="bg-secondary/50 p-4 rounded-lg border">
-              <h3 className="text-base font-semibold text-foreground mb-2 flex items-center gap-2"><CalendarDays className="w-5 h-5"/> Community Appointments</h3>
-              <p className="text-sm text-muted-foreground">Sign in to view and RSVP to community events for this day.</p>
-              <Button onClick={handleSignIn} className="mt-3" size="sm">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
-              </Button>
-          </div>
-      )
-    }
-
-    if (areAppointmentsLoading) {
-      return (
-            <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
-                <LoaderCircle className="animate-spin" />
-            </div>
-        )
-    }
-
-    if (!appointmentsForDay || appointmentsForDay.length === 0) {
+    
+    if (appointmentsForDay.length === 0) {
+        // Don't show the component if there's nothing to display.
         return null;
     }
 
