@@ -76,11 +76,10 @@ const GLOSSARY_SECTIONS_DATA = {
         "restorationNote": "Restores familial closeness to the Creator."
     },
     "Abomination of Desolation": {
-      "hebrew": "",
-      "definition": "The final desecration of holy space.",
-      "context": "Daniel’s warning echoed by Yahusha.",
-      "restorationNote": "Recognizing it prevents deception.",
-      "scripturalWitness": "Daniel 9; Matthew 24"
+        "definition": "The final desecration of holy space.",
+        "context": "Daniel’s warning echoed by Yahusha.",
+        "scripturalWitness": "Daniel 9; Matthew 24",
+        "restorationNote": "Recognizing it prevents deception."
     },
     "Ahavah": {
         "hebrew": "אַהֲבָה",
@@ -101,7 +100,7 @@ const GLOSSARY_SECTIONS_DATA = {
         "scripturalWitness": "Leviticus 23:15.",
         "restorationNote": "Reinforces the structure built into the solar calendar."
     },
-    "Avinu": {
+    "Avinu Malkenu": {
         "hebrew": "מלכנו",
         "definition": "“Our Father, our King.”",
         "context": "Acknowledges Yahuah as both authority and protector.",
@@ -109,11 +108,16 @@ const GLOSSARY_SECTIONS_DATA = {
         "restorationNote": "Places worshippers in covenant identity."
     },
     "Aviv": {
-      "hebrew": "",
-      "definition": "The stage of barley ripeness signaling the start of the Scriptural Year. Not a “month name” originally, but an agricultural sign.",
-      "context": "Month 1 is called “Aviv” only because the barley was in the aviv stage. Later Babylonian names replaced this.",
-      "restorationNote": "Restoring Aviv removes dependence on lunar sighting and brings the year back to the agricultural sign Yahuah ordained.",
-      "scripturalWitness": "Exodus 12:2; Deuteronomy 16:1"
+        "definition": "The stage of barley ripeness signaling the start of the Scriptural Year. Not a “month name” originally, but an agricultural sign.",
+        "context": "Month 1 is called “Aviv” only because the barley was in the aviv stage. Later Babylonian names replaced this.",
+        "scripturalWitness": "Exodus 12:2; Deuteronomy 16:1",
+        "restorationNote": "Restoring Aviv removes dependence on lunar sighting and brings the year back to the agricultural sign Yahuah ordained."
+    },
+    "Aviv Month (Month 1)": {
+        "definition": "The true beginning of the year in Yahuah’s calendar. Aviv marks the renewal of life and the first month of the 364-day year.",
+        "context": "Begins the yearly Mo’edim cycle and anchors Passover and Unleavened Bread.",
+        "scripturalWitness": "Exodus 12:2; Deuteronomy 16:1",
+        "restorationNote": "Replaces the Babylonian term 'Nisan', restoring the biblical agricultural beginning."
     },
     "Babylonian": {
       "hebrew": "",
@@ -136,11 +140,10 @@ const GLOSSARY_SECTIONS_DATA = {
         "restorationNote": "Emphasizes the need for spiritual renewal."
     },
     "Beast System": {
-      "hebrew": "",
-      "definition": "Global structure of governance, commerce, and religion united against Yahuah.",
-      "context": "Not a single man.",
-      "restorationNote": "Helps identify counterfeit authority.",
-      "scripturalWitness": "Revelation 13"
+        "definition": "Global structure of governance, commerce, and religion united against Yahuah.",
+        "context": "Not a single man.",
+        "scripturalWitness": "Revelation 13",
+        "restorationNote": "Helps identify counterfeit authority."
     },
     "Bereshit": {
         "hebrew": "בְּרֵאשִׁית",
@@ -182,6 +185,12 @@ const GLOSSARY_SECTIONS_DATA = {
         "scripturalWitness": "Psalm 136",
         "restorationNote": "Reveals Yahuah’s covenant loyalty."
     },
+    "Chiastic Structure": {
+        "definition": "A Hebrew literary pattern where ideas mirror each other (A-B-C-B-A).",
+        "context": "Used throughout Torah and prophecy.",
+        "scripturalWitness": "Genesis and Psalms exhibit this structure",
+        "restorationNote": "Reveals deeper meaning and restores Hebrew thought patterns."
+    },
     "Chokhmah": {
         "hebrew": "חָכְמָה",
         "definition": "Wisdom personified.",
@@ -195,12 +204,17 @@ const GLOSSARY_SECTIONS_DATA = {
         "scripturalWitness": "Leviticus 23:15–16.",
         "restorationNote": "The restored calendar provides a fixed, non-floating count."
     },
+    "Covenant Sign": {
+        "definition": "A physical or temporal marker that identifies those in covenant with Yahuah.",
+        "context": "Sabbath, circumcision, and the Name are major covenant signs.",
+        "scripturalWitness": "Exodus 31:13",
+        "restorationNote": "Restores the understanding of signs as identifiers, not religious rituals."
+    },
     "Cup of Wrath": {
-      "hebrew": "",
-      "definition": "Symbol of Yahuah’s righteous anger poured out on rebellion.",
-      "context": "A recurring prophetic symbol.",
-      "restorationNote": "Warns against aligning with corrupted nations.",
-      "scripturalWitness": "Jeremiah 25"
+        "definition": "Symbol of Yahuah’s righteous anger poured out on rebellion.",
+        "context": "A recurring prophetic symbol.",
+        "scripturalWitness": "Jeremiah 25",
+        "restorationNote": "Warns against aligning with corrupted nations."
     },
     "Dawn-to-Dawn Day": {
         "definition": "The scriptural day counted from dawn, not midnight or sunset.",
@@ -222,11 +236,10 @@ const GLOSSARY_SECTIONS_DATA = {
       "scripturalWitness": "Leviticus 23:24, 'In the seventh month, in the first day of the month, shall ye have a sabbath, a memorial of blowing of trumpets, an holy convocation.'"
     },
     "Day of Yahuah": {
-      "hebrew": "",
-      "definition": "The climactic day of judgment and deliverance.",
-      "context": "Darkness for the wicked, light for the righteous.",
-      "restorationNote": "Aligns end-time expectation with Scripture.",
-      "scripturalWitness": "Joel 2; Zephaniah 1"
+        "definition": "The climactic day when Yahuah executes justice.",
+        "context": "A day of darkness for the wicked and salvation for the faithful.",
+        "scripturalWitness": "Joel 2; Zephaniah 1",
+        "restorationNote": "Encourages preparation and purity."
     },
     "Day of Atonement (Yom Kippur)": {
         "hebrew": "יוֹם כִּפּוּר",
@@ -281,12 +294,17 @@ const GLOSSARY_SECTIONS_DATA = {
         "scripturalWitness": "Genesis 1:10.",
         "restorationNote": "Restores the land promises."
     },
+    "Eternal Covenant": {
+        "definition": "A perpetual agreement initiated by Yahuah that cannot be nullified by man.",
+        "context": "Sabbath, priesthood, and the promises to Abraham.",
+        "scripturalWitness": "Genesis 17:7; Exodus 31:16",
+        "restorationNote": "Corrects the false belief that Yahuah's covenant was replaced."
+    },
     "Evening-Morning Order": {
-      "hebrew": "",
-      "definition": "Days beginning at sunset, not midnight or sunrise.",
-      "context": "This was the ancient Hebrew and Creation-based pattern.",
-      "restorationNote": "Rejects Roman midnight-clock systems.",
-      "scripturalWitness": "Genesis 1:5"
+        "definition": "Days beginning at sunset, not midnight or sunrise.",
+        "context": "This was the ancient Hebrew and Creation-based pattern.",
+        "scripturalWitness": "Genesis 1:5",
+        "restorationNote": "Rejects Roman midnight-clock systems."
     },
     "Evening Sacrifice": {
         "definition": "The offering given in the late afternoon, not night.",
@@ -295,11 +313,10 @@ const GLOSSARY_SECTIONS_DATA = {
         "restorationNote": "Helps anchor true Passover chronology."
     },
     "Fallen Watchers": {
-      "hebrew": "",
-      "definition": "Angels who descended, transgressed, and corrupted mankind.",
-      "context": "Their sin brought hybrid offspring and corrupted knowledge.",
-      "restorationNote": "Understanding them reveals origins of deception.",
-      "scripturalWitness": "Genesis 6; Enoch 6–15"
+        "definition": "Angels who descended, transgressed, and corrupted mankind.",
+        "context": "Their sin brought hybrid offspring and corrupted knowledge.",
+        "scripturalWitness": "Genesis 6; Enoch 6–15",
+        "restorationNote": "Understanding them reveals origins of deception."
     },
     "Feast of First Fruits": {
       "hebrew": "יוֹם הַבִּכּוּרִים",
@@ -329,12 +346,17 @@ const GLOSSARY_SECTIONS_DATA = {
       "restorationNote": "Commonly called Pentecost, its timing is directly tied to the barley harvest's First Fruits, not a floating date.",
       "scripturalWitness": "Leviticus 23:15-16, 'And ye shall count unto you from the morrow after the sabbath... even unto the morrow after the seventh sabbath shall ye number fifty days...'"
     },
+    "Gates of Heaven": {
+        "definition": "Ordered portals through which celestial lights travel — sun, moon, and stars.",
+        "context": "Foundational to Enoch's 364-day cycle.",
+        "scripturalWitness": "1 Enoch 72–82",
+        "restorationNote": "Reveals that heavenly lights operate on fixed circuits, not chaotic drift."
+    },
     "Gates of the Sun": {
-      "hebrew": "",
-      "definition": "The six portals through which the sun rises and sets over the year, explaining the seasons.",
-      "context": "Enoch describes the sun’s paths as structured gates assigned by angels.",
-      "restorationNote": "These restore a non-pagan understanding of the sun’s movement.",
-      "scripturalWitness": "Enoch 72"
+        "definition": "The six portals through which the sun rises and sets over the year, explaining the seasons.",
+        "context": "Enoch describes the sun’s paths as structured gates assigned by angels.",
+        "scripturalWitness": "Enoch 72",
+        "restorationNote": "These restore a non-pagan understanding of the sun’s movement."
     },
     "The Gathering": {
         "definition": "Collection of Yahuah’s people at Yahusha’s return.",
@@ -343,11 +365,10 @@ const GLOSSARY_SECTIONS_DATA = {
         "restorationNote": "Distinguishes from false “rapture” doctrines."
     },
     "Great Delusion": {
-      "hebrew": "",
-      "definition": "A strong deception permitted for those who reject truth.",
-      "context": "Linked to lawlessness.",
-      "restorationNote": "True disciples guard their minds from falsehood.",
-      "scripturalWitness": "2 Thessalonians 2:11"
+        "definition": "A strong deception permitted for those who reject truth.",
+        "context": "Linked to lawlessness.",
+        "scripturalWitness": "2 Thessalonians 2:11",
+        "restorationNote": "True disciples guard their minds from falsehood."
     },
     "The Great Deception": {
         "definition": "Global spiritual delusion before the end.",
@@ -356,11 +377,10 @@ const GLOSSARY_SECTIONS_DATA = {
         "restorationNote": "Highlights need for discernment."
     },
     "Great Tribulation": {
-      "hebrew": "",
-      "definition": "The period of final testing and purification.",
-      "context": "Not arbitrary suffering; a refining process.",
-      "restorationNote": "Calls believers into endurance.",
-      "scripturalWitness": "Matthew 24:21"
+        "definition": "Time of unprecedented distress.",
+        "context": "Final testing of the faithful.",
+        "scripturalWitness": "Matthew 24:21",
+        "restorationNote": "Clears false teachings of escape."
     },
     "Gregorian model": {
         "hebrew": "",
@@ -377,11 +397,10 @@ const GLOSSARY_SECTIONS_DATA = {
         "scripturalWitness": "Psalm 2:2, 'The kings of the earth set themselves, and the rulers take counsel together, against Yahuah, and against his Anointed (Mashiach)...'"
     },
     "Harlot of Babylon": {
-      "hebrew": "",
-      "definition": "The global spiritual system seducing nations away from truth.",
-      "context": "Found in Revelation 17–18.",
-      "restorationNote": "Calls the remnant to come out of her.",
-      "scripturalWitness": "Revelation 17"
+        "definition": "The global spiritual system seducing nations away from truth.",
+        "context": "Found in Revelation 17–18.",
+        "scripturalWitness": "Revelation 17",
+        "restorationNote": "Calls the remnant to come out of her."
     },
     "The Harvest": {
         "definition": "Final gathering of righteous and wicked.",
@@ -396,11 +415,22 @@ const GLOSSARY_SECTIONS_DATA = {
         "restorationNote": "The restored calendar reconnects worship to agriculture."
     },
     "Harvest of the Earth": {
-      "hebrew": "",
-      "definition": "The final division between righteous and wicked.",
-      "context": "Agricultural imagery of wheat vs tares.",
-      "restorationNote": "Encourages readiness and purity.",
-      "scripturalWitness": "Revelation 14"
+        "definition": "The final division between righteous and wicked.",
+        "context": "Agricultural imagery of wheat vs tares.",
+        "scripturalWitness": "Revelation 14",
+        "restorationNote": "Encourages readiness and purity."
+    },
+    "Heilan Emet": {
+        "definition": "Hebrew phrase meaning 'Truth Restored.'",
+        "context": "A theme for returning to ancient paths.",
+        "scripturalWitness": "Jeremiah 6:16",
+        "restorationNote": "Used for teachings emphasizing pure doctrine and time."
+    },
+    "Hellenization": {
+        "definition": "The process by which Greek culture replaced Hebrew customs, language, and worldview.",
+        "context": "Deeply affected Israel during the Greek empire’s rule.",
+        "scripturalWitness": "Daniel 8:21–25",
+        "restorationNote": "Exposes why many biblical words and concepts are now understood through Greek lenses."
     },
     "High Sabbath": {
       "hebrew": "",
@@ -408,6 +438,12 @@ const GLOSSARY_SECTIONS_DATA = {
       "context": "Examples include the first and last day of Unleavened Bread, Shavuot, Yom Teru'ah, Yom Kippur, and the first day of Sukkot.",
       "restorationNote": "The 364-day calendar often aligns these High Sabbaths with the weekly Sabbath, removing the 'double Sabbath' confusion found in other systems.",
       "scripturalWitness": "Leviticus 23:7, 'In the first day ye shall have an holy convocation: ye shall do no servile work therein.'"
+    },
+    "Idolatrous Syncretism": {
+        "definition": "Mixing the worship of Yahuah with pagan practices.",
+        "context": "Root cause of Israel's downfall.",
+        "scripturalWitness": "2 Kings 17:7–18",
+        "restorationNote": "Calls believers away from hybrid worship forms."
     },
     "Image of the Beast": {
         "definition": "Representation requiring forced worship.",
@@ -431,8 +467,8 @@ const GLOSSARY_SECTIONS_DATA = {
         "hebrew": "קָדוֹשׁ",
         "definition": "Set-apart, distinct, consecrated.",
         "context": "Not merely “holy” in a religious sense; means “set apart to Yahuah.”",
-        "restorationNote": "Restores the purity and separateness required for His people.",
-        "scripturalWitness": "Isaiah 6:3"
+        "scripturalWitness": "Isaiah 6:3",
+        "restorationNote": "Restores the purity and separateness required for His people."
     },
     "Kedushah": {
         "hebrew": "קְדוּשָׁה",
@@ -445,15 +481,14 @@ const GLOSSARY_SECTIONS_DATA = {
         "hebrew": "כֹּהֵן",
         "definition": "Priest; one who ministers before Yahuah.",
         "context": "Not interchangeable with pagan priests.",
-        "restorationNote": "The priesthood carries a function, not a title.",
-        "scripturalWitness": "Leviticus 1"
+        "scripturalWitness": "Leviticus 1",
+        "restorationNote": "The priesthood carries a function, not a title."
     },
     "Lake of Fire": {
-      "hebrew": "",
-      "definition": "The ultimate destruction of wickedness.",
-      "context": "Final separation from Yahuah.",
-      "restorationNote": "Removes confusion about eternal torment.",
-      "scripturalWitness": "Revelation 20:14"
+        "definition": "The ultimate destruction of wickedness.",
+        "context": "Final separation from Yahuah.",
+        "scripturalWitness": "Revelation 20:14",
+        "restorationNote": "Removes confusion about eternal torment."
     },
     "Latter Rain": {
         "definition": "Final outpouring of the Spirit.",
@@ -461,12 +496,18 @@ const GLOSSARY_SECTIONS_DATA = {
         "scripturalWitness": "Joel 2:23.",
         "restorationNote": "Prepares the Ekklesia for harvest."
     },
+    "Lawlessness (Anomia)": {
+        "definition": "A Greek term meaning rejection of Torah.",
+        "context": "Defines the 'mystery of lawlessness.'",
+        "scripturalWitness": "2 Thessalonians 2:7",
+        "restorationNote": "Restores the connection between sin and violation of Torah."
+    },
     "Lechem": {
         "hebrew": "לֶחֶם",
         "definition": "Bread; sustenance; spiritual teaching.",
         "context": "Symbolic of divine instruction.",
-        "restorationNote": "Reveals Yahusha as Bread of Life through Torah.",
-        "scripturalWitness": "Deuteronomy 8:3"
+        "scripturalWitness": "Deuteronomy 8:3",
+        "restorationNote": "Reveals Yahusha as Bread of Life through Torah."
     },
     "lunar cycles": {
       "hebrew": "",
@@ -475,12 +516,18 @@ const GLOSSARY_SECTIONS_DATA = {
       "restorationNote": "The 364-day calendar is purely solar, rejecting lunar phases as the basis for calculating months or years, thereby maintaining perfect consistency.",
       "scripturalWitness": "Enoch 74:12, 'And the sun and the stars bring in all the years exactly, so that they do not advance or delay their position by a single day unto eternity; but complete the years with perfect justice in 364 days.'"
     },
+    "Malakim": {
+        "hebrew": "מַלְאָכִים",
+        "definition": "Heavenly messengers; often translated as angels.",
+        "context": "Serve Yahuah’s will and carry out assignments.",
+        "scripturalWitness": "Psalm 103:20",
+        "restorationNote": "Restores the Hebrew concept of loyal servants, not winged beings."
+    },
     "Mark of the Beast": {
-      "hebrew": "",
-      "definition": "Allegiance to the final world system opposing Yahuah.",
-      "context": "Not merely a physical mark; linked to loyalty and obedience.",
-      "restorationNote": "Restoration leads to discernment of spiritual systems.",
-      "scripturalWitness": "Revelation 13"
+        "definition": "Allegiance to the final world system opposing Yahuah.",
+        "context": "Not merely a physical mark; linked to loyalty and obedience.",
+        "scripturalWitness": "Revelation 13",
+        "restorationNote": "Restoration leads to discernment of spiritual systems."
     },
     "Mayim": {
         "hebrew": "מַיִם",
@@ -493,8 +540,8 @@ const GLOSSARY_SECTIONS_DATA = {
         "hebrew": "מֶלֶךְ",
         "definition": "King; ruler appointed by Yahuah.",
         "context": "Yahusha is the Melech of Kings.",
-        "restorationNote": "Restores divine monarchy instead of democracy.",
-        "scripturalWitness": "Psalm 93:1"
+        "scripturalWitness": "Psalm 93:1",
+        "restorationNote": "Restores divine monarchy instead of democracy."
     },
     "Midnight Cry": {
         "definition": "Sudden announcement of the Bridegroom’s arrival.",
@@ -510,25 +557,24 @@ const GLOSSARY_SECTIONS_DATA = {
         "restorationNote": "Restores community gathering rhythm."
     },
     "Millennial Reign": {
-      "hebrew": "",
-      "definition": "The thousand-year reign of Yahusha on earth.",
-      "context": "Kingdom restoration globally.",
-      "restorationNote": "Reintroduces the physical rule of righteousness.",
-      "scripturalWitness": "Revelation 20"
+        "definition": "The thousand-year reign of Yahusha on earth.",
+        "context": "Kingdom restoration globally.",
+        "scripturalWitness": "Revelation 20",
+        "restorationNote": "Reintroduces the physical rule of righteousness."
     },
     "Mishkan": {
         "hebrew": "מִשְׁכָּן",
         "definition": "The tabernacle or dwelling place of Yahuah among His people.",
         "context": "Portable sanctuary of Israel.",
-        "restorationNote": "Reveals that dwelling requires obedience and purity.",
-        "scripturalWitness": "Exodus 25:8"
+        "scripturalWitness": "Exodus 25:8",
+        "restorationNote": "Reveals that dwelling requires obedience and purity."
     },
     "Mishpat": {
         "hebrew": "מִשְׁפָּט",
         "definition": "Righteous judgment or ruling.",
         "context": "Not human legalism.",
-        "restorationNote": "Restores divine justice.",
-        "scripturalWitness": "Deuteronomy 4:1"
+        "scripturalWitness": "Deuteronomy 4:1",
+        "restorationNote": "Restores divine justice."
     },
     "Mo'edim": {
         "hebrew": "מוֹעֲדִים",
@@ -550,6 +596,13 @@ const GLOSSARY_SECTIONS_DATA = {
         "scripturalWitness": "Enoch 72–82.",
         "restorationNote": "Completes the restoration of time."
     },
+    "Nephilim": {
+        "hebrew": "נְפִילִים",
+        "definition": "Offspring of the rebellious Watchers and human women.",
+        "context": "Catalyst for the flood judgment.",
+        "scripturalWitness": "Genesis 6:4",
+        "restorationNote": "Explains the rise of giants and corrupted bloodlines."
+    },
     "Nephesh": {
         "hebrew": "נֶפֶשׁ",
         "definition": "The living being—mind, heart, will, appetite.",
@@ -561,15 +614,14 @@ const GLOSSARY_SECTIONS_DATA = {
         "hebrew": "נְשָׁמָה",
         "definition": "Breath or soul-breath placed in man by Yahuah.",
         "context": "Deeper than “spirit.”",
-        "restorationNote": "Highlights divine origin of life.",
-        "scripturalWitness": "Genesis 2:7"
+        "scripturalWitness": "Genesis 2:7",
+        "restorationNote": "Highlights divine origin of life."
     },
     "New Jerusalem": {
-      "hebrew": "",
-      "definition": "The eternal city where Yahuah dwells with His people.",
-      "context": "Not symbolic; a real descending city.",
-      "restorationNote": "Restores hope and future vision.",
-      "scripturalWitness": "Revelation 21"
+        "definition": "The eternal city where Yahuah dwells with His people.",
+        "context": "Not symbolic; a real descending city.",
+        "scripturalWitness": "Revelation 21",
+        "restorationNote": "Restores hope and future vision."
     },
     "Night Portion": {
         "definition": "The period of darkness.",
@@ -577,19 +629,12 @@ const GLOSSARY_SECTIONS_DATA = {
         "scripturalWitness": "Psalm 30:5.",
         "restorationNote": "Distinguishes spiritual cycles of night."
     },
-Olam: {
+    "Olam": {
         "hebrew": "עוֹלָם",
         "definition": "Age, everlasting duration.",
         "context": "Hebrew eternity = age upon age, not infinite void.",
         "scripturalWitness": "Psalm 90:2",
         "restorationNote": "Reframes eternity as cycles of divine ages."
-    },
-    "Omer": {
-      "hebrew": "",
-      "definition": "A sheaf of barley offered on First Fruits, beginning a 50-day count.",
-      "context": "Tied to agricultural and resurrection symbolism.",
-      "restorationNote": "Daily counting restores awareness of spiritual growth.",
-      "scripturalWitness": "Leviticus 23:10–15"
     },
     "Or": {
         "hebrew": "אוֹר",
@@ -597,6 +642,12 @@ Olam: {
         "context": "Represents truth, order, and divine presence.",
         "scripturalWitness": "Genesis 1:3.",
         "restorationNote": "Anchors Yahuah as the source of light."
+    },
+    "Ordinances of Heaven": {
+        "definition": "Laws governing celestial movement and seasons.",
+        "context": "A heavenly clock set before the flood.",
+        "scripturalWitness": "Job 38:33",
+        "restorationNote": "Reestablishes the divine origin of time."
     },
     "The Overcomers": {
         "definition": "Those who remain faithful under pressure.",
@@ -612,18 +663,29 @@ Olam: {
       "scripturalWitness": "Exodus 12:6, 'And ye shall keep it up until the fourteenth day of the same month: and the whole assembly of the congregation of Israel shall kill it in the evening.'"
     },
     "Portions of Darkness": {
-      "hebrew": "",
-      "definition": "The measured lengths of night increasing or decreasing seasonally.",
-      "context": "Balances the “portions of light.”",
-      "restorationNote": "Shows divine order in the cosmos.",
-      "scripturalWitness": "Enoch 73"
+        "definition": "The measured lengths of night increasing or decreasing seasonally.",
+        "context": "Balances the “portions of light.”",
+        "scripturalWitness": "Enoch 73",
+        "restorationNote": "Shows divine order in the cosmos."
     },
     "Portions of Light": {
-      "hebrew": "",
-      "definition": "The measured lengths of daylight assigned to each month.",
-      "context": "Explains why 30-day months work precisely in a solar calendar.",
-      "restorationNote": "Supports 364-day alignment.",
-      "scripturalWitness": "Enoch 74"
+        "definition": "The measured lengths of daylight assigned to each month.",
+        "context": "Explains why 30-day months work precisely in a solar calendar.",
+        "scripturalWitness": "Enoch 74",
+        "restorationNote": "Supports 364-day alignment."
+    },
+    "Prophetic Pattern": {
+        "definition": "Repeated cycles showing Yahuah’s method of judgment and redemption.",
+        "context": "Exodus patterns, exile patterns, tribulation cycles.",
+        "scriptularWitness": "Ecclesiastes 1:9",
+        "restorationNote": "Highlights the calendar as prophetic structure."
+    },
+    "Qodesh": {
+        "hebrew": "קֹדֶשׁ",
+        "definition": "Holiness, set-apartness.",
+        "context": "Describes offerings, places, and people set apart to Yahuah.",
+        "scripturalWitness": "Leviticus 20:26",
+        "restorationNote": "Corrects the diluted English meaning of 'holy.'"
     },
     "Qol": {
         "hebrew": "קוֹל",
@@ -645,18 +707,17 @@ Olam: {
       "restorationNote": "By using the 364-day calendar, we are actively participating in 'redeeming the days.'",
       "scripturalWitness": "Ephesians 5:16, 'Redeeming the time, because the days are evil.'"
     },
-    "Refiners Fire": {
-        "definition": "Purification through trials.",
-        "context": "Symbol of preparation for the kingdom.",
-        "scripturalWitness": "Malachi 3:2–3.",
-        "restorationNote": "Teaches endurance and holiness."
+    "Refiner’s Fire": {
+        "definition": "A metaphor for purification through trial.",
+        "context": "Applied to the remnant in end-time prophecy.",
+        "scripturalWitness": "Malachi 3:2–3",
+        "restorationNote": "Explains suffering as purification, not punishment."
     },
     "Remnant": {
-      "hebrew": "",
-      "definition": "The few who remain faithful amidst global deception.",
-      "context": "Always present in every generation.",
-      "restorationNote": "Clarifies prophetic identity.",
-      "scripturalWitness": "Isaiah 10:20–22"
+        "definition": "The few who remain faithful amidst global deception.",
+        "context": "Always present in every generation.",
+        "scripturalWitness": "Isaiah 10:20–22",
+        "restorationNote": "Clarifies prophetic identity."
     },
     "Restoration of All Things": {
         "definition": "The prophetic renewal of creation.",
@@ -686,11 +747,10 @@ Olam: {
         "scripturalWitness": "Psalm 51:11, 'Cast me not away from thy presence; and take not thy Ruach Ha'Kodesh from me.'"
     },
     "Sabbath Cycle": {
-      "hebrew": "",
-      "definition": "The unbroken rhythm of seven days established at creation.",
-      "context": "Never tied to lunar cycles.",
-      "restorationNote": "The 364-day calendar preserves this perfectly.",
-      "scripturalWitness": "Genesis 2:1–3"
+        "definition": "The unbroken rhythm of seven days established at creation.",
+        "context": "Never tied to lunar cycles.",
+        "scripturalWitness": "Genesis 2:1–3",
+        "restorationNote": "The 364-day calendar preserves this perfectly."
     },
     "Sabbatical Year": {
         "definition": "Every 7th year when the land rests and debts are released.",
@@ -698,19 +758,23 @@ Olam: {
         "scripturalWitness": "2 Chronicles 36:21.",
         "restorationNote": "Re-establishing this cycle teaches kingdom economics."
     },
+    "Sanctuary Pattern": {
+        "definition": "The heavenly blueprint that the earthly Tabernacle and Temple were modeled after.",
+        "context": "Contains prophetic symbolism of redemption and time.",
+        "scripturalWitness": "Exodus 25:9; Hebrews 8:5",
+        "restorationNote": "Reveals that the 364-day calendar reflects heavenly order."
+    },
     "Sealed Instructions": {
-      "hebrew": "",
-      "definition": "Knowledge reserved for the final generation.",
-      "context": "Daniel was told to seal the book until the end.",
-      "restorationNote": "Restoration unveils sealed wisdom.",
-      "scripturalWitness": "Daniel 12:4"
+        "definition": "Knowledge reserved for the final generation.",
+        "context": "Daniel was told to seal the book until the end.",
+        "scripturalWitness": "Daniel 12:4",
+        "restorationNote": "Restoration unveils sealed wisdom."
     },
     "Sealing of the 144,000": {
-      "hebrew": "",
-      "definition": "The set-apart group sealed with the Name of Yahuah.",
-      "context": "Spiritual identification, not denomination.",
-      "restorationNote": "Sealed ones stand in obedience and truth.",
-      "scripturalWitness": "Revelation 7"
+        "definition": "The set-apart group sealed with the Name of Yahuah.",
+        "context": "Spiritual identification, not denomination.",
+        "scripturalWitness": "Revelation 7",
+        "restorationNote": "Sealed ones stand in obedience and truth."
     },
     "Sealing of the Servants": {
         "definition": "Marking of Yahuah’s faithful before judgment.",
@@ -719,11 +783,10 @@ Olam: {
         "restorationNote": "Identifies end-time covenant people."
     },
     "Second Exodus": {
-      "hebrew": "",
-      "definition": "The gathering of Yahuah’s people from all nations.",
-      "context": "Greater than the first Exodus.",
-      "restorationNote": "A key event tied to end-time deliverance.",
-      "scripturalWitness": "Jeremiah 16:14–15"
+        "definition": "The gathering of Yahuah’s people from all nations.",
+        "context": "Greater than the first Exodus.",
+        "scripturalWitness": "Jeremiah 16:14–15",
+        "restorationNote": "A key event tied to end-time deliverance."
     },
     "Shabbat": {
         "hebrew": "שַׁבָּת",
@@ -741,10 +804,10 @@ Olam: {
     },
     "Shema": {
         "hebrew": "שְׁמַע",
-        "definition": "To hear and obey together; hearing is obedience.",
-        "context": "Hebrew does not separate hearing from doing.",
-        "restorationNote": "Calls believers to active response.",
-        "scripturalWitness": "Deuteronomy 6:4"
+        "definition": "“Hear and obey.”",
+        "context": "Title of the great command.",
+        "scripturalWitness": "Deuteronomy 6:4.",
+        "restorationNote": "Calls for active obedience."
     },
     "Shemesh": {
         "hebrew": "שֶׁמֶשׁ",
@@ -759,11 +822,23 @@ Olam: {
         "scripturalWitness": "Deuteronomy 12:30 warns against adopting pagan observances.",
         "restorationNote": "The restored calendar avoids solstice-based traditions entirely."
     },
+    "Stronghold": {
+        "definition": "A fortified mindset or spiritual barrier.",
+        "context": "Often built through trauma, lies, or generational sin.",
+        "scripturalWitness": "2 Corinthians 10:4",
+        "restorationNote": "Shows how restored truth breaks strongholds."
+    },
     "Sunrise Marker": {
         "definition": "The fixed point beginning each day in the restored calendar.",
         "context": "Removes confusion caused by midnight clock systems.",
         "scripturalWitness": "Psalm 113:3.",
         "restorationNote": "Aligns daily rhythm with creation light."
+    },
+    "Tares": {
+        "definition": "False believers or counterfeit seeds planted by the enemy.",
+        "context": "Look identical to wheat until harvest.",
+        "scripturalWitness": "Matthew 13:24–30",
+        "restorationNote": "Warning not to uproot prematurely."
     },
     "Tekufah": {
       "hebrew": "תְּקוּפָה",
@@ -773,11 +848,10 @@ Olam: {
       "scripturalWitness": "Enoch 82:4–6 describes the four leaders of the seasons who 'discharge their duties' on these transitional days."
     },
     "Three-Month Course": {
-      "hebrew": "",
-      "definition": "Each season of 91 days corresponds to one major priestly grouping.",
-      "context": "Qumran writings preserved the priestly rotation system.",
-      "restorationNote": "Recovered to rebuild the priestly understanding of sacred time.",
-      "scripturalWitness": "1 Chronicles 24"
+        "definition": "Each season of 91 days corresponds to one major priestly grouping.",
+        "context": "Qumran writings preserved the priestly rotation system.",
+        "scripturalWitness": "1 Chronicles 24",
+        "restorationNote": "Recovered to rebuild the priestly understanding of sacred time."
     },
     "Torah": {
         "hebrew": "תּוֹרָה",
@@ -787,17 +861,16 @@ Olam: {
         "scripturalWitness": "Psalm 119:1, 'Blessed are the undefiled in the way, who walk in the Torah of Yahuah.'"
     },
     "Trumpet Judgments": {
-      "hebrew": "",
-      "definition": "Series of warning judgments preceding final wrath.",
-      "context": "Wake-up calls to mankind.",
-      "restorationNote": "Reveals divine mercy even in judgment.",
-      "scripturalWitness": "Revelation 8–9"
+        "definition": "Series of warning judgments preceding final wrath.",
+        "context": "Wake-up calls to mankind.",
+        "scripturalWitness": "Revelation 8–9",
+        "restorationNote": "Reveals divine mercy even in judgment."
     },
     "The Two Witnesses": {
-        "definition": "Two prophetic figures empowered by Yahuah.",
-        "context": "Testify before global judgment.",
-        "scripturalWitness": "Revelation 11:3–6.",
-        "restorationNote": "Highlights prophetic authority in the last days."
+        "definition": "The final prophetic pair empowered to confront the Beast system.",
+        "context": "Linked to Moses/Elijah patterns.",
+        "scripturalWitness": "Revelation 11",
+        "restorationNote": "Highlights judgment and mercy."
     },
     "Tzedakah": {
         "hebrew": "צְדָקָה",
@@ -813,18 +886,24 @@ Olam: {
         "scripturalWitness": "Psalm 89:14",
         "restorationNote": "Righteousness becomes relational."
     },
-    "Watch Hours": {
-        "definition": "The division of night into four military-style watches.",
-        "context": "Yahusha used these terms when teaching vigilance.",
-        "scripturalWitness": "Mark 13:35.",
-        "restorationNote": "Deepens prophetic understanding of night experiences."
+    "Unleavened Doctrine": {
+        "definition": "Pure teaching without corruption or mixture.",
+        "context": "Symbolized during the Feast of Unleavened Bread.",
+        "scripturalWitness": "1 Corinthians 5:7–8",
+        "restorationNote": "Emphasizes purity in teaching."
     },
     "Watch of the Night": {
-      "hebrew": "",
-      "definition": "One of the four divisions of the night used for priestly vigilance, prayer, and observation of signs.",
-      "context": "Hebrew culture divided the night into watches; Roman culture later imposed different divisions.",
-      "restorationNote": "Recognizing night watches helps restore the rhythm of prayer and prophetic alertness.",
-      "scripturalWitness": "Psalm 63:6; Matthew 14:25"
+        "definition": "One of the four divisions of the night used for priestly vigilance, prayer, and observation of signs.",
+        "context": "Hebrew culture divided the night into watches; Roman culture later imposed different divisions.",
+        "scripturalWitness": "Psalm 63:6; Matthew 14:25",
+        "restorationNote": "Recognizing night watches helps restore the rhythm of prayer and prophetic alertness."
+    },
+    "Watchers": {
+        "hebrew": "עִירִין",
+        "definition": "Heavenly beings appointed to observe and oversee aspects of creation. Some rebelled and taught forbidden knowledge.",
+        "context": "Central to the corruption before the flood.",
+        "scripturalWitness": "1 Enoch 6–15",
+        "restorationNote": "Clarifies the origin of many cultural deceptions and spiritual bondage systems."
     },
     "The Watchmen": {
         "definition": "Prophetic guardians who warn the people.",
@@ -872,5 +951,3 @@ Olam: {
 export const GLOSSARY_SECTIONS = GLOSSARY_SECTIONS_DATA;
 
 export const GLOSSARY_TERM_KEYS = Object.keys(GLOSSARY_SECTIONS_DATA.TERMS).sort();
-
-    
