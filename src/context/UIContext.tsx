@@ -177,7 +177,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         where('inviteScope', 'in', ['all', 'community'])
       );
     }
-    // This now correctly handles anonymous users as well, as they are "signed in" but not "admin" and not "not anonymous".
+    // For anonymous/guest users, only fetch public appointments
     return query(
       collection(firestore, 'appointments'),
       where('inviteScope', '==', 'all')
