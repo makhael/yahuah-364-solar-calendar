@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
-import { XCircle, Search, BookOpen, User, ThumbsUp, LogIn } from 'lucide-react';
+import { XCircle, Search, BookOpen, User, ThumbsUp, LogIn, Edit, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { useUI } from '@/context/UIContext';
 import { getSacredMonthName } from '@/lib/calendar-utils';
 import { get364DateFromGregorian } from '@/lib/calendar-utils';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
 
 interface FullScripturesModalProps {
   isOpen: boolean;
@@ -26,6 +31,7 @@ interface ScriptureReading {
   userId: string;
   userDisplayName?: string;
   upvoters: string[];
+  status: 'pending' | 'approved' | 'rejected';
 }
 
 const Highlight = ({ text, highlight }: { text: string; highlight: string }) => {
@@ -54,10 +60,38 @@ const Highlight = ({ text, highlight }: { text: string; highlight: string }) => 
 export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const { user, isUserLoading } = useUser();
-    const { startDate, handleGoToDate, closeAllModals } = useUI();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const { startDate, handleGoToDate, closeAllModals, openModal } = useUI();
 
-    const allScriptures: ScriptureReading[] = [];
-    const areScripturesLoading = false;
+    const myScripturesQuery = useMemoFirebase(() => {
+        if (!firestore || !user || user.isAnonymous) return null;
+        return query(
+            collection(firestore, 'scriptureReadings'),
+            where('userId', '==', user.uid),
+            orderBy('date', 'desc')
+        );
+    }, [firestore, user]);
+
+    const { data: allScriptures, isLoading: areScripturesLoading } = useCollection<ScriptureReading>(myScripturesQuery);
+
+    const handleDelete = (id: string) => {
+        if (!firestore || !user) return;
+        deleteDocumentNonBlocking(doc(firestore, 'scriptureReadings', id));
+        toast({ title: 'Submission Deleted' });
+    };
+
+    const handleEdit = (scripture: ScriptureReading) => {
+        openModal('dayDetail', { dateId: scripture.date } as any)
+    }
+
+    const getStatusInfo = (status: ScriptureReading['status']) => {
+        switch (status) {
+            case 'approved': return { text: 'Approved', className: 'bg-green-600' };
+            case 'rejected': return { text: 'Rejected', className: 'bg-destructive' };
+            case 'pending': default: return { text: 'Pending', className: 'bg-amber-500' };
+        }
+    }
 
 
     const filteredAndGroupedScriptures = useMemo(() => {
@@ -65,8 +99,7 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
 
         const filtered = searchTerm
             ? allScriptures.filter(s => 
-                s.scripture.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                s.userDisplayName?.toLowerCase().includes(searchTerm.toLowerCase())
+                s.scripture.toLowerCase().includes(searchTerm.toLowerCase())
               )
             : allScriptures;
 
@@ -157,23 +190,50 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
                                         <Button variant="ghost" size="sm" onClick={() => { closeAllModals(); handleGoToDate(date); }}>Go to Day</Button>
                                     </div>
                                     <div className="space-y-3">
-                                        {scriptures.map(s => (
+                                        {scriptures.map(s => {
+                                            const statusInfo = getStatusInfo(s.status);
+                                            return (
                                             <div key={s.id} className="p-3 rounded-md border bg-background/50 flex justify-between items-center gap-2">
                                                 <div>
-                                                    <p className="font-semibold text-lg text-foreground">
-                                                        <Highlight text={s.scripture} highlight={searchTerm} />
-                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-semibold text-lg text-foreground">
+                                                            <Highlight text={s.scripture} highlight={searchTerm} />
+                                                        </p>
+                                                        <Badge className={cn("text-white", statusInfo.className)}>{statusInfo.text}</Badge>
+                                                    </div>
                                                     <Badge variant="secondary" className="mt-1">
                                                         <User className="w-3 h-3 mr-1.5" />
                                                         <Highlight text={s.userDisplayName || 'Anonymous'} highlight={searchTerm} />
                                                     </Badge>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-muted-foreground font-semibold text-sm">
-                                                   <ThumbsUp className="w-4 h-4" />
-                                                   <span>{s.upvoters?.length || 0}</span>
+                                                <div className="flex items-center gap-1">
+                                                    {s.status === 'pending' && (
+                                                         <Button variant="outline" size="sm" onClick={() => handleEdit(s)}>
+                                                            <Edit className="w-3 h-3 mr-2" />
+                                                            Edit
+                                                        </Button>
+                                                    )}
+                                                     <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="destructive" size="sm">
+                                                                <Trash2 className="w-3 h-3 mr-2" />
+                                                                Delete
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete this submission?</AlertDialogTitle>
+                                                                <AlertDialogDescription>This action cannot be undone. This will permanently delete your submission for "{s.scripture}".</AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDelete(s.id)}>Yes, Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )})}
                                     </div>
                                 </div>
                             )

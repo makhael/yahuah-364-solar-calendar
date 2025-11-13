@@ -28,7 +28,7 @@ type ModalType =
 
 // Data shapes for modals that require it
 type ModalDataPayloads = {
-  dayDetail: { yahuahDay: number, gregorianDate: Date, dayOfWeek: number, isSabbath: boolean, special: any, monthNum: number, isToday: boolean };
+  dayDetail: { yahuahDay?: number, gregorianDate?: Date, dayOfWeek?: number, isSabbath?: boolean, special?: any, monthNum?: number, isToday?: boolean, dateId?: string };
   monthInfo: { monthNum: number };
   series: { series: any; allSeries: any[]; seriesIndex: number; };
   glossary: { termKey: string };
@@ -38,6 +38,7 @@ type ModalDataPayloads = {
   appointment: { appointment: any | null, date?: string };
   glossaryProposal: { proposal?: any | null };
   editProfile: {};
+  fullScriptures: {};
 };
 
 type ModalState = {
@@ -94,7 +95,7 @@ interface UIContextType {
   handleSaveAppointment: (appointment: any, id?: string) => Promise<void>;
   handleSaveGlossaryProposal: (proposalData: any, id?: string) => Promise<void>;
   openChatModal: (dateId?: string) => void;
-  handleGoToDate: (elementId: string) => void;
+  handleGoToDate: (elementIdOrDate: string) => void;
   handleGoToGlossaryTerm: (termKey: string) => void;
   scrollToSection: (sectionId: string) => void;
 
@@ -461,14 +462,14 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     openModal('dailyChat', { dateId: targetDateId });
   }, [openModal]);
   
-  const handleGoToDate = useCallback((dateString: string) => {
+  const handleGoToDate = useCallback((elementIdOrDate: string) => {
     let targetId: string;
-    const isDayIdFormat = dateString.startsWith('day-') || dateString.startsWith('month-');
+    const isElementId = elementIdOrDate.startsWith('day-') || elementIdOrDate.startsWith('month-');
     
-    if (isDayIdFormat) {
-        targetId = dateString;
+    if (isElementId) {
+        targetId = elementIdOrDate;
     } else {
-        const gregorianDate = new Date(dateString + 'T00:00:00');
+        const gregorianDate = new Date(elementIdOrDate + 'T00:00:00');
         const date364 = get364DateFromGregorian(gregorianDate, startDate);
         if (date364) {
             targetId = `day-${date364.month}-${date364.day}`;
@@ -481,14 +482,16 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
             return;
         }
     }
+    closeAllModals();
     setNavigationTarget(targetId);
     router.push('/#');
-  }, [startDate, toast, router]);
+  }, [startDate, toast, router, closeAllModals]);
 
   const scrollToSection = useCallback((sectionId: string) => {
+    closeAllModals();
     setNavigationTarget(sectionId);
     router.push('/#');
-  }, [router]);
+  }, [router, closeAllModals]);
 
   const handleGoToGlossaryTerm = useCallback((termKey: string) => {
     closeAllModals();
