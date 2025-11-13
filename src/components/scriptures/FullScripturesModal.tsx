@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
-import { XCircle, Search, BookOpen, User, ThumbsUp } from 'lucide-react';
+import { XCircle, Search, BookOpen, User, ThumbsUp, LogIn } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ interface ScriptureReading {
 }
 
 const Highlight = ({ text, highlight }: { text: string; highlight: string }) => {
-  if (!highlight.trim()) {
+  if (!text || !highlight || !highlight.trim()) {
     return <span>{text}</span>;
   }
   const regex = new RegExp(`(${highlight.replace(/[.*+?^${'()'}|\\[\\]\\\\]/g, '\\$&')})`, 'gi');
@@ -55,10 +55,10 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
     const [searchTerm, setSearchTerm] = useState('');
     const firestore = useFirestore();
     const { user } = useUser();
-    const { startDate, handleGoToDate } = useUI();
+    const { startDate, handleGoToDate, closeAllModals } = useUI();
 
     const scripturesQuery = useMemoFirebase(() => {
-        if (!firestore || !user) return null; // Wait for user to be authenticated
+        if (!firestore || !user || user.isAnonymous) return null;
         return query(
             collection(firestore, 'scriptureReadings'), 
             where('status', '==', 'approved'),
@@ -87,8 +87,102 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
             return acc;
         }, {} as Record<string, ScriptureReading[]>);
     }, [searchTerm, allScriptures]);
+    
+    useEffect(() => {
+        if (!isOpen) {
+            setSearchTerm('');
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
+    
+    const isGuest = !user || user.isAnonymous;
+
+    const Content = () => {
+        if (isGuest) {
+            return (
+                <div className="flex flex-col items-center justify-center p-8 text-center h-full">
+                    <LogIn className="w-12 h-12 text-muted-foreground mb-4" />
+                    <h3 className="font-semibold text-foreground text-lg">Sign In to View Scriptures</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        The community scripture library is available to signed-in members.
+                    </p>
+                </div>
+            )
+        }
+
+        if (areScripturesLoading) {
+            return (
+                <div className="flex justify-center items-center p-8 h-full">
+                    <LoaderCircle className="animate-spin w-8 h-8 text-primary" />
+                </div>
+            )
+        }
+        
+        if (Object.keys(filteredAndGroupedScriptures).length === 0) {
+            return (
+                 <div className="flex flex-col items-center justify-center p-8 text-center h-full">
+                    <BookOpen className="w-12 h-12 text-muted-foreground mb-4" />
+                    <h3 className="font-semibold text-foreground text-lg">
+                        {searchTerm ? `No Results for "${searchTerm}"` : "No Scriptures Yet"}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        {searchTerm ? "Try searching for a different term." : "No community scriptures have been approved yet."}
+                    </p>
+                </div>
+            )
+        }
+
+        return (
+             <ScrollArea className="h-full">
+                <div className="px-6 pb-6">
+                    <div className="space-y-6">
+                        {Object.entries(filteredAndGroupedScriptures).map(([date, scriptures]) => {
+                            const gregorianNoteDate = new Date(date + 'T00:00:00');
+                            const date364 = get364DateFromGregorian(gregorianNoteDate, startDate);
+                            let sacredDateString = '';
+                            if (date364) {
+                                sacredDateString = `${getSacredMonthName(date364.month)} (Month ${date364.month}), Day ${date364.day}`;
+                            }
+
+                            return (
+                                <div key={date}>
+                                    <div className="flex justify-between items-center mb-2 pb-2 border-b">
+                                        <div>
+                                            <h3 className="font-semibold text-primary">
+                                                {gregorianNoteDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
+                                            </h3>
+                                            <p className="text-xs text-muted-foreground">{sacredDateString}</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" onClick={() => { closeAllModals(); handleGoToDate(date); }}>Go to Day</Button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {scriptures.map(s => (
+                                            <div key={s.id} className="p-3 rounded-md border bg-background/50 flex justify-between items-center gap-2">
+                                                <div>
+                                                    <p className="font-semibold text-lg text-foreground">
+                                                        <Highlight text={s.scripture} highlight={searchTerm} />
+                                                    </p>
+                                                    <Badge variant="secondary" className="mt-1">
+                                                        <User className="w-3 h-3 mr-1.5" />
+                                                        <Highlight text={s.userDisplayName || 'Anonymous'} highlight={searchTerm} />
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-muted-foreground font-semibold text-sm">
+                                                   <ThumbsUp className="w-4 h-4" />
+                                                   <span>{s.upvoters?.length || 0}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            </ScrollArea>
+        )
+    }
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
@@ -115,79 +209,23 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
                 </div>
             </div>
             
-            <div className="p-6 flex-shrink-0">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                    <Input 
-                        type="text"
-                        placeholder="Search by scripture reference or user..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 bg-background/50"
-                    />
+            {!isGuest && (
+                <div className="p-6 flex-shrink-0">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                        <Input 
+                            type="text"
+                            placeholder="Search by scripture reference or user..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 bg-background/50"
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="flex-grow overflow-y-auto">
-                <ScrollArea className="h-full">
-                    <div className="px-6 pb-6">
-                        {areScripturesLoading ? (
-                            <div className="flex justify-center p-8">
-                                <LoaderCircle className="animate-spin" />
-                            </div>
-                        ) : (
-                        <div className="space-y-6">
-                            {Object.keys(filteredAndGroupedScriptures).length > 0 ? (
-                                Object.entries(filteredAndGroupedScriptures).map(([date, scriptures]) => {
-                                    const gregorianNoteDate = new Date(date + 'T00:00:00');
-                                    const date364 = get364DateFromGregorian(gregorianNoteDate, startDate);
-                                    let sacredDateString = '';
-                                    if (date364) {
-                                        sacredDateString = `${getSacredMonthName(date364.month)} (Month ${date364.month}), Day ${date364.day}`;
-                                    }
-
-                                    return (
-                                        <div key={date}>
-                                            <div className="flex justify-between items-center mb-2 pb-2 border-b">
-                                                <div>
-                                                    <h3 className="font-semibold text-primary">
-                                                        {gregorianNoteDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
-                                                    </h3>
-                                                    <p className="text-xs text-muted-foreground">{sacredDateString}</p>
-                                                </div>
-                                                <Button variant="ghost" size="sm" onClick={() => handleGoToDate(date)}>Go to Day</Button>
-                                            </div>
-                                            <div className="space-y-3">
-                                                {scriptures.map(s => (
-                                                    <div key={s.id} className="p-3 rounded-md border bg-background/50 flex justify-between items-center gap-2">
-                                                        <div>
-                                                            <p className="font-semibold text-lg text-foreground">
-                                                                <Highlight text={s.scripture} highlight={searchTerm} />
-                                                            </p>
-                                                            <Badge variant="secondary" className="mt-1">
-                                                                <User className="w-3 h-3 mr-1.5" />
-                                                                <Highlight text={s.userDisplayName || 'Anonymous'} highlight={searchTerm} />
-                                                            </Badge>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-muted-foreground font-semibold text-sm">
-                                                           <ThumbsUp className="w-4 h-4" />
-                                                           <span>{s.upvoters?.length || 0}</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )
-                                })
-                            ) : (
-                                <p className="text-center text-muted-foreground py-12">
-                                    {searchTerm ? `No scriptures found for "${searchTerm}".` : "No scriptures have been approved yet."}
-                                </p>
-                            )}
-                        </div>
-                        )}
-                    </div>
-                </ScrollArea>
+                <Content />
             </div>
             
              <div className="p-4 flex-shrink-0 border-t flex items-center justify-end bg-secondary/30 rounded-b-2xl">
