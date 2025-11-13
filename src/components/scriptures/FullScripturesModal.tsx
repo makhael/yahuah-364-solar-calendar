@@ -53,22 +53,12 @@ const Highlight = ({ text, highlight }: { text: string; highlight: string }) => 
 
 export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProps) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { startDate, handleGoToDate, closeAllModals } = useUI();
 
-    const scripturesQuery = useMemoFirebase(() => {
-        if (isUserLoading || !user || user.isAnonymous || !firestore) return null;
-        
-        // Query for the user's own scriptures
-        return query(
-            collection(firestore, 'scriptureReadings'), 
-            where('userId', '==', user.uid),
-            orderBy('date', 'desc')
-        );
-    }, [firestore, user, isUserLoading]);
+    const allScriptures: ScriptureReading[] = [];
+    const areScripturesLoading = false;
 
-    const { data: allScriptures, isLoading: areScripturesLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
     const filteredAndGroupedScriptures = useMemo(() => {
         if (!allScriptures) return {};
