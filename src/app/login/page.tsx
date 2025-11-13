@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { Suspense, useState } from 'react';
@@ -7,21 +6,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
-import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
-
-const emailSchema = z.string().email({ message: "Please enter a valid email address." });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
@@ -32,7 +28,6 @@ function LoginFormComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefilledEmail = searchParams.get('email');
-  const { toast } = useToast();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -43,36 +38,7 @@ function LoginFormComponent() {
     },
   });
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues } = form;
-
-  const handlePasswordReset = async () => {
-    const email = getValues("email");
-    const validationResult = emailSchema.safeParse(email);
-
-    if (!validationResult.success) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Email",
-        description: "Please enter a valid email address to reset your password.",
-      });
-      return;
-    }
-    
-    try {
-      await sendPasswordResetEmail(auth, email);
-      toast({
-        title: "Password Reset Email Sent",
-        description: "If an account exists for this email, a password reset link has been sent.",
-      });
-    } catch (err: any) {
-      // For security, show the same confirmation message even if the email doesn't exist
-      toast({
-        title: "Password Reset Email Sent",
-        description: "If an account exists for this email, a password reset link has been sent.",
-      });
-      console.error("Password reset error:", err);
-    }
-  };
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
@@ -116,13 +82,12 @@ function LoginFormComponent() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <button
-                type="button"
-                onClick={handlePasswordReset}
+              <Link
+                href="/forgot-password"
                 className="text-xs text-primary hover:underline"
               >
                 Forgot password?
-              </button>
+              </Link>
             </div>
             <div className="relative">
               <Input
