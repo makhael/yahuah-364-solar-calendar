@@ -15,8 +15,8 @@ export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
   const { toast } = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('sheldonharding@gmail.com');
+  const [password, setPassword] = useState('123456');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -27,15 +27,13 @@ export default function LoginPage() {
       // We are not awaiting this. The onAuthStateChanged listener will handle redirection.
       initiateEmailSignIn(auth, email, password);
       
-      // Give feedback and navigate.
-      // The onAuthStateChanged listener in FirebaseProvider will create the user doc.
       toast({
         title: 'Signing In...',
         description: 'You will be redirected shortly.',
       });
 
       // Redirect optimistically
-      router.push('/admin');
+      router.push('/');
 
     } catch (error: any) {
       console.error(error);

@@ -3,7 +3,7 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { Firestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
@@ -101,8 +101,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       if (!userSnap.exists()) {
         const { displayName, email, photoURL } = user;
         
-        // Assign admin role to any new user for testing purposes
-        const role = 'admin';
+        // Check for specific admin email, otherwise default to member
+        const role = email === 'sheldonharding@gmail.com' ? 'admin' : 'member';
 
         const userData = {
           displayName,
@@ -110,6 +110,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
           photoURL,
           role,
           status: 'approved', // Automatically approve new users
+          createdAt: serverTimestamp(),
         };
 
         try {

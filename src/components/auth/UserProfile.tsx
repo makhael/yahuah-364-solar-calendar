@@ -22,14 +22,37 @@ interface UserProfileProps {
     onOpenInstructions: () => void;
 }
 
+interface UserProfileData {
+  role?: 'admin' | 'leader' | 'member';
+}
+
 export function UserProfile({ onOpenInstructions }: UserProfileProps) {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
 
-  if (isUserLoading) {
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user?.uid || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user?.uid, firestore]);
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfileData>(userProfileRef);
+
+  const { openModal } = useUI();
+
+  if (isUserLoading || (user && !user.isAnonymous && isProfileLoading)) {
     return <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />;
   }
 
-  // Since we are always an admin now, we always show the full logged-in menu.
+  if (!user || user.isAnonymous) {
+      return (
+        <Button variant="outline" onClick={() => openModal('appointment', { appointment: null })}>
+            Sign In
+        </Button>
+      )
+  }
+
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -51,19 +74,19 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
             <p className="text-sm font-medium leading-none">
               {user?.displayName || user?.email}
             </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              Admin Mode
-            </p>
+             {userProfile?.role && <p className="text-xs leading-none text-muted-foreground capitalize">{userProfile.role}</p>}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem asChild>
-            <Link href="/admin">
-            <ShieldCheck className="mr-2 h-4 w-4" />
-            <span>Admin Dashboard</span>
-            </Link>
-        </DropdownMenuItem>
+        {isAdmin && (
+            <DropdownMenuItem asChild>
+                <Link href="/admin">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                <span>Admin Dashboard</span>
+                </Link>
+            </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem asChild>
             <Link href="/tools">
