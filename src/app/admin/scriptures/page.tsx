@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, doc, orderBy, deleteDoc, where, updateDoc } from 'firebase/firestore';
+import { collection, query, doc, orderBy, deleteDoc, where, updateDoc, getDocs } from 'firebase/firestore';
 import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User, ThumbsUp, ThumbsDown, Hourglass } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +31,7 @@ interface ScriptureReading {
 }
 
 interface UserData {
+  id: string;
   role?: string;
 }
 
@@ -136,22 +137,51 @@ const ScriptureCard = ({ submission, onEdit, onDelete, onUpdateStatus }: { submi
     );
 }
 
-
 export default function ScriptureManagement() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
-  const pendingQuery = useMemoFirebase(() => {
+  const [allScriptures, setAllScriptures] = useState<ScriptureReading[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'scriptureReadings'), where('status', '==', 'pending'), orderBy('createdAt', 'desc'));
+    return query(collection(firestore, 'users'));
   }, [firestore]);
 
-  const { data: pendingScriptures, isLoading } = useCollection<ScriptureReading>(pendingQuery);
+  const { data: users } = useCollection<UserData>(usersQuery);
+
+  useEffect(() => {
+    const fetchAllScriptures = async () => {
+      if (!firestore || !users) return;
+
+      setIsLoading(true);
+      let allSubmissions: ScriptureReading[] = [];
+
+      for (const user of users) {
+        try {
+          const submissionsQuery = query(collection(firestore, 'scriptureReadings'), where('userId', '==', user.id));
+          const submissionsSnapshot = await getDocs(submissionsQuery);
+          const userSubmissions = submissionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScriptureReading));
+          allSubmissions = [...allSubmissions, ...userSubmissions];
+        } catch (error) {
+          console.error(`Failed to fetch scriptures for user ${user.id}`, error);
+        }
+      }
+      
+      allSubmissions.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setAllScriptures(allSubmissions);
+      setIsLoading(false);
+    };
+
+    fetchAllScriptures();
+  }, [firestore, users]);
 
   const handleDelete = (scriptureId: string) => {
     if (!firestore) return;
     deleteDocumentNonBlocking(doc(firestore, 'scriptureReadings', scriptureId));
+    setAllScriptures(prev => prev.filter(s => s.id !== scriptureId));
     toast({ title: 'Submission Deleted', description: 'The scripture submission has been removed.' });
   };
   
@@ -159,9 +189,13 @@ export default function ScriptureManagement() {
     if (!firestore) return;
     const docRef = doc(firestore, 'scriptureReadings', scriptureId);
     updateDocumentNonBlocking(docRef, { status: status });
+    setAllScriptures(prev => prev.map(s => s.id === scriptureId ? { ...s, status } : s));
     toast({ title: 'Status Updated', description: `Submission marked as ${status}.` });
   };
 
+  const pendingScriptures = useMemo(() => allScriptures.filter(s => s.status === 'pending'), [allScriptures]);
+  const approvedScriptures = useMemo(() => allScriptures.filter(s => s.status === 'approved'), [allScriptures]);
+  const rejectedScriptures = useMemo(() => allScriptures.filter(s => s.status === 'rejected'), [allScriptures]);
 
   if (isLoading) {
     return (
@@ -205,7 +239,7 @@ export default function ScriptureManagement() {
     return (
       <ScrollArea className="h-[70vh] pr-4">
         <div className="space-y-6">
-          {Object.entries(grouped).map(([date, submissionsForDate]) => (
+          {Object.entries(grouped).sort(([dateA], [dateB]) => dateB.localeCompare(dateA)).map(([date, submissionsForDate]) => (
             <div key={date}>
               <h3 className="font-semibold text-primary mb-2 border-b pb-1">
                 {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
@@ -228,7 +262,6 @@ export default function ScriptureManagement() {
     );
   };
   
-
   return (
     <Card>
       <CardHeader>
@@ -237,12 +270,20 @@ export default function ScriptureManagement() {
       </CardHeader>
       <CardContent>
           <Tabs defaultValue="pending">
-              <TabsList>
-                  <TabsTrigger value="pending">Pending ({pendingScriptures?.length || 0})</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="pending">Pending ({pendingScriptures.length})</TabsTrigger>
+                  <TabsTrigger value="approved">Approved ({approvedScriptures.length})</TabsTrigger>
+                  <TabsTrigger value="rejected">Rejected ({rejectedScriptures.length})</TabsTrigger>
               </TabsList>
               <div className="pt-6">
                   <TabsContent value="pending">
                       <ScriptureList submissions={pendingScriptures} />
+                  </TabsContent>
+                   <TabsContent value="approved">
+                      <ScriptureList submissions={approvedScriptures} />
+                  </TabsContent>
+                   <TabsContent value="rejected">
+                      <ScriptureList submissions={rejectedScriptures} />
                   </TabsContent>
               </div>
           </Tabs>
@@ -250,3 +291,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    
