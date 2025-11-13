@@ -94,18 +94,21 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const appointmentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         
-        if(isAdmin) {
-            // Admins can see everything, no filter needed
-            return query(collection(firestore, 'appointments'));
+        const baseQuery = collection(firestore, 'appointments');
+
+        if (isAdmin) {
+            // Admins can see everything, no filter needed for scope.
+            // The component will filter by date locally.
+            return baseQuery;
         }
         
         if (isUserFullyAuthenticated) {
             // Signed-in members can see 'public' and 'community'
-            return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', 'community']));
+            return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
         }
         
         // Guests (anonymous users) can only see 'public'
-        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
+        return query(baseQuery, where('inviteScope', '==', 'all'));
 
     }, [firestore, isUserFullyAuthenticated, isAdmin]);
 

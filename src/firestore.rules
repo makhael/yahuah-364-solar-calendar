@@ -24,9 +24,9 @@ service cloud.firestore {
       // Admins can list all.
       // Signed-in users can list public and community events.
       // Guests can only list public events.
-      allow list: if isAdmin() ||
-                   (isSignedIn() && request.query.limit <= 100 && 'inviteScope' in request.query.where && request.query.where.inviteScope in ['all', 'community']) ||
-                   (!isSignedIn() && 'inviteScope' in request.query.where && request.query.where.inviteScope == 'all');
+      allow list: if isAdmin() || 
+                   (isSignedIn() && request.query.filters[0].value in ['all', 'community']) ||
+                   (!isSignedIn() && request.query.filters[0].value == 'all');
       allow write: if isSignedIn();
     }
 
