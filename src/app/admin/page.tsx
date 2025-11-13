@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { LoaderCircle, Shield, Users, CalendarClock, MessageSquare, BookOpen, ScrollText, Ban } from 'lucide-react';
+import { LoaderCircle, Shield, Users, CalendarClock, MessageSquare, BookOpen, ScrollText, Ban, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import { UserManagement } from '@/components/admin/UserManagement';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
@@ -15,6 +15,7 @@ import ScriptureManagement from './scriptures/page';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import Link from 'next/link';
 
 interface UserProfileData {
   role?: 'admin' | 'leader' | 'member';
@@ -116,7 +117,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-12 flex justify-between items-start">
+        <header className="mb-12 flex flex-wrap gap-4 justify-between items-center">
             <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2 text-left flex items-center gap-3">
                 <Shield className="w-6 h-6 text-primary"/>
                 <div>
@@ -124,6 +125,12 @@ export default function AdminDashboardPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">Manage users, events, and content.</p>
                 </div>
             </div>
+            <Button variant="outline" asChild>
+                <Link href="/">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Return to Calendar
+                </Link>
+            </Button>
         </header>
 
         <div className="w-full">
