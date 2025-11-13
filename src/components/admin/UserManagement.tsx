@@ -2,10 +2,10 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase } from '@/firebase';
-import { collection, doc, deleteDoc } from 'firebase/firestore';
+import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase, useAuth } from '@/firebase';
+import { collection, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { LoaderCircle, Trash2, Edit, Save, X } from 'lucide-react';
+import { LoaderCircle, Trash2, Edit, Save, X, UserPlus } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,11 @@ import { Button } from '../ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 
 interface User {
@@ -197,12 +202,12 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
               <TableRow key={user.id}>
                 <TableCell className="font-medium">
                   {isEditing ? (
-                    <Input value={editingUser.displayName} onChange={(e) => setEditingUser({...editingUser, displayName: e.target.value})} />
+                    <Input value={editingUser!.displayName} onChange={(e) => setEditingUser({...editingUser!, displayName: e.target.value})} />
                   ) : user.displayName}
                 </TableCell>
                 <TableCell>
                   {isEditing ? (
-                    <Input value={editingUser.email} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} />
+                    <Input value={editingUser!.email} onChange={(e) => setEditingUser({...editingUser!, email: e.target.value})} />
                   ) : user.email}
                 </TableCell>
                 <TableCell>
@@ -279,6 +284,153 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
   )
 }
 
+const createUserSchema = z.object({
+  displayName: z.string().min(3, "Display name must be at least 3 characters."),
+  email: z.string().email("Invalid email address."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
+  role: z.enum(['member', 'leader', 'admin']),
+});
+
+type CreateUserForm = z.infer<typeof createUserSchema>;
+
+function CreateUserDialog() {
+  const [open, setOpen] = useState(false);
+  const auth = useAuth();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const form = useForm<CreateUserForm>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      displayName: '',
+      email: '',
+      password: '',
+      role: 'member',
+    },
+  });
+
+  const { formState: { isSubmitting }, control, handleSubmit } = form;
+
+  const onSubmit = async (data: CreateUserForm) => {
+    try {
+      // We can't use the main auth instance for this, as it might be signed in.
+      // Firebase doesn't support creating users from the client SDK while another user is signed in.
+      // This is a simplified approach. A more robust solution would use a backend function.
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const newUser = userCredential.user;
+
+      const userDocRef = doc(firestore, "users", newUser.uid);
+      await setDoc(userDocRef, {
+        displayName: data.displayName,
+        email: data.email,
+        role: data.role,
+        status: 'approved',
+        createdAt: new Date().toISOString(),
+      });
+      
+      toast({
+        title: "User Created",
+        description: `Account for ${data.displayName} has been successfully created.`,
+      });
+
+      form.reset();
+      setOpen(false);
+
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      let errorMessage = "An unexpected error occurred.";
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already in use by another account.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'The password is too weak.';
+      }
+      toast({
+        variant: "destructive",
+        title: "Creation Failed",
+        description: errorMessage,
+      });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Create User
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create New User</DialogTitle>
+          <DialogDescription>
+            Enter the details for the new user account. The user will be created with 'approved' status.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="displayName" className="text-right">Name</Label>
+              <Controller
+                name="displayName"
+                control={control}
+                render={({ field }) => <Input id="displayName" {...field} className="col-span-3" />}
+              />
+              {form.formState.errors.displayName && <p className="col-span-4 text-xs text-destructive text-right">{form.formState.errors.displayName.message}</p>}
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">Email</Label>
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => <Input id="email" type="email" {...field} className="col-span-3" />}
+              />
+              {form.formState.errors.email && <p className="col-span-4 text-xs text-destructive text-right">{form.formState.errors.email.message}</p>}
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="password" className="text-right">Password</Label>
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => <Input id="password" type="password" {...field} className="col-span-3" />}
+              />
+              {form.formState.errors.password && <p className="col-span-4 text-xs text-destructive text-right">{form.formState.errors.password.message}</p>}
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="role" className="text-right">Role</Label>
+              <Controller
+                  name="role"
+                  control={control}
+                  render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Select a role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="member">Member</SelectItem>
+                              <SelectItem value="leader">Leader</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                      </Select>
+                  )}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+              Create User
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 export function UserManagement() {
   const firestore = useFirestore();
   const { isUserLoading } = useUser();
@@ -335,38 +487,43 @@ export function UserManagement() {
     }
   };
 
-  const approvedUsers = users?.filter(u => u.status === 'approved') || [];
-  const pendingUsers = users?.filter(u => u.status === 'pending' || !u.status) || [];
-  const deniedUsers = users?.filter(u => u.status === 'denied') || [];
+  const approvedUsers = useMemo(() => users?.filter(u => u.status === 'approved') || [], [users]);
+  const pendingUsers = useMemo(() => users?.filter(u => u.status === 'pending' || !u.status) || [], [users]);
+  const deniedUsers = useMemo(() => users?.filter(u => u.status === 'denied') || [], [users]);
 
   return (
-    <Card>
-      {areUsersLoading ? (
-        <div className="flex justify-center items-center p-12">
-          <LoaderCircle className="animate-spin text-primary" />
-        </div>
-      ) : (
-        <Tabs defaultValue="approved">
-          <CardHeader className="p-4 sm:p-6">
-            <TabsList className="grid w-full grid-cols-3 h-auto">
-              <TabsTrigger value="approved" className="py-2">Approved ({approvedUsers.length})</TabsTrigger>
-              <TabsTrigger value="pending" className="py-2">Pending ({pendingUsers.length})</TabsTrigger>
-              <TabsTrigger value="denied" className="py-2">Denied ({deniedUsers.length})</TabsTrigger>
-            </TabsList>
-          </CardHeader>
-          <CardContent className="p-2 sm:p-6 sm:pt-0">
-            <TabsContent value="approved" className="mt-0">
-              <UserTable users={approvedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} />
-            </TabsContent>
-            <TabsContent value="pending" className="mt-0">
-              <UserTable users={pendingUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} />
-            </TabsContent>
-            <TabsContent value="denied" className="mt-0">
-              <UserTable users={deniedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} />
-            </TabsContent>
-          </CardContent>
-        </Tabs>
-      )}
-    </Card>
+    <>
+      <div className="flex justify-end mb-4">
+        <CreateUserDialog />
+      </div>
+      <Card>
+        {areUsersLoading ? (
+          <div className="flex justify-center items-center p-12">
+            <LoaderCircle className="animate-spin text-primary" />
+          </div>
+        ) : (
+          <Tabs defaultValue="approved">
+            <CardHeader className="p-4 sm:p-6">
+              <TabsList className="grid w-full grid-cols-3 h-auto">
+                <TabsTrigger value="approved" className="py-2">Approved ({approvedUsers.length})</TabsTrigger>
+                <TabsTrigger value="pending" className="py-2">Pending ({pendingUsers.length})</TabsTrigger>
+                <TabsTrigger value="denied" className="py-2">Denied ({deniedUsers.length})</TabsTrigger>
+              </TabsList>
+            </CardHeader>
+            <CardContent className="p-2 sm:p-6 sm:pt-0">
+              <TabsContent value="approved" className="mt-0">
+                <UserTable users={approvedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} />
+              </TabsContent>
+              <TabsContent value="pending" className="mt-0">
+                <UserTable users={pendingUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} />
+              </TabsContent>
+              <TabsContent value="denied" className="mt-0">
+                <UserTable users={deniedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} />
+              </TabsContent>
+            </CardContent>
+          </Tabs>
+        )}
+      </Card>
+    </>
   );
 }

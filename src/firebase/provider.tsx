@@ -82,6 +82,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       } else {
         // No user signed in, sign in anonymously for guest access.
         initiateAnonymousSignIn(auth);
+        // We still set user to null here because the anonymous sign-in will trigger another state change.
         setUserAuthState({ user: null, isUserLoading: false, userError: null });
       }
     }, (error) => {
@@ -91,6 +92,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     return () => unsubscribe(); // Cleanup subscription on unmount
   }, [auth]);
+
 
   // Effect to create user document in Firestore on first login
   useEffect(() => {
