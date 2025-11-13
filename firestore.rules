@@ -53,8 +53,7 @@ service cloud.firestore {
       allow write: if isOwner(userId) || isAdmin();
 
       match /glossaryProposals/{proposalId} {
-        allow get, update, delete, create: if isOwner(userId);
-        allow list: if isOwner(userId);
+        allow get, list, update, delete, create: if isOwner(userId);
       }
     }
     
@@ -87,9 +86,8 @@ service cloud.firestore {
     }
 
     match /scriptureReadings {
-      allow list: if (request.query.where.size() > 0 && 
-                      (request.query.where.map(c => c[0]).hasAny(['status']))) || 
-                     (isSignedIn() && request.query.where.size() > 0 && request.query.where.map(c => c[0]).hasAny(['userId']) && request.query.where.filter(c => c[0] == 'userId')[0][2] == request.auth.uid) || 
+      allow list: if (request.query.limit <= 100 && request.query.filters.hasAny(['status', '==', 'approved'])) ||
+                     (isSignedIn() && request.query.filters.hasAny(['userId', '==', request.auth.uid])) ||
                      isAdmin();
     }
 
