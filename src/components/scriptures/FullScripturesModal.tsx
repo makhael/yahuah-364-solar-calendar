@@ -58,8 +58,7 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
     const { startDate, handleGoToDate, closeAllModals } = useUI();
 
     const scripturesQuery = useMemoFirebase(() => {
-        // Prevent query from running while auth is loading or if user is a guest.
-        if (isUserLoading || !user || user.isAnonymous) return null;
+        if (isUserLoading || !user || user.isAnonymous || !firestore) return null;
         
         return query(
             collection(firestore, 'scriptureReadings'), 
