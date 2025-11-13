@@ -242,6 +242,321 @@ const GLOSSARY_SECTIONS_DATA = {
       "context": "Begins on the 15th day of the seventh month. The first day is a High Sabbath, and it is followed by the Eighth Day Assembly (Shemini Atzeret).",
       "restorationNote": "This feast celebrates Yahuah's provision and His desire to dwell with us. It is the culmination of the yearly feast cycle.",
       "scripturalWitness": "Leviticus 23:34, 'The fifteenth day of this seventh month shall be the feast of tabernacles for seven days unto Yahuah.'"
+    },
+    "Aviv": {
+        "hebrew": "",
+        "definition": "The stage of barley ripeness signaling the start of the Scriptural Year. Not a “month name” originally, but an agricultural sign.",
+        "context": "Month 1 is called “Aviv” only because the barley was in the aviv stage. Later Babylonian names replaced this.",
+        "restorationNote": "Restoring Aviv removes dependence on lunar sighting and brings the year back to the agricultural sign Yahuah ordained.",
+        "scripturalWitness": "Exodus 12:2; Deuteronomy 16:1"
+    },
+    "Watch of the Night": {
+        "hebrew": "",
+        "definition": "One of the four divisions of the night used for priestly vigilance, prayer, and observation of signs.",
+        "context": "Hebrew culture divided the night into watches; Roman culture later imposed different divisions.",
+        "restorationNote": "Recognizing night watches helps restore the rhythm of prayer and prophetic alertness.",
+        "scripturalWitness": "Psalm 63:6; Matthew 14:25"
+    },
+    "Gates of the Sun": {
+        "hebrew": "",
+        "definition": "The six portals through which the sun rises and sets over the year, explaining the seasons.",
+        "context": "Enoch describes the sun’s paths as structured gates assigned by angels.",
+        "restorationNote": "These restore a non-pagan understanding of the sun’s movement.",
+        "scripturalWitness": "Enoch 72"
+    },
+    "Three-Month Course": {
+        "hebrew": "",
+        "definition": "Each season of 91 days corresponds to one major priestly grouping.",
+        "context": "Qumran writings preserved the priestly rotation system.",
+        "restorationNote": "Recovered to rebuild the priestly understanding of sacred time.",
+        "scripturalWitness": "1 Chronicles 24"
+    },
+    "Omer": {
+        "hebrew": "",
+        "definition": "A sheaf of barley offered on First Fruits, beginning a 50-day count.",
+        "context": "Tied to agricultural and resurrection symbolism.",
+        "restorationNote": "Daily counting restores awareness of spiritual growth.",
+        "scripturalWitness": "Leviticus 23:10–15"
+    },
+    "Evening-Morning Order": {
+        "hebrew": "",
+        "definition": "Days beginning at sunset, not midnight or sunrise.",
+        "context": "This was the ancient Hebrew and Creation-based pattern.",
+        "restorationNote": "Rejects Roman midnight-clock systems.",
+        "scripturalWitness": "Genesis 1:5"
+    },
+    "Seasons (Mo'adey HaShanah)": {
+        "hebrew": "",
+        "definition": "The four Scriptural seasonal markers: Aviv, Summer, Autumn, Winter.",
+        "context": "Defined by the sun, not the moon.",
+        "restorationNote": "These guide agricultural and prophetic timing.",
+        "scripturalWitness": "Genesis 1:14"
+    },
+    "Portions of Light": {
+        "hebrew": "",
+        "definition": "The measured lengths of daylight assigned to each month.",
+        "context": "Explains why 30-day months work precisely in a solar calendar.",
+        "restorationNote": "Supports 364-day alignment.",
+        "scripturalWitness": "Enoch 74"
+    },
+    "Portions of Darkness": {
+        "hebrew": "",
+        "definition": "The measured lengths of night increasing or decreasing seasonally.",
+        "context": "Balances the “portions of light.”",
+        "restorationNote": "Shows divine order in the cosmos.",
+        "scripturalWitness": "Enoch 73"
+    },
+    "Sabbath Cycle": {
+        "hebrew": "",
+        "definition": "The unbroken rhythm of seven days established at creation.",
+        "context": "Never tied to lunar cycles.",
+        "restorationNote": "The 364-day calendar preserves this perfectly.",
+        "scripturalWitness": "Genesis 2:1–3"
+    },
+    "Kadosh": {
+        "hebrew": "קָדוֹשׁ",
+        "definition": "Set-apart, distinct, consecrated.",
+        "context": "Not merely “holy” in a religious sense; means “set apart to Yahuah.”",
+        "restorationNote": "Restores the purity and separateness required for His people.",
+        "scripturalWitness": "Isaiah 6:3"
+    },
+    "Mishkan": {
+        "hebrew": "מִשְׁכָּן",
+        "definition": "The tabernacle or dwelling place of Yahuah among His people.",
+        "context": "Portable sanctuary of Israel.",
+        "restorationNote": "Reveals that dwelling requires obedience and purity.",
+        "scripturalWitness": "Exodus 25:8"
+    },
+    "Kohen": {
+        "hebrew": "כֹּהֵן",
+        "definition": "Priest; one who ministers before Yahuah.",
+        "context": "Not interchangeable with pagan priests.",
+        "restorationNote": "The priesthood carries a function, not a title.",
+        "scripturalWitness": "Leviticus 1"
+    },
+    "Melech": {
+        "hebrew": "מֶלֶךְ",
+        "definition": "King; ruler appointed by Yahuah.",
+        "context": "Yahusha is the Melech of Kings.",
+        "restorationNote": "Restores divine monarchy instead of democracy.",
+        "scripturalWitness": "Psalm 93:1"
+    },
+    "Shema": {
+        "hebrew": "שְׁמַע",
+        "definition": "To hear and obey together; hearing is obedience.",
+        "context": "Hebrew does not separate hearing from doing.",
+        "restorationNote": "Calls believers to active response.",
+        "scripturalWitness": "Deuteronomy 6:4"
+    },
+    "Neshama": {
+        "hebrew": "נְשָׁמָה",
+        "definition": "Breath or soul-breath placed in man by Yahuah.",
+        "context": "Deeper than “spirit.”",
+        "restorationNote": "Highlights divine origin of life.",
+        "scripturalWitness": "Genesis 2:7"
+    },
+    "Ruach": {
+        "hebrew": "רוּחַ",
+        "definition": "Spirit, wind, breath—movement of invisible power.",
+        "context": "The force of Yahuah’s presence.",
+        "restorationNote": "Corrects misunderstanding of the Spirit as separate “person.”",
+        "scripturalWitness": "Psalm 104:30"
+    },
+    "Chesed": {
+        "hebrew": "חֶסֶד",
+        "definition": "Covenant-lovingkindness, faithful devotion.",
+        "context": "Hard to translate into one English word.",
+        "restorationNote": "Reveals Yahuah’s covenant loyalty.",
+        "scripturalWitness": "Psalm 136"
+    },
+    "Mishpat": {
+        "hebrew": "מִשְׁפָּט",
+        "definition": "Righteous judgment or ruling.",
+        "context": "Not human legalism.",
+        "restorationNote": "Restores divine justice.",
+        "scripturalWitness": "Deuteronomy 4:1"
+    },
+    "Tzedek": {
+        "hebrew": "צֶדֶק",
+        "definition": "Righteousness aligned with Yahuah’s character.",
+        "context": "Not moral perfection—divine alignment.",
+        "restorationNote": "Righteousness becomes relational.",
+        "scripturalWitness": "Psalm 89:14"
+    },
+    "Ahavah": {
+        "hebrew": "אַהֲבָה",
+        "definition": "Love rooted in loyalty and obedience.",
+        "context": "Hebrew love is action-based.",
+        "restorationNote": "Restores love as covenant loyalty.",
+        "scripturalWitness": "Deuteronomy 7:9"
+    },
+    "Shalom": {
+        "hebrew": "שָׁלוֹם",
+        "definition": "Wholeness, completeness, harmony—not absence of conflict.",
+        "context": "Restoration of alignment with Yahuah.",
+        "restorationNote": "Reclaims the full meaning of completeness.",
+        "scripturalWitness": "Numbers 6:24–26"
+    },
+    "Nephesh": {
+        "hebrew": "נֶפֶשׁ",
+        "definition": "The living being—mind, heart, will, appetite.",
+        "context": "Not an immortal ghost.",
+        "restorationNote": "Restores soul as living person, not Greek dualism.",
+        "scripturalWitness": "Genesis 1:20"
+    },
+    "Lechem": {
+        "hebrew": "לֶחֶם",
+        "definition": "Bread; sustenance; spiritual teaching.",
+        "context": "Symbolic of divine instruction.",
+        "restorationNote": "Reveals Yahusha as Bread of Life through Torah.",
+        "scripturalWitness": "Deuteronomy 8:3"
+    },
+    "Olam": {
+        "hebrew": "עוֹלָם",
+        "definition": "Age, everlasting duration.",
+        "context": "Hebrew eternity = age upon age, not infinite void.",
+        "restorationNote": "Reframes eternity as cycles of divine ages.",
+        "scripturalWitness": "Psalm 90:2"
+    },
+    "Mark of the Beast": {
+        "hebrew": "",
+        "definition": "Allegiance to the final world system opposing Yahuah.",
+        "context": "Not merely a physical mark; linked to loyalty and obedience.",
+        "restorationNote": "Restoration leads to discernment of spiritual systems.",
+        "scripturalWitness": "Revelation 13"
+    },
+    "Sealing of the 144,000": {
+        "hebrew": "",
+        "definition": "The set-apart group sealed with the Name of Yahuah.",
+        "context": "Spiritual identification, not denomination.",
+        "restorationNote": "Sealed ones stand in obedience and truth.",
+        "scripturalWitness": "Revelation 7"
+    },
+    "Fallen Watchers": {
+        "hebrew": "",
+        "definition": "Angels who descended, transgressed, and corrupted mankind.",
+        "context": "Their sin brought hybrid offspring and corrupted knowledge.",
+        "restorationNote": "Understanding them reveals origins of deception.",
+        "scripturalWitness": "Genesis 6; Enoch 6–15"
+    },
+    "Great Tribulation": {
+        "hebrew": "",
+        "definition": "The period of final testing and purification.",
+        "context": "Not arbitrary suffering; a refining process.",
+        "restorationNote": "Calls believers into endurance.",
+        "scripturalWitness": "Matthew 24:21"
+    },
+    "Abomination of Desolation": {
+        "hebrew": "",
+        "definition": "The final desecration of holy space.",
+        "context": "Daniel’s warning echoed by Yahusha.",
+        "restorationNote": "Recognizing it prevents deception.",
+        "scripturalWitness": "Daniel 9; Matthew 24"
+    },
+    "Beast System": {
+        "hebrew": "",
+        "definition": "Global structure of governance, commerce, and religion united against Yahuah.",
+        "context": "Not a single man.",
+        "restorationNote": "Helps identify counterfeit authority.",
+        "scripturalWitness": "Revelation 13"
+    },
+    "Harlot of Babylon": {
+        "hebrew": "",
+        "definition": "The global spiritual system seducing nations away from truth.",
+        "context": "Found in Revelation 17–18.",
+        "restorationNote": "Calls the remnant to come out of her.",
+        "scripturalWitness": "Revelation 17"
+    },
+    "Millennial Reign": {
+        "hebrew": "",
+        "definition": "The thousand-year reign of Yahusha on earth.",
+        "context": "Kingdom restoration globally.",
+        "restorationNote": "Reintroduces the physical rule of righteousness.",
+        "scripturalWitness": "Revelation 20"
+    },
+    "Day of Yahuah": {
+        "hebrew": "",
+        "definition": "The climactic day when Yahuah executes justice.",
+        "context": "Darkness for the wicked, light for the righteous.",
+        "restorationNote": "Encourages preparation and purity.",
+        "scripturalWitness": "Joel 2; Zephaniah 1"
+    },
+    "Second Exodus": {
+        "hebrew": "",
+        "definition": "The gathering of Yahuah’s people from all nations.",
+        "context": "Greater than the first Exodus.",
+        "restorationNote": "A key event tied to end-time deliverance.",
+        "scripturalWitness": "Jeremiah 16:14–15"
+    },
+    "New Jerusalem": {
+        "hebrew": "",
+        "definition": "The eternal city where Yahuah dwells with His people.",
+        "context": "Not symbolic; a real descending city.",
+        "restorationNote": "Restores hope and future vision.",
+        "scripturalWitness": "Revelation 21"
+    },
+    "Lake of Fire": {
+        "hebrew": "",
+        "definition": "The ultimate destruction of wickedness.",
+        "context": "Final separation from Yahuah.",
+        "restorationNote": "Removes confusion about eternal torment.",
+        "scripturalWitness": "Revelation 20:14"
+    },
+    "Sealed Instructions": {
+        "hebrew": "",
+        "definition": "Knowledge reserved for the final generation.",
+        "context": "Daniel was told to seal the book until the end.",
+        "restorationNote": "Restoration unveils sealed wisdom.",
+        "scripturalWitness": "Daniel 12:4"
+    },
+    "Remnant": {
+        "hebrew": "",
+        "definition": "The few who remain faithful amidst global deception.",
+        "context": "Always present in every generation.",
+        "restorationNote": "Clarifies prophetic identity.",
+        "scripturalWitness": "Isaiah 10:20–22"
+    },
+    "Two Witnesses": {
+        "hebrew": "",
+        "definition": "The final prophetic pair empowered to confront the Beast system.",
+        "context": "Linked to Moses/Elijah patterns.",
+        "restorationNote": "Highlights judgment and mercy.",
+        "scripturalWitness": "Revelation 11"
+    },
+    "Book of Life": {
+        "hebrew": "",
+        "definition": "The register of those belonging to Yahuah.",
+        "context": "Represents covenant belonging.",
+        "restorationNote": "Encourages perseverance in righteousness.",
+        "scripturalWitness": "Revelation 20:12"
+    },
+    "Trumpet Judgments": {
+        "hebrew": "",
+        "definition": "Series of warning judgments preceding final wrath.",
+        "context": "Wake-up calls to mankind.",
+        "restorationNote": "Reveals divine mercy even in judgment.",
+        "scripturalWitness": "Revelation 8–9"
+    },
+    "Cup of Wrath": {
+        "hebrew": "",
+        "definition": "Symbol of Yahuah’s righteous anger poured out on rebellion.",
+        "context": "A recurring prophetic symbol.",
+        "restorationNote": "Warns against aligning with corrupted nations.",
+        "scripturalWitness": "Jeremiah 25"
+    },
+    "Harvest of the Earth": {
+        "hebrew": "",
+        "definition": "The final division between righteous and wicked.",
+        "context": "Agricultural imagery of wheat vs tares.",
+        "restorationNote": "Encourages readiness and purity.",
+        "scripturalWitness": "Revelation 14"
+    },
+    "Great Delusion": {
+        "hebrew": "",
+        "definition": "A strong deception permitted for those who reject truth.",
+        "context": "Linked to lawlessness.",
+        "restorationNote": "True disciples guard their minds from falsehood.",
+        "scripturalWitness": "2 Thessalonians 2:11"
     }
   }
 };
