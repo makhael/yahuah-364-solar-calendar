@@ -31,7 +31,7 @@ interface CommunityTopic {
 }
 
 export default function ForumManagement() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -42,9 +42,10 @@ export default function ForumManagement() {
   const [newTopicDescription, setNewTopicDescription] = useState('');
 
   const topicsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (isUserLoading || !firestore) return null;
     return query(collection(firestore, 'communityTopics'), orderBy('lastActivity', 'desc'));
-  }, [firestore]);
+  }, [isUserLoading, firestore]);
+
   const { data: topics, isLoading: areTopicsLoading } = useCollection<CommunityTopic>(topicsQuery);
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 

@@ -222,12 +222,13 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
 
 export function UserManagement() {
   const firestore = useFirestore();
+  const { isUserLoading } = useUser();
   const { toast } = useToast();
 
   const usersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (isUserLoading || !firestore) return null;
     return collection(firestore, 'users');
-  }, [firestore]);
+  }, [isUserLoading, firestore]);
 
   const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
 

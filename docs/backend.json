@@ -1,241 +1,190 @@
 {
   "entities": {
-    "CalendarEvent": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "CalendarEvent",
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's public profile information.",
       "type": "object",
-      "description": "Represents an event in the 364-day calendar, including appointed times, sabbaths, and other significant days.",
       "properties": {
-        "id": {
+        "displayName": {
           "type": "string",
-          "description": "Unique identifier for the calendar event."
+          "description": "The user's display name."
         },
-        "month": {
-          "type": "number",
-          "description": "The month of the event (1-12)."
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture."
         },
-        "day": {
-          "type": "number",
-          "description": "The day of the event (1-31)."
-        },
-        "year": {
-          "type": "number",
-          "description": "The Gregorian year the event occurs in."
-        },
+        "role": {
+            "type": "string",
+            "enum": ["admin", "leader", "member", "contributor", "moderator"],
+            "description": "The user's role in the application."
+        }
+      }
+    },
+    "CommunityTopic": {
+      "title": "Community Topic",
+      "description": "A topic for community discussion.",
+      "type": "object",
+      "properties": {
         "title": {
           "type": "string",
-          "description": "Title of the event (e.g., Passover, Weekly Sabbath)."
-        },
-        "type": {
-          "type": "string",
-          "description": "Type of the event (e.g., moedim, high-sabbath, tekufah, transitional, work)."
+          "description": "The title of the chat topic."
         },
         "description": {
           "type": "string",
-          "description": "Detailed description of the event, including its meaning and prophetic significance."
+          "description": "A brief description of the topic."
         },
-        "scripturalReferences": {
-          "type": "array",
-          "description": "Array of scriptural references related to the event.",
-          "items": {
-            "type": "string"
+        "creatorId": {
+            "type": "string",
+            "description": "The UID of the user who created the topic."
+        },
+        "creatorDisplayName": {
+            "type": "string",
+            "description": "The display name of the user who created the topic."
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the topic was created."
+        },
+        "lastActivity": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last message in this topic."
+        }
+      },
+      "required": ["title", "description", "creatorId", "creatorDisplayName", "createdAt", "lastActivity"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A single message within a community topic chat.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who sent the message."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The display name of the user at the time of sending."
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The server timestamp when the message was created."
+        }
+      },
+      "required": ["userId", "displayName", "text", "createdAt"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "A scheduled event on the calendar.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "inviteScope": { "enum": ["all", "community", "private"] },
+        "creatorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "recurrence": {
+          "type": "object",
+          "properties": {
+            "frequency": { "enum": ["none", "weekly", "bi-weekly"] },
+            "dayOfWeek": { "type": "string" }
           }
         },
-        "isSabbath": {
-          "type": "boolean",
-          "description": "Indicates whether the event is a Sabbath day."
-        }
-      },
-      "required": [
-        "id",
-        "month",
-        "day",
-        "year",
-        "title",
-        "type",
-        "description",
-        "scripturalReferences",
-        "isSabbath"
-      ]
-    },
-    "Settings": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Settings",
-      "type": "object",
-      "description": "Represents user-specific settings for the calendar application.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the settings."
-        },
-        "startYear": {
-          "type": "number",
-          "description": "The gregorian year the calendar starts."
-        },
-        "gregorianStart": {
-          "type": "string",
-          "description": "User-selected Gregorian start date (M1D1) in YYYY-MM-DD format.",
-          "format": "date"
-        }
-      },
-      "required": [
-        "id",
-        "startYear",
-        "gregorianStart"
-      ]
-    },
-    "GlossaryTerm": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "GlossaryTerm",
-      "type": "object",
-      "description": "Represents a term and its definition used within the calendar application's glossary.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the glossary term."
-        },
-        "term": {
-          "type": "string",
-          "description": "The glossary term itself (e.g., Babylonian, Roman)."
-        },
-        "definition": {
-          "type": "string",
-          "description": "The definition of the term."
-        }
-      },
-      "required": [
-        "id",
-        "term",
-        "definition"
-      ]
-    },
-    "PodcastSeries": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PodcastSeries",
-      "type": "object",
-      "description": "Represents a podcast series available for listening, including its episodes and status.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the podcast series."
-        },
-        "code": {
-          "type": "string",
-          "description": "A short code identifying the series (e.g., SC, LD)."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the podcast series."
-        },
-        "description": {
-          "type": "string",
-          "description": "A brief description of the series' content."
-        },
-        "status": {
-          "type": "string",
-          "description": "The status of the series (e.g., Done, In Progress, Coming Soon)."
-        },
-        "episodes": {
-          "type": "array",
-          "description": "Array of episode titles in the series.",
-          "items": {
-            "type": "string"
+        "rsvps": {
+          "type": "object",
+          "properties": {
+            "going": { "type": "array", "items": { "type": "string" } },
+            "notGoing": { "type": "array", "items": { "type": "string" } },
+            "maybe": { "type": "array", "items": { "type": "string" } },
+            "pending": { "type": "array", "items": { "type": "string" } }
           }
-        },
-        "listenUrl": {
-          "type": "string",
-          "description": "URL where the podcast series can be listened to.",
-          "format": "uri"
         }
       },
-      "required": [
-        "id",
-        "code",
-        "title",
-        "description",
-        "status",
-        "episodes",
-        "listenUrl"
-      ]
+      "required": ["title", "startDate", "startTime", "inviteScope", "creatorId"]
+    },
+    "AppointmentSummary": {
+      "title": "Appointment Summary",
+      "description": "A summary of dates that have appointments for a given year.",
+      "type": "object",
+      "properties": {
+        "appointmentDates": {
+          "type": "array",
+          "items": { "type": "string", "format": "date" },
+          "description": "An array of YYYY-MM-DD strings for which appointments exist."
+        }
+      }
+    },
+    "GlossaryProposal": {
+      "title": "Glossary Proposal",
+      "description": "A user's proposal for a new or updated glossary term.",
+      "type": "object",
+      "properties": {
+        "term": { "type": "string" },
+        "definition": { "type": "string" },
+        "context": { "type": "string" },
+        "scripturalWitness": { "type": "string" },
+        "restorationNote": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "userId": { "type": "string" },
+        "userDisplayName": { "type": "string" },
+        "status": { "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["term", "definition", "userId", "userDisplayName", "status", "createdAt"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["anonymous", "google.com"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}/settings/{settingsId}",
-        "definition": {
-          "entityName": "Settings",
-          "schema": {
-            "$ref": "#/backend/entities/Settings"
-          },
-          "description": "Stores user-specific settings. Path-based ownership ensures only the user can access their own settings.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "settingsId",
-              "description": "The unique identifier for settings object."
-            }
-          ]
-        }
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
       },
-      {
-        "path": "/calendar_events/{calendarEventId}",
-        "definition": {
-          "entityName": "CalendarEvent",
-          "schema": {
-            "$ref": "#/backend/entities/CalendarEvent"
-          },
-          "description": "Stores calendar events. No authorization dependencies.",
-          "params": [
-            {
-              "name": "calendarEventId",
-              "description": "The unique identifier for the calendar event."
-            }
-          ]
-        }
+      "description": "Stores public profile information for each user."
+    },
+    "/users/{userId}/glossaryProposals/{proposalId}": {
+      "schema": {
+        "$ref": "#/entities/GlossaryProposal"
       },
-      {
-        "path": "/glossary_terms/{glossaryTermId}",
-        "definition": {
-          "entityName": "GlossaryTerm",
-          "schema": {
-            "$ref": "#/backend/entities/GlossaryTerm"
-          },
-          "description": "Stores glossary terms. No authorization dependencies.",
-          "params": [
-            {
-              "name": "glossaryTermId",
-              "description": "The unique identifier for the glossary term."
-            }
-          ]
-        }
+      "description": "User-specific collection of their glossary proposals."
+    },
+    "/communityTopics/{topicId}": {
+        "schema": {
+            "$ref": "#/entities/CommunityTopic"
+        },
+        "description": "Collection of all community chat topics."
+    },
+    "/communityTopics/{topicId}/messages/{messageId}": {
+        "schema": {
+            "$ref": "#/entities/ChatMessage"
+        },
+        "description": "Sub-collection of messages for a specific community topic."
+    },
+    "/appointments/{appointmentId}": {
+      "schema": {
+        "$ref": "#/entities/Appointment"
       },
-      {
-        "path": "/podcast_series/{podcastSeriesId}",
-        "definition": {
-          "entityName": "PodcastSeries",
-          "schema": {
-            "$ref": "#/backend/entities/PodcastSeries"
-          },
-          "description": "Stores podcast series. No authorization dependencies.",
-          "params": [
-            {
-              "name": "podcastSeriesId",
-              "description": "The unique identifier for the podcast series."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore data structure is designed to store calendar events, user settings, glossary terms, and podcast series. User-specific data (settings) are stored under the `/users/{userId}` path, ensuring private data is isolated. Calendar events, glossary terms, and podcast series are stored in top-level collections as they are global and not user-specific.\n\n**Authorization Independence:** All collections, including user settings, rely on simple path-based authorization (user-owned data). No `get()` calls are needed in the security rules.\n\n**QAPs Support:**\n*   `users/{userId}/settings`:  Secure `list` operations are supported because only the user with the matching `userId` can access their settings. This uses Path-Based Ownership.\n*   `calendar_events`, `glossary_terms`, `podcast_series`: These collections do not store any personal information and can be made publicly readable (if desired) or restricted to admin access. Secure `list` operations are naturally supported because of Structural Segregation. All documents share the same security posture."
+      "description": "Collection of all calendar appointments."
+    },
+    "/appointmentSummaries/{year}": {
+      "schema": {
+        "$ref": "#/entities/AppointmentSummary"
+      },
+      "description": "Summary of appointment dates for quick lookups."
+    }
   }
 }

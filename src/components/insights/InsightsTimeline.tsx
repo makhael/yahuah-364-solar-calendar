@@ -36,7 +36,7 @@ export const InsightsTimeline = () => {
       collection(firestore, 'users', user.uid, 'notes'),
       where('isRevelation', '==', true)
     );
-  }, [firestore, user?.uid, isUserLoading]);
+  }, [isUserLoading, user?.uid, firestore]);
 
   const { data: revelationNotes, isLoading } = useCollection<Note>(revelationNotesQuery);
   
