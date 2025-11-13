@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -102,14 +101,46 @@ export const MyProposals = ({ userId }: { userId: string }) => {
         {proposals.map(proposal => {
            const statusInfo = getStatusInfo(proposal.status);
            return (
-            <div key={proposal.id} className="p-4 rounded-lg border bg-background/50 flex justify-between items-start gap-4">
-              <div className="flex-1 space-y-3">
-                <div className="flex items-center gap-3">
-                    <h4 className="font-semibold text-lg text-primary">{proposal.term}</h4>
-                    <Badge className={cn("text-white", statusInfo.className)}>{statusInfo.text}</Badge>
+            <div key={proposal.id} className="p-4 rounded-lg border bg-background/50">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                  <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3 flex-wrap">
+                          <h4 className="font-semibold text-lg text-primary">{proposal.term}</h4>
+                          <Badge className={cn("text-white", statusInfo.className)}>{statusInfo.text}</Badge>
+                      </div>
+                  </div>
+                  <div className="flex flex-shrink-0 gap-2 self-start sm:self-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openModal('glossaryProposal', { proposal })}
+                      disabled={proposal.status === 'approved'}
+                    >
+                      <Edit className="w-3 h-3 mr-2" /> Edit
+                    </Button>
+                     <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="w-3 h-3 mr-2" /> Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete your proposal for "{proposal.term}". Are you sure?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(proposal.id)}>Yes, Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-                
-                <div className="space-y-2 text-sm">
+
+                <div className="mt-4 space-y-2 text-sm">
                   <div>
                     <p className="font-medium text-muted-foreground">Definition:</p>
                     <p className="text-foreground/90 whitespace-pre-wrap">{proposal.definition}</p>
@@ -141,39 +172,9 @@ export const MyProposals = ({ userId }: { userId: string }) => {
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-muted-foreground/80 pt-2 border-t">
+                <p className="text-xs text-muted-foreground/80 pt-2 mt-4 border-t">
                   Submitted: {proposal.createdAt ? new Date(proposal.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
                 </p>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openModal('glossaryProposal', { proposal })}
-                  disabled={proposal.status === 'approved'}
-                >
-                  <Edit className="w-3 h-3 mr-2" /> Edit
-                </Button>
-                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="w-3 h-3 mr-2" /> Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently delete your proposal for "{proposal.term}". Are you sure?
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDelete(proposal.id)}>Yes, Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
             </div>
           )
         })}
