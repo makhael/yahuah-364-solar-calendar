@@ -105,15 +105,6 @@ export default function JournalPage() {
                                     <MyBookmarks userId={user.uid} />
                                 </TabsContent>
                                 <TabsContent value="proposals">
-                                    <div className="flex justify-end mb-4">
-                                        <button
-                                            className="text-sm font-medium text-primary hover:underline flex items-center"
-                                            onClick={() => openModal('glossaryProposal')}
-                                        >
-                                            <Edit className="w-4 h-4 mr-2" />
-                                            Submit a New Proposal
-                                        </button>
-                                    </div>
                                     <MyProposals userId={user.uid} />
                                 </TabsContent>
                                  <TabsContent value="invitations">

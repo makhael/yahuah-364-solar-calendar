@@ -17,7 +17,6 @@ type ModalType =
   | 'series' 
   | 'glossary' 
   | 'preset' 
-  | 'glossaryProposal' 
   | 'dailyChat' 
   | 'fullGlossary' 
   | 'glossaryInfo'
@@ -37,7 +36,6 @@ type ModalDataPayloads = {
   fullGlossary: { targetTerm?: string };
   glossaryInfo: {};
   appointment: { appointment: any | null, date?: string };
-  glossaryProposal: { proposal?: any | null };
   editProfile: {};
 };
 
@@ -54,7 +52,6 @@ const initialModalState: ModalState = {
   series: { isOpen: false },
   glossary: { isOpen: false },
   preset: { isOpen: false },
-  glossaryProposal: { isOpen: false },
   dailyChat: { isOpen: false },
   fullGlossary: { isOpen: false },
   glossaryInfo: { isOpen: false },

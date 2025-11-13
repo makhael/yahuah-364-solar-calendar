@@ -215,10 +215,7 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
             </div>
             
              <div className="p-4 flex-shrink-0 border-t flex items-center justify-between bg-secondary/30 rounded-b-2xl">
-                <Button variant="outline" onClick={() => openModal('glossaryProposal', {})}>
-                    <FilePlus2 className="mr-2 h-4 w-4" />
-                    Propose New Term or Edit
-                </Button>
+                <div></div>
                 <Button onClick={onClose}>
                     Close
                 </Button>

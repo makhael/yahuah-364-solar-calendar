@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -113,8 +114,8 @@ export const MyProposals = ({ userId }: { userId: string }) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => openModal('glossaryProposal', { proposal })}
-                      disabled={proposal.status === 'approved'}
+                      onClick={() => {}}
+                      disabled={true}
                     >
                       <Edit className="w-3 h-3 mr-2" /> Edit
                     </Button>

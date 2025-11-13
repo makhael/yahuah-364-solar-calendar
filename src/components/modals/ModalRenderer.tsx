@@ -7,7 +7,6 @@ import { GlossaryModal } from '@/components/glossary/GlossaryModal';
 import { SeriesModal } from '@/components/modals/SeriesModal';
 import { MonthInfoModal } from '@/components/modals/MonthInfoModal';
 import { PresetModal } from '@/components/modals/PresetModal';
-import { GlossaryProposalModal } from '../glossary/GlossaryProposalModal';
 import { FullGlossaryModal } from '../glossary/FullGlossaryModal';
 import { DayDetailModal } from './DayDetailModal';
 import { DailyChatModal } from '../chat/DailyChatModal';
@@ -27,9 +26,9 @@ export const ModalRenderer = () => {
     openModal('glossary', { termKey });
   };
 
-  const isModalOpen = Object.values(modalState).some(m => m.isOpen);
+  const isAnyModalOpen = Object.values(modalState).some(m => m.isOpen);
 
-  if (!isModalOpen) {
+  if (!isAnyModalOpen) {
     return null;
   }
 
@@ -71,13 +70,6 @@ export const ModalRenderer = () => {
           onClose={closeAllModals}
           onSave={handleSavePreset}
           {...modalState.preset.data!}
-        />
-      )}
-      {modalState.glossaryProposal.isOpen && (
-        <GlossaryProposalModal 
-          isOpen={true} 
-          onClose={closeAllModals} 
-          {...modalState.glossaryProposal.data}
         />
       )}
       {modalState.dayDetail.isOpen && (
