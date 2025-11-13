@@ -35,11 +35,9 @@ service cloud.firestore {
       }
     }
     
-    match /dailyContent/{dateId} {
-      match /chatMessages/{messageId} {
+    match /dailyContent/{dateId}/chatMessages/{messageId} {
         allow get, list: if true;
         allow create, update, delete: if isSignedIn();
-      }
     }
 
     match /users/{userId} {
@@ -64,12 +62,9 @@ service cloud.firestore {
     
     match /scriptureReadings/{readingId} {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow list: if isAdmin();
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-    }
-
-    match /scriptureReadings {
-      allow list: if isSignedIn();
     }
 
     match /podcast_series/{podcastSeriesId} {
