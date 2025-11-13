@@ -93,13 +93,15 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     
     const appointmentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
+        const baseQuery = collection(firestore, 'appointments');
+
         if (isAdmin) {
-            return collection(firestore, 'appointments');
+            return baseQuery;
         }
         if (isUserFullyAuthenticated) {
-            return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', 'community']));
+            return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
         }
-        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
+        return query(baseQuery, where('inviteScope', '==', 'all'));
     }, [firestore, isAdmin, isUserFullyAuthenticated]);
 
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);

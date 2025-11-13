@@ -21,7 +21,7 @@ service cloud.firestore {
     
     match /appointments/{appointmentId} {
       allow get: if true;
-      allow list: if isAdmin() || (request.query.where[0][0] == 'inviteScope');
+      allow list: if isAdmin() || 'inviteScope' in request.query.where;
       allow write: if isSignedIn();
     }
 
@@ -84,9 +84,7 @@ service cloud.firestore {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-      // ANYONE can list as long as they are filtering for approved scriptures.
-      allow list: if isAdmin() || 
-                   (request.query.where[0] == 'status' && request.query.where[2] == 'approved');
+      allow list: if isAdmin() || (request.query.where.status == 'approved');
     }
 
     match /podcast_series/{podcastSeriesId} {
