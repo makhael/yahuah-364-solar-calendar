@@ -18,6 +18,7 @@ import { LoaderCircle, Edit, BookOpen, ShieldCheck, BookText, Terminal, LogOut }
 import { useUI } from "@/context/UIContext";
 import { getAuth, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { doc } from 'firebase/firestore';
 
 interface UserProfileProps {
     onOpenInstructions: () => void;
