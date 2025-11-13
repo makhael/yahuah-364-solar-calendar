@@ -185,11 +185,11 @@
       },
       "description": "Stores public profile information for each user."
     },
-    "/users/{userId}/glossaryProposals/{proposalId}": {
+    "/glossaryProposals/{proposalId}": {
       "schema": {
         "$ref": "#/entities/GlossaryProposal"
       },
-      "description": "User-specific collection of their glossary proposals."
+      "description": "All glossary proposals from all users."
     },
     "/glossaryTerms/{termId}": {
       "schema": {

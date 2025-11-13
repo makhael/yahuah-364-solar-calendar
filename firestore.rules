@@ -60,6 +60,11 @@ service cloud.firestore {
       allow create, update, delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    match /glossaryProposals/{proposalId} {
+        allow create: if isSignedIn();
+        allow list, get, update, delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     match /scriptureReadings/{readingId} {
       allow get, list: if true;
       allow create: if isSignedIn();

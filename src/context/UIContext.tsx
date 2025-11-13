@@ -429,30 +429,19 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         status: 'pending' as 'pending',
         userId: user.uid,
         userDisplayName: user.displayName || user.email,
-        updatedAt: serverTimestamp(),
     };
-
+    
     if (id) {
-      const proposalRef = doc(firestore, 'users', user.uid, 'glossaryProposals', id);
-      updateDocumentNonBlocking(proposalRef, payload);
-      toast({
-        title: 'Proposal Updated!',
-        description: 'Your changes have been submitted for review.',
-      });
+        const proposalRef = doc(firestore, 'glossaryProposals', id);
+        updateDocumentNonBlocking(proposalRef, { ...payload, updatedAt: serverTimestamp() });
+        toast({ title: 'Proposal Updated!', description: 'Your changes have been submitted for review.' });
     } else {
-      const proposalCol = collection(firestore, 'users', user.uid, 'glossaryProposals');
-      const newProposal = {
-        ...payload,
-        createdAt: serverTimestamp(),
-      };
-      addDocumentNonBlocking(proposalCol, newProposal);
-      toast({
-        title: 'Proposal Submitted!',
-        description: 'Thank you for your contribution.',
-      });
+        const proposalRef = doc(collection(firestore, 'glossaryProposals'));
+        addDocumentNonBlocking(proposalRef, { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+        toast({ title: 'Proposal Submitted!', description: 'Thank you for your contribution.' });
     }
     
-    closeAllModals(); 
+    closeAllModals();
   }, [user, firestore, toast, closeAllModals]);
 
 

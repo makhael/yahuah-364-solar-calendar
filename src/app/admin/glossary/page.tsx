@@ -17,10 +17,6 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
-interface User {
-  id: string;
-}
-
 interface Proposal {
     id: string;
     term: string;
@@ -33,10 +29,9 @@ interface Proposal {
     userDisplayName: string;
     createdAt?: { seconds: number };
     tags?: string[];
-    path: string; 
 }
 
-const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void }) => {
+const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, onUpdate: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void }) => {
     
     const getStatusInfo = (status: Proposal['status']) => {
         switch (status) {
@@ -104,17 +99,17 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(proposal)}>Yes, Delete</AlertDialogAction>
+                            <AlertDialogAction onClick={() => onDelete(proposal.id)}>Yes, Delete</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
                     {proposal.status === 'pending' && (
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={() => onUpdate(proposal, 'rejected')}>
+                            <Button variant="outline" size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
                                 <ThumbsDown className="w-4 h-4 mr-2" />
                                 Reject
                             </Button>
-                            <Button variant="default" size="sm" onClick={() => onUpdate(proposal, 'approved')} className="bg-green-600 hover:bg-green-700">
+                            <Button variant="default" size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className="bg-green-600 hover:bg-green-700">
                                 <ThumbsUp className="w-4 h-4 mr-2" />
                                 Approve
                             </Button>
@@ -126,14 +121,14 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
     );
 }
 
-const ProposalsList = ({ proposals, onUpdate, onDelete }: { proposals: Proposal[], onUpdate: (proposal: Proposal, status: Proposal['status']) => void, onDelete: (proposal: Proposal) => void }) => {
+const ProposalsList = ({ proposals, onUpdate, onDelete }: { proposals: Proposal[], onUpdate: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void }) => {
     if (proposals.length === 0) {
         return <p className="text-center text-muted-foreground py-8">No proposals in this category.</p>;
     }
 
     return (
         <div className="space-y-4">
-            {proposals.map(p => <ProposalCard key={p.path} proposal={p} onUpdate={onUpdate} onDelete={onDelete} />)}
+            {proposals.map(p => <ProposalCard key={p.id} proposal={p} onUpdate={onUpdate} onDelete={onDelete} />)}
         </div>
     )
 }
@@ -143,55 +138,23 @@ export default function GlossaryManagement() {
     const { toast } = useToast();
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
-    const [allProposals, setAllProposals] = useState<Proposal[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const proposalsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, `glossaryProposals`), orderBy('createdAt', 'desc'));
+    }, [firestore]);
+    
+    const { data: allProposals, isLoading } = useCollection<Proposal>(proposalsQuery);
 
-    const usersQuery = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-    const { data: users, isLoading: areUsersLoading } = useCollection<User>(usersQuery);
-
-    useEffect(() => {
-        if (!firestore || areUsersLoading || !users) return;
-
-        const fetchAllProposals = async () => {
-            setIsLoading(true);
-            const proposalPromises = users.map(user => {
-                const proposalsQuery = query(collection(firestore, `users/${user.id}/glossaryProposals`));
-                return getDocs(proposalsQuery);
-            });
-
-            try {
-                const snapshotResults = await Promise.all(proposalPromises);
-                const flattenedProposals = snapshotResults.flatMap(snapshot => 
-                    snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        path: doc.ref.path,
-                        ...doc.data()
-                    } as Proposal))
-                );
-                
-                flattenedProposals.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                setAllProposals(flattenedProposals);
-            } catch (error) {
-                console.error("Error fetching all proposals:", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not load glossary proposals.' });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchAllProposals();
-    }, [firestore, users, areUsersLoading, toast]);
-
-
-    const handleUpdateStatus = (proposal: Proposal, status: Proposal['status']) => {
-        if (!firestore || !proposal.path) return;
+    const handleUpdateStatus = (proposalId: string, status: Proposal['status']) => {
+        if (!firestore || !allProposals) return;
         
-        setAllProposals(prev => prev.map(p => p.path === proposal.path ? { ...p, status } : p));
-        
-        const proposalRef = doc(firestore, proposal.path);
+        const proposalRef = doc(firestore, 'glossaryProposals', proposalId);
         updateDocumentNonBlocking(proposalRef, { status });
 
         if (status === 'approved') {
+            const proposal = allProposals.find(p => p.id === proposalId);
+            if (!proposal) return;
+
             const safeId = proposal.term.toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-');
             const glossaryTermRef = doc(firestore, 'glossaryTerms', safeId);
             const newTermData = {
@@ -224,22 +187,21 @@ export default function GlossaryManagement() {
         }
     };
 
-    const handleDelete = async (proposal: Proposal) => {
-        if (!firestore || !proposal.path) return;
-        setAllProposals(prev => prev.filter(p => p.path !== proposal.path));
+    const handleDelete = async (proposalId: string) => {
+        if (!firestore) return;
         try {
-            await deleteDoc(doc(firestore, proposal.path));
+            await deleteDoc(doc(firestore, 'glossaryProposals', proposalId));
             toast({ title: 'Proposal Deleted', description: 'The proposal has been permanently removed.' });
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
         }
     };
     
-    const pendingProposals = useMemo(() => allProposals.filter(p => p.status === 'pending'), [allProposals]);
-    const approvedProposals = useMemo(() => allProposals.filter(p => p.status === 'approved'), [allProposals]);
-    const rejectedProposals = useMemo(() => allProposals.filter(p => p.status === 'rejected'), [allProposals]);
+    const pendingProposals = useMemo(() => allProposals?.filter(p => p.status === 'pending') || [], [allProposals]);
+    const approvedProposals = useMemo(() => allProposals?.filter(p => p.status === 'approved') || [], [allProposals]);
+    const rejectedProposals = useMemo(() => allProposals?.filter(p => p.status === 'rejected') || [], [allProposals]);
 
-    if (isLoading || areUsersLoading) {
+    if (isLoading) {
         return (
             <div className="flex justify-center items-center p-12">
                 <div className="relative flex h-24 w-24 items-center justify-center">
