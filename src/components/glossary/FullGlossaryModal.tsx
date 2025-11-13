@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { XCircle, Search } from 'lucide-react';
+import { XCircle, Search, FilePlus2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { GLOSSARY_PREFACE, GLOSSARY_SECTIONS, GLOSSARY_TERM_KEYS } from '@/lib/g
 import type { User } from 'firebase/auth';
 import { cn } from '@/lib/utils';
 import { LoaderCircle } from 'lucide-react';
+import { useUI } from '@/context/UIContext';
 
 interface FullGlossaryModalProps {
   isOpen: boolean;
@@ -70,6 +71,7 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
     const [searchTerm, setSearchTerm] = useState('');
     const [highlightedTerm, setHighlightedTerm] = useState<string | undefined>(targetTerm);
     const firestore = useFirestore();
+    const { openModal } = useUI();
 
     const glossaryTermsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -271,7 +273,11 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
                 </ScrollArea>
             </div>
             
-             <div className="p-4 flex-shrink-0 border-t flex items-center justify-end bg-secondary/30 rounded-b-2xl">
+             <div className="p-4 flex-shrink-0 border-t flex items-center justify-between bg-secondary/30 rounded-b-2xl">
+                <Button variant="outline" onClick={() => openModal('glossaryProposal', {})}>
+                    <FilePlus2 className="mr-2 h-4 w-4" />
+                    Propose New Term or Edit
+                </Button>
                 <Button onClick={onClose}>
                     Close
                 </Button>

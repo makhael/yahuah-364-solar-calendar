@@ -90,14 +90,7 @@ export const GlossaryModal = ({ termKey, onClose }: GlossaryModalProps) => {
           </div>
         </div>
 
-        <div className="p-4 flex-shrink-0 border-t bg-secondary/30 rounded-b-2xl flex flex-col sm:flex-row sm:justify-between gap-2">
-            <Button
-              variant="outline"
-              onClick={handlePropose}
-            >
-              <FilePlus2 className="mr-2 h-4 w-4" />
-              Propose New Term
-            </Button>
+        <div className="p-4 flex-shrink-0 border-t bg-secondary/30 rounded-b-2xl flex justify-end">
             <Button
               variant="outline"
               onClick={() => copyToClipboard(fullContent, toast)}
