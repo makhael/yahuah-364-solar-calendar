@@ -86,10 +86,10 @@ service cloud.firestore {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-    }
-
-    match /scriptureReadings {
-       allow list: if isAdmin() || (request.query.where.size() > 0 && request.query.where[0] == 'status' && request.query.where[2] == 'approved');
+      // Admin can list all. Non-admins can only list approved scriptures, or their own submissions.
+      allow list: if isAdmin() ||
+                   (request.query.where[2] == 'approved') ||
+                   (isSignedIn() && request.query.where[0] == 'userId' && request.query.where[2] == request.auth.uid);
     }
 
     match /podcast_series/{podcastSeriesId} {
