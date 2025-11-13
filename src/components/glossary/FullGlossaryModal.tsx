@@ -135,7 +135,7 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
                         <h2 className="text-2xl font-bold text-foreground">
                             Glossary: Return to the Original Witness
                         </h2>
-                        <Button variant="ghost" size="icon" onClick={handleOpenInfo}>
+                        <Button variant="ghost" size="icon" onClick={handleOpenInfo} className="h-6 w-6">
                             <Info className="w-5 h-5 text-muted-foreground" />
                         </Button>
                     </div>
