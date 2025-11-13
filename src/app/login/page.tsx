@@ -1,10 +1,11 @@
+
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const auth = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const prefilledEmail = searchParams.get('email');
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -34,7 +37,13 @@ export default function LoginPage() {
     },
   });
 
-  const { formState: { isSubmitting } } = form;
+  const { formState: { isSubmitting }, setValue } = form;
+
+  useEffect(() => {
+    if (prefilledEmail) {
+      setValue('email', decodeURIComponent(prefilledEmail));
+    }
+  }, [prefilledEmail, setValue]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);

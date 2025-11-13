@@ -5,7 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase, useAuth, useFirebaseApp } from '@/firebase';
 import { collection, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { LoaderCircle, Trash2, Edit, Save, X, UserPlus } from 'lucide-react';
+import { LoaderCircle, Trash2, Edit, Save, X, UserPlus, LogIn } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -22,9 +22,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createUserWithEmailAndPassword, getAuth as getAuthSecondary } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth as getAuthSecondary, signInWithCredential, EmailAuthProvider, signOut as firebaseSignOut, reauthenticateWithCredential } from 'firebase/auth';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
+import { useRouter } from 'next/navigation';
 
 
 interface User {
@@ -52,7 +53,7 @@ const getRoleVariant = (role: User['role']) => {
   }
 };
 
-const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUsers }: { users: User[], onRoleChange: Function, onStatusChange: Function, onDelete: Function, updatingUsers: Record<string, boolean> }) => {
+const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUsers, onSwitchUser }: { users: User[], onRoleChange: Function, onStatusChange: Function, onDelete: Function, updatingUsers: Record<string, boolean>, onSwitchUser: (email: string) => void }) => {
   const [editingUser, setEditingUser] = useState<EditingUserState | null>(null);
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -122,11 +123,31 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                         <Button onClick={handleSaveEdit}>Save</Button>
                     </div>
                 ) : (
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-2">
                         <Button variant="outline" size="sm" onClick={() => handleEditClick(user)}>
                             <Edit className="w-4 h-4 mr-2"/>
                             Edit User
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                             <Button variant="secondary" size="sm">
+                                <LogIn className="w-4 h-4 mr-2"/>
+                                Switch
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Switch to {user.displayName}?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will sign you out and pre-fill the login form with this user's email. You will need their password to proceed.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onSwitchUser(user.email)}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                 )}
 
@@ -194,7 +215,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right w-[320px]">Actions</TableHead>
+              <TableHead className="text-right w-[380px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -250,6 +271,25 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                               <SelectItem value="denied">Denied</SelectItem>
                             </SelectContent>
                           </Select>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                               <Button variant="ghost" size="icon">
+                                <LogIn className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Switch to {user.displayName}?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will sign you out and pre-fill the login form with this user's email. You will need their password to proceed.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onSwitchUser(user.email)}>Continue</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                           <Button variant="outline" size="icon" onClick={() => handleEditClick(user)}>
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -300,6 +340,10 @@ function CreateUserDialog() {
   const mainApp = useFirebaseApp(); // Get the main Firebase app instance
   const firestore = useFirestore();
   const { toast } = useToast();
+  const auth = useAuth();
+  
+  const currentAdminUser = auth.currentUser;
+
 
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
@@ -314,49 +358,70 @@ function CreateUserDialog() {
   const { formState: { isSubmitting }, control, handleSubmit } = form;
 
   const onSubmit = async (data: CreateUserForm) => {
-    // Create a temporary, secondary Firebase app instance for user creation.
-    // This isolates the auth state from the main app, preventing the admin from being logged out.
+    if (!currentAdminUser || !currentAdminUser.email) {
+        toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Admin user not found. Please sign in again.",
+        });
+        return;
+    }
+
+    // This is a workaround since the client SDK doesn't support creating users without signing them in.
+    // 1. Create a temporary, secondary Firebase app instance.
     const tempAppName = `temp-user-creation-${Date.now()}`;
     const tempApp = initializeApp(firebaseConfig, tempAppName);
     const tempAuth = getAuthSecondary(tempApp);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(tempAuth, data.email, data.password);
-      const newUser = userCredential.user;
+        // 2. Create the new user in the temporary app. This signs them in *within that app instance*.
+        const userCredential = await createUserWithEmailAndPassword(tempAuth, data.email, data.password);
+        const newUser = userCredential.user;
 
-      const userDocRef = doc(firestore, "users", newUser.uid);
-      await setDoc(userDocRef, {
-        displayName: data.displayName,
-        email: data.email,
-        role: data.role,
-        status: 'approved',
-        createdAt: new Date().toISOString(),
-      });
-      
-      toast({
-        title: "User Created",
-        description: `Account for ${data.displayName} has been successfully created.`,
-      });
+        // 3. Create the user's document in Firestore.
+        const userDocRef = doc(firestore, "users", newUser.uid);
+        await setDoc(userDocRef, {
+            displayName: data.displayName,
+            email: data.email,
+            role: data.role,
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+        });
+        
+        toast({
+            title: "User Created",
+            description: `Account for ${data.displayName} has been successfully created.`,
+        });
 
-      form.reset();
-      setOpen(false);
+        form.reset();
+        setOpen(false);
 
     } catch (error: any) {
-      console.error("Error creating user:", error);
-      let errorMessage = "An unexpected error occurred.";
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'This email is already in use by another account.';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'The password is too weak.';
-      }
-      toast({
-        variant: "destructive",
-        title: "Creation Failed",
-        description: errorMessage,
-      });
+        console.error("Error creating user:", error);
+        let errorMessage = "An unexpected error occurred.";
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'This email is already in use by another account.';
+        } else if (error.code === 'auth/weak-password') {
+            errorMessage = 'The password is too weak.';
+        }
+        toast({
+            variant: "destructive",
+            title: "Creation Failed",
+            description: errorMessage,
+        });
     } finally {
-      // Clean up the temporary app instance to avoid memory leaks.
-      await deleteApp(tempApp);
+        // 4. IMPORTANT: Re-authenticate the original admin user in the main app instance.
+        // This is necessary because the above process might affect the main auth state in some browser environments.
+        // This is a simplified re-authentication. A more robust solution for production
+        // might involve securely storing and retrieving admin credentials or using refresh tokens.
+        if (auth.currentUser?.email !== currentAdminUser.email) {
+           // The auth state was switched. We need to sign out of the new user and sign back in as admin.
+           // This is complex and usually requires the admin's password again.
+           // For this context, we will assume the session remains and just log a warning.
+           console.warn("Admin user was logged out during user creation. Manual re-login may be required if session is lost.");
+        }
+        // 5. Clean up the temporary app instance.
+        await deleteApp(tempApp);
     }
   };
 
@@ -442,6 +507,8 @@ export function UserManagement() {
   const firestore = useFirestore();
   const { isUserLoading } = useUser();
   const { toast } = useToast();
+  const auth = useAuth();
+  const router = useRouter();
 
   const usersQuery = useMemoFirebase(() => {
     if (isUserLoading || !firestore) return null;
@@ -494,6 +561,15 @@ export function UserManagement() {
     }
   };
 
+  const handleSwitchUser = (email: string) => {
+    firebaseSignOut(auth).then(() => {
+      router.push(`/login?email=${encodeURIComponent(email)}`);
+    }).catch((error) => {
+      console.error("Sign out error", error);
+      toast({variant: 'destructive', title: 'Sign Out Failed', description: 'Could not sign out to switch users.'});
+    });
+  };
+
   const approvedUsers = useMemo(() => users?.filter(u => u.status === 'approved') || [], [users]);
   const pendingUsers = useMemo(() => users?.filter(u => u.status === 'pending' || !u.status) || [], [users]);
   const deniedUsers = useMemo(() => users?.filter(u => u.status === 'denied') || [], [users]);
@@ -519,13 +595,13 @@ export function UserManagement() {
             </CardHeader>
             <CardContent className="p-2 sm:p-6 sm:pt-0">
               <TabsContent value="approved" className="mt-0">
-                <UserTable users={approvedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} />
+                <UserTable users={approvedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} />
               </TabsContent>
               <TabsContent value="pending" className="mt-0">
-                <UserTable users={pendingUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} />
+                <UserTable users={pendingUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} />
               </TabsContent>
               <TabsContent value="denied" className="mt-0">
-                <UserTable users={deniedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} />
+                <UserTable users={deniedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} />
               </TabsContent>
             </CardContent>
           </Tabs>
