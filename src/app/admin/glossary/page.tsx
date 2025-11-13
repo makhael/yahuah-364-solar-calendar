@@ -49,20 +49,10 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
     return (
         <Card className={cn("transition-all flex flex-col", statusInfo.color)}>
             <CardHeader>
-                <div className="flex flex-col gap-4">
-                    <div className="flex justify-center">
-                         <Badge variant="outline" className={cn("flex items-center gap-2", statusInfo.color)}>
-                            {statusInfo.icon}
-                            <span>{statusInfo.text}</span>
-                        </Badge>
-                    </div>
-                    <div className="text-center">
-                        <CardTitle className="text-lg">{proposal.term}</CardTitle>
-                        <CardDescription>
-                            Submitted by {proposal.userDisplayName} on {proposal.createdAt ? new Date(proposal.createdAt.seconds * 1000).toLocaleDateString() : 'just now'}
-                        </CardDescription>
-                    </div>
-                </div>
+                <CardTitle className="text-lg">{proposal.term}</CardTitle>
+                <CardDescription>
+                    Submitted by {proposal.userDisplayName} on {proposal.createdAt ? new Date(proposal.createdAt.seconds * 1000).toLocaleDateString() : 'just now'}
+                </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow">
                 <div className="space-y-4">
@@ -84,7 +74,11 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                     </div>}
                 </div>
             </CardContent>
-            <CardFooter className="pt-4 mt-4 border-t">
+            <CardFooter className="pt-4 mt-4 border-t flex flex-col items-end gap-4">
+                 <Badge variant="outline" className={cn("flex items-center gap-2 self-start", statusInfo.color)}>
+                    {statusInfo.icon}
+                    <span>{statusInfo.text}</span>
+                </Badge>
                 <div className="w-full flex flex-col sm:flex-row sm:justify-end items-stretch gap-2">
                     {proposal.status === 'pending' && (
                         <>
