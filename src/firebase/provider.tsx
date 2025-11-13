@@ -75,8 +75,6 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
-
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => { // Auth state determined
@@ -89,11 +87,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
             await signInWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
             // onAuthStateChanged will be triggered again by this, so we don't need to set user state here.
           } catch (error: any) {
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
               // The user doesn't exist, so create it.
               try {
-                await createUserWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
-                // onAuthStateChanged will be triggered again by this, so we don't need to set user state here.
+                const userCredential = await createUserWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
+                // After creation, onAuthStateChanged will fire with the new user.
+                // We can optionally set state here to be faster, but the listener will handle it.
+                setUserAuthState({ user: userCredential.user, isUserLoading: false, userError: null });
               } catch (createUserError: any) {
                  console.error("FirebaseProvider: Auto user creation failed:", createUserError);
                  setUserAuthState({ user: null, isUserLoading: false, userError: createUserError });
