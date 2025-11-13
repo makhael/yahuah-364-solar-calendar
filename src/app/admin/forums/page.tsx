@@ -201,17 +201,17 @@ export default function ForumManagement() {
                   </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="title" className="text-right">
+                  <div className="space-y-2">
+                      <Label htmlFor="title">
                           Title
                       </Label>
-                      <Input id="title" value={newTopicTitle} onChange={(e) => setNewTopicTitle(e.target.value)} className="col-span-3" />
+                      <Input id="title" value={newTopicTitle} onChange={(e) => setNewTopicTitle(e.target.value)} />
                   </div>
-                  <div className="grid grid-cols-4 items-start gap-4">
-                      <Label htmlFor="description" className="text-right pt-2">
+                  <div className="space-y-2">
+                      <Label htmlFor="description">
                           Description
                       </Label>
-                      <Textarea id="description" value={newTopicDescription} onChange={(e) => setNewTopicDescription(e.target.value)} className="col-span-3" />
+                      <Textarea id="description" value={newTopicDescription} onChange={(e) => setNewTopicDescription(e.target.value)} />
                   </div>
               </div>
               <DialogFooter>
