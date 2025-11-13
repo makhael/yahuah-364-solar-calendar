@@ -43,7 +43,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
+      allow get: if isOwner(userId);
       allow write: if isOwner(userId) || isAdmin();
     }
 
@@ -82,7 +82,7 @@ service cloud.firestore {
     match /scriptureReadings {
       // Admins can list all documents for moderation, OR
       // any user can list documents if they are filtering for approved ones.
-      allow list: if isAdmin() || request.query.where.get("status")[2] == "approved";
+      allow list: if isAdmin() || request.query.where[2] == ["status", "==", "approved"];
     }
 
     match /podcast_series/{podcastSeriesId} {
