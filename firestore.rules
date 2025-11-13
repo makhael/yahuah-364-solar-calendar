@@ -72,7 +72,7 @@ service cloud.firestore {
     
     match /scriptureReadings/{readingId} {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
-      allow list: if isSignedIn(); // Allow any signed-in user to list for now. This will be refined.
+      allow list: if (request.query.get("status") == "approved" && isSignedIn()) || (isAdmin());
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
