@@ -4,7 +4,7 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
@@ -80,31 +80,30 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     const unsubscribe = onAuthStateChanged(
       auth,
       async (firebaseUser) => { // Auth state determined
-        if (!firebaseUser) {
-          // No user found, attempt auto-login for admin
+        if (firebaseUser) {
+          // If a user is found, update the state and we're done.
+          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        } else {
+          // No user logged in, so attempt to log in the admin user.
           try {
-            // NOTE: Using a placeholder password. In a real app, this would be insecure.
-            // This is for demonstration purposes to log in the specified admin user.
             await signInWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
-            // onAuthStateChanged will be triggered again upon successful sign-in.
+            // onAuthStateChanged will be triggered again by this, so we don't need to set user state here.
           } catch (error: any) {
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-               // This is expected if the user doesn't exist yet or password is wrong.
-               // We will now create the user.
-               try {
-                 const { createUserWithEmailAndPassword } = await import('firebase/auth');
-                 await createUserWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
-               } catch (createUserError) {
-                  console.error("FirebaseProvider: Auto user creation failed:", createUserError);
-                  setUserAuthState({ user: null, isUserLoading: false, userError: createUserError as Error });
-               }
+              // The user doesn't exist, so create it.
+              try {
+                await createUserWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
+                // onAuthStateChanged will be triggered again by this, so we don't need to set user state here.
+              } catch (createUserError: any) {
+                 console.error("FirebaseProvider: Auto user creation failed:", createUserError);
+                 setUserAuthState({ user: null, isUserLoading: false, userError: createUserError });
+              }
             } else {
+              // Some other sign-in error occurred.
               console.error("FirebaseProvider: Auto sign-in failed:", error);
               setUserAuthState({ user: null, isUserLoading: false, userError: error });
             }
           }
-        } else {
-          setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
         }
       },
       (error) => { // Auth listener error
