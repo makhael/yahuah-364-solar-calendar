@@ -38,10 +38,10 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Admins can list all users and read/write any user profile
+      // Admins can list all users.
       allow list: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      // Any signed in user can read/write their own profile
-      allow read, write: if isSignedIn() && isOwner(userId);
+      // Admins can read/write any profile, and users can read/write their own.
+      allow read, write: if isSignedIn() && (isOwner(userId) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
     
     // Rule for user's calendar presets subcollection
