@@ -16,7 +16,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import Link from "next/link";
 import { LoaderCircle, Edit, BookOpen, ShieldCheck, BookText, Terminal, LogOut } from "lucide-react";
 import { useUI } from "@/context/UIContext";
-import { doc, getAuth, signOut } from 'firebase/firestore';
+import { getAuth, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 interface UserProfileProps {
@@ -54,8 +54,8 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
 
   if (!user || user.isAnonymous) {
       return (
-        <Button variant="outline" onClick={() => router.push('/login')}>
-            Sign In
+        <Button variant="outline" asChild>
+            <Link href="/login">Sign In</Link>
         </Button>
       )
   }

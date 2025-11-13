@@ -4,8 +4,9 @@
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { initiateAnonymousSignIn } from './non-blocking-login';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -75,31 +76,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
       } else {
-        // No user is logged in, initiate the auto-login sequence.
-        try {
-          // Attempt to sign in first.
-          await signInWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
-          // `onAuthStateChanged` will be called again upon successful login, so we don't set state here.
-        } catch (signInError: any) {
-          // If sign-in fails because the user doesn't exist, create the account.
-          if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
-            try {
-              await createUserWithEmailAndPassword(auth, 'sheldonharding@gmail.com', 'password123');
-              // `onAuthStateChanged` will be called again upon successful creation and sign-in.
-            } catch (createError: any) {
-              console.error("FirebaseProvider: Auto user creation failed:", createError);
-              setUserAuthState({ user: null, isUserLoading: false, userError: createError });
-            }
-          } else {
-            // Another sign-in error occurred.
-            console.error("FirebaseProvider: Auto sign-in failed:", signInError);
-            setUserAuthState({ user: null, isUserLoading: false, userError: signInError });
-          }
-        }
+        // No user signed in, sign in anonymously for guest access.
+        initiateAnonymousSignIn(auth);
+        setUserAuthState({ user: null, isUserLoading: false, userError: null });
       }
     }, (error) => {
       console.error("FirebaseProvider: Auth state listener error:", error);
