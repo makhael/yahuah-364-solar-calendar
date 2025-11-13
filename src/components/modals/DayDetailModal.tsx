@@ -90,16 +90,19 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
     
     const appointmentsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        const baseQuery = collection(firestore, 'appointments');
+      if (!firestore) return null;
+      const baseQuery = collection(firestore, 'appointments');
 
-        if (isAdmin) {
-            return baseQuery;
-        }
-        // For signed-in users, get both community and public events.
-        return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
+      if (isAdmin) {
+          return baseQuery;
+      }
+      if (user && !user.isAnonymous) {
+          return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
+      }
+      // Guest
+      return query(baseQuery, where('inviteScope', '==', 'all'));
 
-    }, [firestore, isAdmin]);
+    }, [firestore, user, isAdmin]);
 
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
@@ -138,12 +141,11 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
             }
         });
         
-        // Final filter based on user role (already pre-filtered by query)
         return combined.filter(app => 
             isAdmin ||
             app.inviteScope === 'all' || 
-            app.inviteScope === 'community' ||
-            (app.inviteScope === 'private' && app.creatorId === user?.uid)
+            (user && !user.isAnonymous && app.inviteScope === 'community') ||
+            (user && app.inviteScope === 'private' && app.creatorId === user?.uid)
         );
 
     }, [dateId, dayOfWeek, allAppointments, user, isAdmin]);
