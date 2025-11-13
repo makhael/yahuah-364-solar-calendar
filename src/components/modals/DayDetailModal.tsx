@@ -96,15 +96,16 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
 
         const baseQuery = collection(firestore, 'appointments');
         
+        // Admins can see all appointments without filtering.
         if (isAdmin) {
             return baseQuery;
         }
 
-        // For both signed-in and anonymous users, we need to apply a filter.
-        // The security rules will enforce the correct visibility.
+        // For all other users (signed-in members and anonymous guests),
+        // we must apply a filter to comply with security rules.
         return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
 
-    }, [firestore, user, isAdmin, isUserFullyAuthenticated]);
+    }, [firestore, isAdmin]);
     
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
@@ -220,7 +221,7 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         router.push('/login');
     };
 
-    if (areAppointmentsLoading) {
+    if (areAppointmentsLoading && !isUserFullyAuthenticated) {
         return (
             <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
                 <LoaderCircle className="animate-spin" />
@@ -239,6 +240,14 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
               </Button>
           </div>
       )
+    }
+
+    if (areAppointmentsLoading) {
+      return (
+            <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
+                <LoaderCircle className="animate-spin" />
+            </div>
+        )
     }
 
     if (!appointmentsForDay || appointmentsForDay.length === 0) {

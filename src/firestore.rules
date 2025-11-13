@@ -21,8 +21,7 @@ service cloud.firestore {
     
     match /appointments/{appointmentId} {
       allow get: if true;
-      // Admins can list all. Signed-in users can list community/public. Guests can list public.
-      allow list: if isAdmin() || (request.query.where[0] == 'inviteScope' && request.query.where[1] == 'in' && request.query.where[2] == ['all', 'community']);
+      allow list: if isAdmin() || (request.query.where[0] == 'inviteScope' && request.query.where[1] == 'in');
       allow write: if isSignedIn();
     }
 
