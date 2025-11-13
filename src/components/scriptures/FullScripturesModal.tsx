@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import { XCircle, Search, BookOpen, User, ThumbsUp } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -54,16 +54,17 @@ const Highlight = ({ text, highlight }: { text: string; highlight: string }) => 
 export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const firestore = useFirestore();
+    const { user } = useUser();
     const { startDate, handleGoToDate } = useUI();
 
     const scripturesQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !user) return null; // Wait for user to be authenticated
         return query(
             collection(firestore, 'scriptureReadings'), 
             where('status', '==', 'approved'),
             orderBy('date', 'desc')
         );
-    }, [firestore]);
+    }, [firestore, user]);
 
     const { data: allScriptures, isLoading: areScripturesLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
