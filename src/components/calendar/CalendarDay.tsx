@@ -26,9 +26,10 @@ type CalendarDayProps = {
   isToday: boolean;
   theme: string;
   hasAppointment: boolean;
+  appointmentTheme?: string;
 };
 
-export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick, isSabbath, special, monthNum, highlightFilter, isToday, theme, hasAppointment }: CalendarDayProps) => {
+export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick, isSabbath, special, monthNum, highlightFilter, isToday, theme, hasAppointment, appointmentTheme }: CalendarDayProps) => {
   
   const isTekufahDay = TEKUFAH_MONTHS.includes(monthNum) && day === 31;
   const isTransitional = (day >= 29 && day <= 30) || isTekufahDay;
@@ -58,6 +59,15 @@ export const CalendarDay = React.memo(({ day, gregorianDate, dayOfWeek, onClick,
   
   let { bg, border, shadow: currentShadow, text: dayNumberColor, dayName: dayNameColor, date: currentDateText, badge: badgeTextColor } = dayStyles[dayType];
   
+  const appointmentBgClass = appointmentTheme ? `appointment-bg-${appointmentTheme}` : '';
+
+  if (dayType === 'work' && appointmentBgClass) {
+    bg = appointmentBgClass;
+    dayNumberColor = 'text-white';
+    dayNameColor = 'text-white/90';
+    currentDateText = 'text-white/70';
+  }
+
   if (isToday) {
     border = 'border-2 border-yellow-400';
     currentShadow = 'shadow-2xl shadow-yellow-500/50';

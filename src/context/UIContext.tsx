@@ -70,6 +70,19 @@ type VisibleSections = {
   scripture: boolean;
 };
 
+interface Appointment {
+  id: string;
+  title: string;
+  startDate: string; // YYYY-MM-DD
+  endDate?: string;
+  inviteScope: 'all' | 'community' | 'private';
+  colorTheme?: string;
+  recurrence?: {
+    frequency: 'weekly' | 'bi-weekly';
+    dayOfWeek: string;
+  }
+}
+
 interface UIContextType {
   modalState: ModalState;
   openModal: <T extends ModalType>(modal: T, data?: T extends keyof ModalDataPayloads ? ModalDataPayloads[T] : undefined) => void;
@@ -101,6 +114,8 @@ interface UIContextType {
   toggleSection: (section: keyof VisibleSections) => void;
   
   appointmentDates: string[];
+  appointmentThemesByDate: Record<string, string>;
+  allAppointments: Appointment[] | null;
 
   today364: { month: number; day: number } | null;
   currentGregorianYear: number;
@@ -181,13 +196,42 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   }, [gregorianStart, startDate]);
 
 
-  const summaryRef = useMemoFirebase(() => {
-    if (!firestore || !currentGregorianYear) return null;
-    return doc(firestore, 'appointmentSummaries', String(currentGregorianYear));
-  }, [firestore, currentGregorianYear]);
+  const appointmentsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    const baseQuery = collection(firestore, 'appointments');
+    if (user && !user.isAnonymous) {
+      return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
+    }
+    return query(baseQuery, where('inviteScope', '==', 'all'));
+  }, [firestore, user]);
 
-  const { data: appointmentSummary } = useDoc<{ appointmentDates: string[] }>(summaryRef);
-  const appointmentDates = useMemo(() => appointmentSummary?.appointmentDates || [], [appointmentSummary]);
+  const { data: allAppointments } = useCollection<Appointment>(appointmentsQuery);
+
+  const { appointmentDates, appointmentThemesByDate } = useMemo(() => {
+    const dates = new Set<string>();
+    const themes: Record<string, string> = {};
+
+    if (allAppointments) {
+      allAppointments.forEach(app => {
+        const appStartDate = startOfDay(new Date(app.startDate + 'T00:00:00'));
+        const appEndDate = app.endDate ? startOfDay(new Date(app.endDate + 'T00:00:00')) : appStartDate;
+        
+        // Handle non-recurring multi-day and single day events
+        if (!app.recurrence || app.recurrence.frequency === 'none') {
+          let currentDate = new Date(appStartDate);
+          while (isBefore(currentDate, appEndDate) || isEqual(currentDate, appEndDate)) {
+            const dateId = currentDate.toISOString().split('T')[0];
+            dates.add(dateId);
+            if (app.colorTheme && app.colorTheme !== 'default') {
+              themes[dateId] = app.colorTheme;
+            }
+            currentDate = add(currentDate, { days: 1 });
+          }
+        }
+      });
+    }
+    return { appointmentDates: Array.from(dates), appointmentThemesByDate: themes };
+  }, [allAppointments]);
 
 
   useEffect(() => {
@@ -462,12 +506,6 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   
   const isAnyModalOpen = useMemo(() => Object.values(modalState).some(m => m.isOpen), [modalState]);
   
-  const appointmentThemesByDate = useMemo(() => {
-    const themes: Record<string, string> = {};
-    // This functionality is now handled locally in the Month component based on appointmentDates
-    return themes;
-  }, []);
-
   const value = useMemo(() => ({
     modalState,
     openModal,
@@ -495,6 +533,8 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     navigationTarget,
     clearNavigationTarget,
     appointmentDates,
+    appointmentThemesByDate,
+    allAppointments,
     today364,
     currentGregorianYear,
   }), [
@@ -504,7 +544,8 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
       handleSavePreset, handleDeletePreset, handleSaveAppointment, handleSaveGlossaryProposal,
       openChatModal, handleGoToDate, handleGoToGlossaryTerm, scrollToSection,
       visibleSections, toggleSection, navigationTarget, clearNavigationTarget,
-      appointmentDates, today364, currentGregorianYear
+      appointmentDates, appointmentThemesByDate, allAppointments,
+      today364, currentGregorianYear
   ]);
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
