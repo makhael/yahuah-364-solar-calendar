@@ -12,6 +12,7 @@ interface FilterControlsProps {
         podcast: boolean;
         calendar: boolean;
         scripture: boolean;
+        controls: boolean;
     };
     toggleSection: (section: keyof FilterControlsProps['visibleSections']) => void;
 }
@@ -26,7 +27,7 @@ export const FilterControls = ({
             <h2 className="text-sm font-medium text-muted-foreground whitespace-nowrap flex-shrink-0">
                 Show/Hide Sections
             </h2>
-            <div className="w-full grid grid-cols-2 lg:grid-cols-5 gap-2">
+            <div className="w-full grid grid-cols-2 lg:grid-cols-6 gap-2">
                 <Button
                     variant={visibleSections.insights ? 'default' : 'outline'}
                     onClick={() => toggleSection('insights')}
@@ -75,6 +76,16 @@ export const FilterControls = ({
                     <div className="flex items-center gap-2">
                         {visibleSections.calendar ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         <span>Calendar Grid</span>
+                    </div>
+                </Button>
+                <Button
+                    variant={visibleSections.controls ? 'default' : 'outline'}
+                    onClick={() => toggleSection('controls')}
+                    className="w-full justify-center transition-all duration-200"
+                >
+                    <div className="flex items-center gap-2">
+                        {visibleSections.controls ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        <span>Calendar Controls</span>
                     </div>
                 </Button>
             </div>

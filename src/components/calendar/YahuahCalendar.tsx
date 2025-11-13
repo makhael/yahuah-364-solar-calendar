@@ -123,22 +123,24 @@ export default function YahuahCalendar() {
                         </CardContent>
                     </Card>
                     
-                    <Card className="border shadow-lg">
-                         <CardContent className="p-4 sm:p-6">
-                            <CalendarControls
-                                currentGregorianYear={startDate.getFullYear()}
-                                user={user}
-                                gregorianStart={gregorianStart}
-                                setGregorianStart={setGregorianStart}
-                                presets={presets}
-                                arePresetsLoading={arePresetsLoading}
-                                activePresetId={activePresetId}
-                                handleSelectPreset={handleSelectPreset}
-                                setEditingPreset={setEditingPreset}
-                                handleDeletePreset={handleDeletePreset}
-                            />
-                        </CardContent>
-                    </Card>
+                    {visibleSections.controls && (
+                        <Card className="border shadow-lg">
+                            <CardContent className="p-4 sm:p-6">
+                                <CalendarControls
+                                    currentGregorianYear={startDate.getFullYear()}
+                                    user={user}
+                                    gregorianStart={gregorianStart}
+                                    setGregorianStart={setGregorianStart}
+                                    presets={presets}
+                                    arePresetsLoading={arePresetsLoading}
+                                    activePresetId={activePresetId}
+                                    handleSelectPreset={handleSelectPreset}
+                                    setEditingPreset={setEditingPreset}
+                                    handleDeletePreset={handleDeletePreset}
+                                />
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {visibleSections.insights && (
                         <InsightsTimeline />

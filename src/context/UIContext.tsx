@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
@@ -68,6 +69,7 @@ type VisibleSections = {
   podcast: boolean;
   calendar: boolean;
   scripture: boolean;
+  controls: boolean;
 };
 
 interface Appointment {
@@ -129,6 +131,7 @@ const defaultVisibleSections: VisibleSections = {
   podcast: true,
   calendar: true,
   scripture: true,
+  controls: true,
 };
 
 export const UIProvider = ({ children }: { children: ReactNode; }) => {
