@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
@@ -169,15 +170,17 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
       return null;
     }
     if (isAdmin) {
+      // Admins can see everything
       return query(collection(firestore, 'appointments'));
     }
     if (user && !user.isAnonymous) {
+      // Signed-in non-admins can see 'all' and 'community'
       return query(
         collection(firestore, 'appointments'),
         where('inviteScope', 'in', ['all', 'community'])
       );
     }
-    // For anonymous/guest users, only fetch public appointments
+    // Guests (not signed in) can only see 'all'
     return query(
       collection(firestore, 'appointments'),
       where('inviteScope', '==', 'all')
