@@ -139,7 +139,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   const preferenceRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return doc(firestore, 'users', user.uid, 'calendarPreferences', user.uid);
-  }, [user, firestore]);
+  }, [user?.uid, firestore]);
   
   const presetsQuery = useMemoFirebase(() => {
     if (!user || user.isAnonymous || !firestore) return null;
@@ -157,21 +157,23 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   const clearNavigationTarget = useCallback(() => setNavigationTarget(null), []);
 
   // -- APPOINTMENT LOGIC -- //
-  const isGuest = !user || user.isAnonymous;
   
   const allAppointmentsQuery = useMemoFirebase(() => {
-    if (isUserLoading || !firestore) return null;
+    if (isUserLoading) return null; // DO NOT create query until auth state is known.
+    if (!firestore) return null;
+
+    const isGuest = !user || user.isAnonymous;
     if (isGuest) {
       return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
     } else {
       return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', 'community']));
     }
-  }, [firestore, isGuest, isUserLoading]);
+  }, [firestore, user, isUserLoading]);
   
   const myAppointmentsQuery = useMemoFirebase(() => {
-      if (isUserLoading || !firestore || isGuest) return null;
+      if (isUserLoading || !firestore || !user || user.isAnonymous) return null;
       return query(collection(firestore, 'appointments'), where('creatorId', '==', user.uid));
-  }, [firestore, user, isGuest, isUserLoading]);
+  }, [firestore, user, isUserLoading]);
   
   const { data: publicAppointmentsData } = useCollection<any>(allAppointmentsQuery);
   const { data: privateAppointmentsData } = useCollection<any>(myAppointmentsQuery);
