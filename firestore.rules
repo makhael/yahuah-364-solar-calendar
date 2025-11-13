@@ -36,7 +36,8 @@ service cloud.firestore {
     }
 
     match /dailyContent/{dateId}/chatMessages/{messageId} {
-        allow read, write: if true;
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     match /users/{userId} {
