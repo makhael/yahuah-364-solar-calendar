@@ -47,15 +47,14 @@ const InvitationCard = ({ invitation, onRsvp }: { invitation: Appointment, onRsv
 
     return (
         <div className="p-4 rounded-lg border bg-background/50 flex flex-col gap-4">
-            <div>
-                <div className="flex justify-between items-start">
-                    <h4 className="font-semibold text-lg text-primary">{invitation.title}</h4>
-                    <Button variant="link" size="sm" onClick={() => handleGoToDate(invitation.startDate)} className="h-auto p-0">
-                        View on Calendar
-                    </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">From: {invitation.creatorDisplayName || 'Unknown Creator'}</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                <h4 className="font-semibold text-lg text-primary">{invitation.title}</h4>
+                <Button variant="link" size="sm" onClick={() => handleGoToDate(invitation.startDate)} className="h-auto p-0 self-start sm:self-center">
+                    View on Calendar
+                </Button>
             </div>
+            
+            <p className="text-xs text-muted-foreground -mt-3">From: {invitation.creatorDisplayName || 'Unknown Creator'}</p>
 
             <div className="text-sm space-y-1">
                 <p><span className="font-semibold">Date:</span> {gregorianDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })} ({sacredDateString})</p>

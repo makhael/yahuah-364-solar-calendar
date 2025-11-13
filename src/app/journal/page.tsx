@@ -81,15 +81,15 @@ export default function JournalPage() {
                     </Button>
                 </header>
 
-                <Tabs defaultValue="journal" className="w-full flex flex-col md:flex-row gap-6">
-                    <TabsList className="grid grid-cols-1 md:w-1/4">
-                        <TabsTrigger value="journal">My Journal</TabsTrigger>
-                        <TabsTrigger value="bookmarks">My Bookmarks</TabsTrigger>
-                        <TabsTrigger value="proposals">My Proposals</TabsTrigger>
-                         <TabsTrigger value="invitations" className="relative">
+                <Tabs defaultValue="journal" className="w-full flex flex-col md:flex-row gap-6 md:gap-8">
+                    <TabsList className="flex flex-col h-auto md:w-1/4">
+                        <TabsTrigger value="journal" className="w-full justify-start">My Journal</TabsTrigger>
+                        <TabsTrigger value="bookmarks" className="w-full justify-start">My Bookmarks</TabsTrigger>
+                        <TabsTrigger value="proposals" className="w-full justify-start">My Proposals</TabsTrigger>
+                         <TabsTrigger value="invitations" className="relative w-full justify-start">
                             My Invitations
                              {pendingInvitations && pendingInvitations.length > 0 && (
-                                <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-xs text-white">
+                                <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-xs text-white">
                                     {pendingInvitations.length}
                                 </span>
                             )}
@@ -118,7 +118,7 @@ export default function JournalPage() {
                                 </TabsContent>
                                  <TabsContent value="invitations">
                                     <MyInvitations userId={user.uid} />
-                                </TabsContent>
+                                 </TabsContent>
                             </CardContent>
                         </Card>
                     </div>
