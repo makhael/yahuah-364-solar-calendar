@@ -90,20 +90,21 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
         <DropdownMenuSeparator />
         
         {isAdmin && (
-            <DropdownMenuItem asChild>
-                <Link href="/admin">
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                <span>Admin Dashboard</span>
-                </Link>
-            </DropdownMenuItem>
+            <>
+                <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    <span>Admin Dashboard</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/tools">
+                    <Terminal className="mr-2 h-4 w-4" />
+                    <span>Developer Tools</span>
+                    </Link>
+                </DropdownMenuItem>
+            </>
         )}
-
-        <DropdownMenuItem asChild>
-            <Link href="/tools">
-            <Terminal className="mr-2 h-4 w-4" />
-            <span>Developer Tools</span>
-            </Link>
-        </DropdownMenuItem>
 
         <DropdownMenuItem asChild>
           <Link href="/journal">
