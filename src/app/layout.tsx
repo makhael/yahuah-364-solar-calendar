@@ -4,6 +4,8 @@ import './globals.css';
 import React, { ReactNode } from 'react';
 import { MainApp } from '@/components/layout/main-app';
 import { ClientProviders } from './client-providers';
+import { usePathname } from 'next/navigation';
+import RootLayoutClient from './layout-client';
 
 export const metadata: Metadata = {
   title: "Yahuah's 364-Day Solar Calendar",
@@ -39,9 +41,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ClientProviders>
-          <MainApp>
+          <RootLayoutClient>
             {children}
-          </MainApp>
+          </RootLayoutClient>
         </ClientProviders>
       </body>
     </html>

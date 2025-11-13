@@ -2,7 +2,6 @@
 'use client';
 
 import React, { ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarFooter } from '@/components/calendar/CalendarFooter';
 import { UIProvider } from '@/context/UIContext';
@@ -10,13 +9,6 @@ import { ModalRenderer } from '../modals/ModalRenderer';
 import { Toaster } from '../ui/toaster';
 
 export function MainApp({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
-
-  if (isAuthPage) {
-    return <>{children}</>;
-  }
-
   return (
     <UIProvider>
       <div className="flex min-h-screen w-full flex-col bg-background">
