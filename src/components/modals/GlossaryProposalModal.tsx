@@ -113,12 +113,12 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
             </div>
             <div className="flex-grow overflow-y-auto p-6 space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="term">Term</Label>
+                    <Label htmlFor="term">Term <span className="text-destructive">*</span></Label>
                     <Controller name="term" control={control} render={({ field }) => <Input id="term" {...field} className="bg-background/50" />} />
                     {errors.term && <p className="text-sm text-destructive">{errors.term.message}</p>}
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="definition">Definition</Label>
+                    <Label htmlFor="definition">Definition <span className="text-destructive">*</span></Label>
                     <Controller name="definition" control={control} render={({ field }) => <Textarea id="definition" {...field} rows={3} className="bg-background/50" />} />
                     {errors.definition && <p className="text-sm text-destructive">{errors.definition.message}</p>}
                 </div>
