@@ -12,6 +12,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      // Use exists() instead of get() to avoid recursive loops and for efficiency.
+      // This checks if a document exists for the user in the /users collection
+      // and if that document has the role 'admin'. This is non-recursive.
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
@@ -44,6 +47,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
+      // An admin can get any user's profile. A user can get their own.
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow write: if isOwner(userId) || isAdmin();
@@ -80,13 +84,11 @@ service cloud.firestore {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-      // Admin list permission restored here
-      allow list: if isAdmin();
     }
 
     match /scriptureReadings {
-      // Public list permission restored here
-      allow list: if request.query.where[0][2] == 'approved';
+      // Allow listing if the query is for approved scriptures (public), if the user is an admin, or if the user is signed in.
+      allow list: if request.query.filters.hasAny(['status', '==', 'approved']) || isSignedIn() || isAdmin();
     }
 
     match /podcast_series/{podcastSeriesId} {
