@@ -16,6 +16,7 @@ import { InstructionsModal } from './InstructionsModal';
 import { useUser } from '@/firebase';
 import { AppointmentModal } from './AppointmentModal';
 import { EditProfileModal } from './EditProfileModal';
+import { GlossaryInfoModal } from '../glossary/GlossaryInfoModal';
 
 
 export const ModalRenderer = () => {
@@ -47,6 +48,12 @@ export const ModalRenderer = () => {
           onOpenGlossary={handleOpenGlossaryFromFull} 
           user={user} 
           {...modalState.fullGlossary.data} 
+        />
+      )}
+      {modalState.glossaryInfo.isOpen && (
+        <GlossaryInfoModal 
+          isOpen={true}
+          onClose={closeAllModals}
         />
       )}
       {modalState.series.isOpen && (

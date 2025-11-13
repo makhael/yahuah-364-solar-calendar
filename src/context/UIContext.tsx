@@ -1,6 +1,4 @@
 
-
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
@@ -22,6 +20,7 @@ type ModalType =
   | 'glossaryProposal' 
   | 'dailyChat' 
   | 'fullGlossary' 
+  | 'glossaryInfo'
   | 'search' 
   | 'instructions'
   | 'appointment'
@@ -36,6 +35,7 @@ type ModalDataPayloads = {
   preset: { preset: any | null };
   dailyChat: { dateId: string };
   fullGlossary: { targetTerm?: string };
+  glossaryInfo: {};
   appointment: { appointment: any | null, date?: string };
   glossaryProposal: { proposal?: any | null };
   editProfile: {};
@@ -57,6 +57,7 @@ const initialModalState: ModalState = {
   glossaryProposal: { isOpen: false },
   dailyChat: { isOpen: false },
   fullGlossary: { isOpen: false },
+  glossaryInfo: { isOpen: false },
   search: { isOpen: false },
   instructions: { isOpen: false },
   appointment: { isOpen: false },
