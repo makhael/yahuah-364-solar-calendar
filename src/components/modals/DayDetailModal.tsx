@@ -48,6 +48,7 @@ interface Appointment {
   startTime: string;
   endTime?: string;
   inviteScope: 'all' | 'community' | 'private';
+  invitedUserIds?: string[];
   creatorId: string;
   rsvps: {
     going?: string[];
@@ -91,18 +92,8 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     
     const appointmentsQuery = useMemoFirebase(() => {
       if (!firestore) return null;
-      const baseQuery = collection(firestore, 'appointments');
-
-      if (isAdmin) {
-          return baseQuery;
-      }
-      if (user && !user.isAnonymous) {
-          return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
-      }
-      // Guest
-      return query(baseQuery, where('inviteScope', '==', 'all'));
-
-    }, [firestore, user, isAdmin]);
+      return collection(firestore, 'appointments');
+    }, [firestore]);
 
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
@@ -141,12 +132,15 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
             }
         });
         
-        return combined.filter(app => 
-            isAdmin ||
-            app.inviteScope === 'all' || 
-            (user && !user.isAnonymous && app.inviteScope === 'community') ||
-            (user && app.inviteScope === 'private' && app.creatorId === user?.uid)
-        );
+        return combined.filter(app => {
+            if (isAdmin) return true;
+            if (app.inviteScope === 'all') return true;
+            if (user && !user.isAnonymous) {
+              if (app.inviteScope === 'community') return true;
+              if (app.inviteScope === 'private' && (app.creatorId === user.uid || app.invitedUserIds?.includes(user.uid))) return true;
+            }
+            return false;
+        });
 
     }, [dateId, dayOfWeek, allAppointments, user, isAdmin]);
     

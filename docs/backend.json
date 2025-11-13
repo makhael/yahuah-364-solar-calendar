@@ -114,6 +114,7 @@
         "startTime": { "type": "string" },
         "endTime": { "type": "string" },
         "inviteScope": { "enum": ["all", "community", "private"] },
+        "invitedUserIds": { "type": "array", "items": { "type": "string" } },
         "creatorId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" },

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { LoaderCircle, XCircle, HelpCircle, Check, CalendarClock } from 'lucide-react';
+import { LoaderCircle, XCircle, HelpCircle, Check, CalendarClock, Users } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { hebrewDays, TEKUFAH_MONTHS } from '@/lib/calendar-data';
 import { useUI } from '@/context/UIContext';
@@ -19,6 +19,10 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { collection } from 'firebase/firestore';
 
 
 const appointmentSchema = z.object({
@@ -39,6 +43,7 @@ const appointmentSchema = z.object({
   colorTheme: z.enum(["default", "blue", "green", "purple", "orange"]).default("default"),
 
   inviteScope: z.enum(["all", "community", "private"]),
+  invitedUserIds: z.array(z.string()).optional(),
   
   recurrenceFrequency: z.enum(["none", "weekly", "bi-weekly"]),
 }).refine(data => {
@@ -61,6 +66,12 @@ const appointmentSchema = z.object({
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
+interface UserProfile {
+    id: string;
+    displayName: string;
+    email: string;
+}
+
 interface AppointmentModalProps {
   appointment: any | null;
   date?: string; // YYYY-MM-DD string
@@ -80,7 +91,12 @@ const colorThemes = [
 
 export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModalProps) => {
   const { startDate: m1d1StartDate, handleSaveAppointment } = useUI();
+  const firestore = useFirestore();
+  const [openUserSelect, setOpenUserSelect] = useState(false);
   
+  const usersQuery = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+  const { data: allUsers } = useCollection<UserProfile>(usersQuery);
+
   const { control, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
@@ -96,6 +112,7 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
       endTime: '12:00',
       colorTheme: 'default',
       inviteScope: 'community',
+      invitedUserIds: [],
       recurrenceFrequency: 'none',
     }
   });
@@ -104,6 +121,8 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
   const watchIsMultiDay = watch('isMultiDay');
   const watchStartMonth = watch('startMonth');
   const watchStartDay = watch('startDay');
+  const watchInviteScope = watch('inviteScope');
+  const watchInvitedUsers = watch('invitedUserIds');
 
   useEffect(() => {
     if (watchIsMultiDay && watchRecurrence !== 'none') {
@@ -159,6 +178,7 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
             endTime: appointment.endTime || '',
             colorTheme: appointment.colorTheme || 'default',
             inviteScope: appointment.inviteScope,
+            invitedUserIds: appointment.invitedUserIds || [],
             recurrenceFrequency: appointment.recurrence?.frequency || 'none',
         });
     } else if (date) { // Pre-fill date for new appointment
@@ -176,6 +196,7 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
             endTime: '12:00',
             colorTheme: 'default',
             inviteScope: 'community',
+            invitedUserIds: [],
             recurrenceFrequency: 'none',
         });
     } else {
@@ -192,6 +213,7 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
           endTime: '12:00',
           colorTheme: 'default',
           inviteScope: 'community',
+          invitedUserIds: [],
           recurrenceFrequency: 'none',
         });
     }
@@ -371,6 +393,57 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
                     </Select>
                   )} />
                 </div>
+
+                {watchInviteScope === 'private' && (
+                  <div className="space-y-2">
+                      <Label>Invite Users</Label>
+                      <Controller
+                          name="invitedUserIds"
+                          control={control}
+                          render={({ field }) => (
+                              <Popover open={openUserSelect} onOpenChange={setOpenUserSelect}>
+                                  <PopoverTrigger asChild>
+                                      <Button variant="outline" role="combobox" aria-expanded={openUserSelect} className="w-full justify-between bg-background/50">
+                                          <span className="truncate">
+                                            {watchInvitedUsers && watchInvitedUsers.length > 0
+                                                ? `${watchInvitedUsers.length} user${watchInvitedUsers.length > 1 ? 's' : ''} selected`
+                                                : "Select users..."}
+                                          </span>
+                                          <Users className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                      <Command>
+                                          <CommandInput placeholder="Search users..." />
+                                          <CommandList>
+                                              <CommandEmpty>No users found.</CommandEmpty>
+                                              <CommandGroup>
+                                                  {allUsers?.map(user => (
+                                                      <CommandItem
+                                                          key={user.id}
+                                                          value={user.displayName}
+                                                          onSelect={() => {
+                                                              const currentInvited = field.value || [];
+                                                              const isSelected = currentInvited.includes(user.id);
+                                                              const newInvited = isSelected
+                                                                  ? currentInvited.filter(id => id !== user.id)
+                                                                  : [...currentInvited, user.id];
+                                                              field.onChange(newInvited);
+                                                          }}
+                                                      >
+                                                          <Check className={cn("mr-2 h-4 w-4", (field.value || []).includes(user.id) ? "opacity-100" : "opacity-0")} />
+                                                          {user.displayName} ({user.email})
+                                                      </CommandItem>
+                                                  ))}
+                                              </CommandGroup>
+                                          </CommandList>
+                                      </Command>
+                                  </PopoverContent>
+                              </Popover>
+                          )}
+                      />
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </div>
