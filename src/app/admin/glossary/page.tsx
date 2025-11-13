@@ -82,39 +82,41 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                     </div>}
                 </div>
             </CardContent>
-            <CardFooter className="flex justify-end gap-2 pt-4 mt-4 border-t">
-                {proposal.status === 'pending' && (
-                    <>
-                        <Button variant="outline" size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
-                            <ThumbsDown className="w-4 h-4 mr-2" />
-                            Reject
-                        </Button>
-                        <Button variant="default" size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className="bg-green-600 hover:bg-green-700">
-                            <ThumbsUp className="w-4 h-4 mr-2" />
-                            Approve
-                        </Button>
-                    </>
-                )}
-                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                       <Button variant="destructive" size="sm">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently remove the proposal for "{proposal.term}". Are you sure?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onDelete(proposal.id)}>Yes, Delete</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+            <CardFooter className="pt-4 mt-4 border-t flex justify-end">
+                <div className="flex gap-2">
+                    {proposal.status === 'pending' && (
+                        <>
+                            <Button variant="outline" size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
+                                <ThumbsDown className="w-4 h-4 mr-2" />
+                                Reject
+                            </Button>
+                            <Button variant="default" size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className="bg-green-600 hover:bg-green-700">
+                                <ThumbsUp className="w-4 h-4 mr-2" />
+                                Approve
+                            </Button>
+                        </>
+                    )}
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="destructive" size="sm">
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently remove the proposal for "{proposal.term}". Are you sure?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(proposal.id)}>Yes, Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
             </CardFooter>
         </Card>
     );
