@@ -39,13 +39,15 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Admins can list all users and read/write any user profile
-      allow list, read, write: if isSignedIn() && isAdmin();
-      // Non-admins can only read/write their own profile
-      allow read, write: if isSignedIn() && isOwner(userId) && !isAdmin();
+      allow list: if isSignedIn() && isAdmin();
+      // Any signed in user can read/write their own profile
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
     
+    // This rule allows a user to read and write to any documents
+    // in any subcollection under their own user document.
     match /users/{userId}/{document=**} {
-      allow read, write: if isSignedIn() && (isAdmin() || isOwner(userId));
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
 
     match /glossaryTerms/{termId} {
