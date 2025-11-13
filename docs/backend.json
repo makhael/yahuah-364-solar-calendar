@@ -158,6 +158,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["term", "definition", "userId", "userDisplayName", "status", "createdAt"]
+    },
+    "ScriptureReading": {
+      "title": "Scripture Reading",
+      "description": "A community-submitted scripture reading for a specific day.",
+      "type": "object",
+      "properties": {
+        "scripture": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "userId": { "type": "string" },
+        "userDisplayName": { "type": "string" },
+        "upvoters": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "enum": ["pending", "approved", "rejected"] }
+      },
+      "required": ["scripture", "date", "userId", "status"]
     }
   },
   "auth": {
@@ -205,6 +220,12 @@
         "$ref": "#/entities/AppointmentSummary"
       },
       "description": "Summary of appointment dates for quick lookups."
+    },
+    "/scriptureReadings/{readingId}": {
+      "schema": {
+        "$ref": "#/entities/ScriptureReading"
+      },
+      "description": "Collection of all community-submitted scripture readings."
     }
   }
 }
