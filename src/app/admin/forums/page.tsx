@@ -146,7 +146,7 @@ export default function ForumManagement() {
             <div className="space-y-4">
               {topics && topics.map(topic => (
                 <div key={topic.id} className="p-4 border bg-background/50 rounded-lg">
-                  <div className="flex justify-between items-start gap-4">
+                  <div className="flex justify-between items-center gap-4">
                     <div className="flex-grow cursor-pointer" onClick={() => setSelectedTopic(topic)}>
                       <h4 className="font-semibold text-foreground hover:text-primary transition-colors">{topic.title}</h4>
                        <p className="text-xs text-muted-foreground mt-1">
@@ -228,3 +228,5 @@ export default function ForumManagement() {
     </>
   );
 }
+
+    
