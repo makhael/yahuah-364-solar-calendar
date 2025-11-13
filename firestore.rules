@@ -18,13 +18,13 @@ service cloud.firestore {
     
     // Allow public read on appointments, but only authenticated writes.
     match /appointments/{appointmentId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     match /appointmentSummaries/{year} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     match /communityTopics/{topicId} {
@@ -38,27 +38,29 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      // Admins can list all users and read/write any user profile
+      allow list, read, write: if isSignedIn() && isAdmin();
+      // Non-admins can only read/write their own profile
+      allow read, write: if isSignedIn() && isOwner(userId) && !isAdmin();
     }
     
     match /users/{userId}/{document=**} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if isSignedIn() && (isAdmin() || isOwner(userId));
     }
 
     match /glossaryTerms/{termId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+      allow create, update, delete: if isSignedIn() && isAdmin();
     }
 
     match /scriptureReadings/{readingId} {
-      allow get, list: if true;
+      allow read: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
     }
 
     /**
-     * @description Allows public read and write access to podcast series.
+     * @description Allows public read access to podcast series.
      * @path /podcast_series/{podcastSeriesId}
      * @allow (get) - Any user, authenticated or unauthenticated, can get a podcast series.
      * @allow (list) - Any user, authenticated or unauthenticated, can list podcast series.
@@ -86,10 +88,13 @@ service cloud.firestore {
   function isOwner(userId) {
     return request.auth.uid == userId;
   }
+  
+  function isAdmin() {
+    return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+  }
 
     // Helper function to determine if the user is the existing owner of the resource.
   function isExistingOwner(userId) {
     return isSignedIn() && isOwner(userId) && resource != null;
   }
 }
-
