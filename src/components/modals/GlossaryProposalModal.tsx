@@ -109,7 +109,7 @@ export const GlossaryProposalModal = ({ isOpen, onClose, proposal }: GlossaryPro
             <div className="flex items-start gap-4 pr-8">
                 <ScrollText className="w-8 h-8 text-primary flex-shrink-0 mt-1" />
                 <div>
-                    <h2 className="text-xl font-bold text-foreground">Propose a Glossary Change</h2>
+                    <h2 className="text-xl font-bold text-foreground">Glossary Proposal</h2>
                     <p className="text-sm text-muted-foreground">Submit a new term or suggest an edit. Your contribution will be reviewed.</p>
                 </div>
             </div>
