@@ -2,8 +2,8 @@
 "use client";
 
 import React from 'react';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, deleteDoc, where } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, orderBy, doc } from 'firebase/firestore';
 import { BookOpen, LoaderCircle, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +22,7 @@ interface ScriptureReading {
   date: string;
   createdAt: { seconds: number };
   status: 'pending' | 'approved' | 'rejected';
+  userId: string;
 }
 
 export const MyScriptures = ({ userId }: { userId: string }) => {
