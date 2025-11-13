@@ -101,7 +101,9 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         if (isUserFullyAuthenticated) {
             return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
         }
+        // Guest
         return query(baseQuery, where('inviteScope', '==', 'all'));
+
     }, [firestore, isAdmin, isUserFullyAuthenticated]);
 
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
