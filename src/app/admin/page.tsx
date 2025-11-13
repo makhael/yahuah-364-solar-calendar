@@ -127,13 +127,13 @@ export default function AdminDashboardPage() {
         </header>
 
         <div className="w-full">
-            <div className="mb-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+            <div className="mb-6 flex flex-wrap gap-2">
                  {menuItems.map(item => (
                     <Button
                         key={item.id}
                         variant={activeView === item.id ? 'default' : 'outline'}
                         onClick={() => setActiveView(item.id)}
-                        className="w-full justify-start h-auto py-2 px-3 text-left transition-all duration-200"
+                        className="flex-grow sm:flex-grow-0 justify-start h-auto py-2 px-3 text-left transition-all duration-200"
                     >
                         <div className="flex items-center gap-2">
                            <div className="flex-shrink-0">{item.icon}</div>

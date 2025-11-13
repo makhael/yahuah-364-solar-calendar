@@ -8,7 +8,7 @@ import { collection, doc, query, orderBy, where, getDocs, deleteDoc, setDoc } fr
 import { LoaderCircle, Check, X, Hourglass, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -47,7 +47,7 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
     const statusInfo = getStatusInfo(proposal.status);
 
     return (
-        <Card className={cn("transition-all", statusInfo.color)}>
+        <Card className={cn("transition-all flex flex-col", statusInfo.color)}>
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
@@ -62,7 +62,7 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                     </Badge>
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-grow">
                 <div className="space-y-4">
                     <div>
                         <h4 className="font-semibold text-sm text-foreground/90">Definition</h4>
@@ -81,42 +81,41 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                         <p className="text-sm text-foreground/80 whitespace-pre-wrap italic">{proposal.restorationNote}</p>
                     </div>}
                 </div>
-
-                <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="destructive" size="sm">
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently remove the proposal for "{proposal.term}". Are you sure?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(proposal.id)}>Yes, Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                    {proposal.status === 'pending' && (
-                        <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
-                                <ThumbsDown className="w-4 h-4 mr-2" />
-                                Reject
-                            </Button>
-                            <Button variant="default" size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className="bg-green-600 hover:bg-green-700">
-                                <ThumbsUp className="w-4 h-4 mr-2" />
-                                Approve
-                            </Button>
-                        </div>
-                    )}
-                </div>
             </CardContent>
+            <CardFooter className="flex justify-end gap-2 pt-4 mt-4 border-t">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                       <Button variant="destructive" size="sm">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently remove the proposal for "{proposal.term}". Are you sure?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(proposal.id)}>Yes, Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                {proposal.status === 'pending' && (
+                    <>
+                        <Button variant="outline" size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
+                            <ThumbsDown className="w-4 h-4 mr-2" />
+                            Reject
+                        </Button>
+                        <Button variant="default" size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className="bg-green-600 hover:bg-green-700">
+                            <ThumbsUp className="w-4 h-4 mr-2" />
+                            Approve
+                        </Button>
+                    </>
+                )}
+            </CardFooter>
         </Card>
     );
 }
