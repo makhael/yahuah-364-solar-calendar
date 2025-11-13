@@ -19,7 +19,8 @@ export const DailyChatModal = ({ dateId, onClose }: DailyChatModalProps) => {
   const { startDate } = useUI();
 
   const { yahuahDate, gregorianDate } = useMemo(() => {
-    const gregDate = new Date(dateId + 'T00:00:00Z');
+    // Interpret the date string in the local timezone by not adding 'Z'
+    const gregDate = new Date(dateId + 'T00:00:00');
     const yahDate = get364DateFromGregorian(gregDate, startDate);
     return { yahuahDate: yahDate, gregorianDate: gregDate };
   }, [dateId, startDate]);
@@ -29,7 +30,6 @@ export const DailyChatModal = ({ dateId, onClose }: DailyChatModalProps) => {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-    timeZone: 'UTC'
   });
 
   return (

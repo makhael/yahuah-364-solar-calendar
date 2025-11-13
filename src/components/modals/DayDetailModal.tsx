@@ -443,8 +443,8 @@ export const DayDetailModal = ({ info }: ModalProps) => {
       return info.gregorianDate;
     }
     if (info.dateId) {
-      // Create a new Date object from the string, ensuring it's treated as UTC
-      return new Date(info.dateId + 'T00:00:00Z');
+      // Interpret the date string in the local timezone by not adding 'Z'
+      return new Date(info.dateId + 'T00:00:00');
     }
     // This should not happen in normal flow, but provides a fallback
     return new Date();
@@ -524,7 +524,7 @@ export const DayDetailModal = ({ info }: ModalProps) => {
   const paganOriginInfo = WEEKDAY_ORIGINS[dayOfWeek] || null;
 
   const formattedGregorian = gregorianDate.toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
   
   const handleSignIn = () => {
