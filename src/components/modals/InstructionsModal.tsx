@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { XCircle, BookOpen, Palette, Compass, CalendarDays, Edit, Users, Mic, ScrollText, ThumbsUp, BookMarked, Search, ShieldCheck } from 'lucide-react';
+import { XCircle, BookOpen, Palette, Compass, CalendarDays, Edit, Users, Mic, ScrollText, ThumbsUp, BookMarked, Search, ShieldCheck, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -80,23 +80,26 @@ export const InstructionsModal = ({ isOpen, onClose }: InstructionsModalProps) =
                             <AccordionItem value="item-3">
                                 <AccordionTrigger>Navigating the Calendar & Your Notes</AccordionTrigger>
                                 <AccordionContent className="space-y-4">
+                                     <InstructionItem icon={<Search />} title="Global Search">
+                                        Use the search icon in the header to find anything in the calendar. You can jump directly to a specific day by typing "m1d15" (for Month 1, Day 15), a Gregorian date like "Nov 25", or search for feast names, glossary terms, podcast titles, and even appointment tags like `#teaching`.
+                                    </InstructionItem>
                                     <InstructionItem icon={<CalendarDays />} title="Day & Month Details">
                                         Click on any day to open a detailed modal with information about its spiritual significance, Hebrew name, and community-submitted scriptures. Click the info icon next to a month's title for a deeper look into its meaning.
                                     </InstructionItem>
-                                    <InstructionItem icon={<Edit />} title="Private Notes">
-                                        In the Day Detail modal, you can write private, personal notes for any day. These notes are only visible to you and are saved to your account if you are signed in.
+                                    <InstructionItem icon={<Edit />} title="Private Notes & Search">
+                                        In the Day Detail modal, you can write private, personal notes. On your Personal page (from the profile menu), you can now **search all your notes** to easily find past entries.
                                     </InstructionItem>
                                     <InstructionItem icon={<BookMarked />} title="My Revelation Timeline">
                                         When a note feels like a significant insight from the Ruach, check the "Mark as Revelation" box before saving. This will add the note to your personal "My Revelation Timeline" on the main page, creating a powerful journal of your spiritual journey through time.
-                                    </InstructionItem>
-                                     <InstructionItem icon={<Search />} title="Search & Go to Date">
-                                        Use the search icon in the header to find anything in the calendar. You can jump directly to a specific day by typing "m1d15" (for Month 1, Day 15) or "d4" (for Day 4 of any month). You can also search for feast names, glossary terms, or podcast titles.
                                     </InstructionItem>
                                 </AccordionContent>
                             </AccordionItem>
                             <AccordionItem value="item-4">
                                 <AccordionTrigger>Community & Study Tools</AccordionTrigger>
                                 <AccordionContent className="space-y-4">
+                                     <InstructionItem icon={<Mail />} title="Private Invitations & Notifications">
+                                        When an admin invites you to a private event, a green dot will appear on your profile avatar. Go to your **Personal page** and click the **My Invitations** tab to view and RSVP to the event.
+                                    </InstructionItem>
                                     <InstructionItem icon={<ThumbsUp />} title="Community Scriptures">
                                         Inside the Day Detail modal, you can share a scripture reference that you feel is relevant to that day. The community can then "upvote" submissions that resonate with them by clicking the thumbs-up icon. The most-upvoted scriptures for that day will rise to the top, creating a shared treasury of inspired readings.
                                     </InstructionItem>
@@ -121,14 +124,11 @@ export const InstructionsModal = ({ isOpen, onClose }: InstructionsModalProps) =
                                     <InstructionItem icon={<ShieldCheck />} title="Admin Dashboard">
                                         This central hub, accessible via your profile menu, contains all management pages. Use the sidebar to navigate between User Management, Appointments, Scrolls, Scriptures, and Forums.
                                     </InstructionItem>
-                                    <InstructionItem icon={<BookMarked />} title="Teacher's Scriptorium (in Dashboard)">
-                                        This is your personal library. Upload your entire collection of notes and teachings as Markdown (.md) files. The app will organize them by folder, allowing you to read, study, and sort them. You can sort categories and scrolls alphabetically or by a custom drag-and-drop order.
-                                    </InstructionItem>
                                     <InstructionItem icon={<CalendarDays />} title="Appointment Management (in Dashboard)">
-                                       Create and manage events for the whole community. Create single-day, multi-day, or recurring events. These appointments will appear on the main calendar for all users to see.
+                                       Create public, community, or private events. For private events, you can now invite specific users, who will receive an in-app notification to RSVP.
                                     </InstructionItem>
                                     <InstructionItem icon={<ScrollText />} title="Content Moderation (in Dashboard)">
-                                        Admins and Leaders can moderate all community-submitted content. You can edit or delete any scripture submission from the "Scripture Management" page and delete entire topics or individual messages from the "Forum Management" page to ensure the community remains healthy and focused.
+                                        Admins and Leaders can moderate all community-submitted content. You can approve/reject scripture and glossary submissions, and delete topics or messages from the forums to ensure the community remains healthy and focused.
                                     </InstructionItem>
                                 </AccordionContent>
                             </AccordionItem>
