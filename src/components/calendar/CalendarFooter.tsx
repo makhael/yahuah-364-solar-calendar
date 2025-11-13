@@ -5,6 +5,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useUI } from '@/context/UIContext';
 import { cn } from '@/lib/utils';
+import { BookOpen, ScrollText } from 'lucide-react';
 
 export const CalendarFooter = () => {
     const { openModal } = useUI();
@@ -23,10 +24,16 @@ export const CalendarFooter = () => {
                             <p>All reckonings based on the 364-day solar calendar described in Enoch & Jubilees.</p>
                             <p>Designed by Ma'Kha'el — Guided by Yahuah (יהוה)</p>
                         </div>
-                        <Button variant="outline" onClick={() => openModal('fullGlossary')} className="w-full sm:w-auto flex-shrink-0">
-                            <span className="font-sans mr-2">📖</span>
-                            Full Glossary
-                        </Button>
+                        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                           <Button variant="outline" onClick={() => openModal('fullGlossary')} className="w-full sm:w-auto flex-shrink-0">
+                                <ScrollText className="font-sans mr-2 h-4 w-4" />
+                                Full Glossary
+                            </Button>
+                            <Button variant="outline" onClick={() => openModal('fullScriptures')} className="w-full sm:w-auto flex-shrink-0">
+                                <BookOpen className="font-sans mr-2 h-4 w-4" />
+                                All Scriptures
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>

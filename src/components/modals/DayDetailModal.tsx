@@ -587,6 +587,7 @@ export const DayDetailModal = ({ info }: ModalProps) => {
         <div className="overflow-y-auto flex-grow p-6 pt-2 space-y-4">
             <CommunityAppointments dateId={dateId} dayOfWeek={dayOfWeek} />
             <CommunityScriptures dateId={dateId} />
+            <ScriptureSubmission dateId={dateId} />
             
             {meaningText && (
               <div className="bg-secondary/50 p-4 rounded-lg border">

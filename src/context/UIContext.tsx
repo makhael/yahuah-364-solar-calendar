@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
@@ -22,7 +23,8 @@ type ModalType =
   | 'fullGlossary' 
   | 'search' 
   | 'instructions'
-  | 'appointment';
+  | 'appointment'
+  | 'fullScriptures';
 
 // Data shapes for modals that require it
 type ModalDataPayloads = {
@@ -56,6 +58,7 @@ const initialModalState: ModalState = {
   search: { isOpen: false },
   instructions: { isOpen: false },
   appointment: { isOpen: false },
+  fullScriptures: { isOpen: false },
 };
 
 type VisibleSections = {

@@ -1,6 +1,7 @@
 
 
 
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -74,7 +75,6 @@ export default function YahuahCalendar() {
     }, [openModal]);
     
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
-    const todayDateId = today ? today.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
     if (isUserLoading || !startDate || isNaN(startDate.getTime())) {
         return (
@@ -132,12 +132,6 @@ export default function YahuahCalendar() {
 
                     {visibleSections.insights && (
                         <InsightsTimeline />
-                    )}
-
-                    {visibleSections.scripture && (
-                        <Card id="scripture-submission-section" className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
-                           <ScriptureSubmission dateId={todayDateId} />
-                        </Card>
                     )}
 
                     {visibleSections.intro && (
