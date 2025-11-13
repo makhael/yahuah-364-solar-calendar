@@ -51,6 +51,11 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow write: if isOwner(userId) || isAdmin();
+
+      match /glossaryProposals/{proposalId} {
+        allow get, update, delete, create: if isOwner(userId);
+        allow list: if isOwner(userId);
+      }
     }
     
     match /users/{userId}/notes/{noteId} {
@@ -72,9 +77,7 @@ service cloud.firestore {
 
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
-        // Use a direct role check here for list operations as isAdmin can be tricky
-        allow list: if isAdmin(); 
-        allow get, update, delete: if isAdmin();
+        allow read, list, get, update, delete: if isAdmin();
     }
     
     match /scriptureReadings/{readingId} {
@@ -84,8 +87,8 @@ service cloud.firestore {
     }
 
     match /scriptureReadings {
-      // Consolidated rule for listing scriptures
-      allow list: if isAdmin() || request.query.where[0][2] == 'approved';
+      // Allow listing if the query is for approved scriptures (public access) OR if the user is an admin.
+      allow list: if request.query.filters.hasAny(['status', '==', 'approved']) || isAdmin();
     }
 
     match /podcast_series/{podcastSeriesId} {
