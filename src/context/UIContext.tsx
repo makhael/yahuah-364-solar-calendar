@@ -161,9 +161,13 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   
   const allAppointmentsQuery = useMemoFirebase(() => {
     if (isUserLoading || !firestore) return null;
-    return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', isGuest ? '' : 'community']));
+    if (isGuest) {
+      return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
+    } else {
+      return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', 'community']));
+    }
   }, [firestore, isGuest, isUserLoading]);
-
+  
   const myAppointmentsQuery = useMemoFirebase(() => {
       if (isUserLoading || !firestore || isGuest) return null;
       return query(collection(firestore, 'appointments'), where('creatorId', '==', user.uid));
