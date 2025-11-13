@@ -1,9 +1,11 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import React, { ReactNode } from 'react';
-import { Providers } from './providers';
 import { Toaster } from '@/components/ui/toaster';
 import { ModalRenderer } from '@/components/modals/ModalRenderer';
+import { MainApp } from '@/components/layout/main-app';
+import { ClientProviders } from './client-providers';
 
 export const metadata: Metadata = {
   title: "Yahuah's 364-Day Solar Calendar",
@@ -30,15 +32,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <Providers>
-          {children}
+        <ClientProviders>
+          <MainApp>
+            {children}
+          </MainApp>
           <ModalRenderer />
           <Toaster />
-        </Providers>
+        </ClientProviders>
       </body>
     </html>
   );
