@@ -21,7 +21,7 @@ service cloud.firestore {
     
     match /appointments/{appointmentId} {
       allow get: if true;
-      allow list: if isAdmin() || request.query.get('inviteScope') == 'all' || (isSignedIn() && request.query.get('inviteScope') in ['all', 'community']);
+      allow list: if isSignedIn() && request.query.get("inviteScope") in ["all", "community"];
       allow write: if isSignedIn();
     }
 
@@ -84,7 +84,7 @@ service cloud.firestore {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-      allow list: if isAdmin() || request.query.get('status') == 'approved';
+      allow list: if isSignedIn() && request.query.get("status") == "approved";
     }
 
     match /podcast_series/{podcastSeriesId} {
