@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,28 +22,20 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginCore({ prefilledEmail }: { prefilledEmail: string | null }) {
   const [error, setError] = useState<string | null>(null);
   const auth = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const prefilledEmail = searchParams.get('email');
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      email: prefilledEmail || '',
       password: '',
     },
   });
 
-  const { formState: { isSubmitting }, setValue } = form;
-
-  useEffect(() => {
-    if (prefilledEmail) {
-      setValue('email', decodeURIComponent(prefilledEmail));
-    }
-  }, [prefilledEmail, setValue]);
+  const { formState: { isSubmitting } } = form;
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
@@ -67,56 +59,72 @@ export default function LoginPage() {
   };
 
   return (
+    <Card className="w-full max-w-sm">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Sign In</CardTitle>
+        <CardDescription>Enter your credentials to access your account</CardDescription>
+      </CardHeader>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              {...form.register('email')}
+              disabled={isSubmitting}
+            />
+            {form.formState.errors.email && (
+              <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              {...form.register('password')}
+              disabled={isSubmitting}
+            />
+            {form.formState.errors.password && (
+              <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+            )}
+          </div>
+          {error && <p className="text-sm text-destructive text-center">{error}</p>}
+        </CardContent>
+        <CardFooter className="flex flex-col gap-4">
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <LogIn className="mr-2 h-4 w-4" />
+            )}
+            Sign In
+          </Button>
+           <p className="text-xs text-muted-foreground">
+              Don't have an account? <Link href="/signup" className="text-primary hover:underline">Sign Up</Link>
+          </p>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+
+function LoginPageWrapper() {
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email');
+  return <LoginCore prefilledEmail={email} />;
+}
+
+
+export default function LoginPage() {
+  return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Sign In</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
-        </CardHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                {...form.register('email')}
-                disabled={isSubmitting}
-              />
-              {form.formState.errors.email && (
-                <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                {...form.register('password')}
-                disabled={isSubmitting}
-              />
-              {form.formState.errors.password && (
-                <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
-              )}
-            </div>
-            {error && <p className="text-sm text-destructive text-center">{error}</p>}
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <LogIn className="mr-2 h-4 w-4" />
-              )}
-              Sign In
-            </Button>
-             <p className="text-xs text-muted-foreground">
-                Don't have an account? <Link href="/signup" className="text-primary hover:underline">Sign Up</Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+      <Suspense fallback={<Card className="w-full max-w-sm h-[450px] animate-pulse" />}>
+        <LoginPageWrapper />
+      </Suspense>
     </div>
   );
 }
