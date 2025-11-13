@@ -21,6 +21,8 @@ const loginSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
+const emailSchema = z.string().email({ message: "Please enter a valid email address." });
+
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 function LoginFormComponent() {
@@ -41,20 +43,21 @@ function LoginFormComponent() {
     },
   });
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues, trigger } = form;
+  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues } = form;
 
   const handlePasswordReset = async () => {
-    const isEmailValid = await trigger("email");
-    if (!isEmailValid) {
-        toast({
-            variant: "destructive",
-            title: "Invalid Email",
-            description: "Please enter a valid email address to reset your password.",
-        });
-        return;
-    }
     const email = getValues("email");
+    const validationResult = emailSchema.safeParse(email);
 
+    if (!validationResult.success) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Email",
+        description: "Please enter a valid email address to reset your password.",
+      });
+      return;
+    }
+    
     try {
       await sendPasswordResetEmail(auth, email);
       toast({
