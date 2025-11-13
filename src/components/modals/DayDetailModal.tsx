@@ -82,17 +82,30 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const { toast } = useToast();
 
     const isUserFullyAuthenticated = user && !user.isAnonymous;
+    
+    const userProfileRef = useMemoFirebase(() => {
+        if (!isUserFullyAuthenticated) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [isUserFullyAuthenticated, user?.uid, firestore]);
+
+    const { data: userProfile } = useDoc<{ role?: string }>(userProfileRef);
+    const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
 
     const appointmentsQuery = useMemoFirebase(() => {
         if (!firestore || !isUserFullyAuthenticated) return null;
         
-        let q = query(
+        const baseQuery = query(
             collection(firestore, 'appointments'),
-            where('startDate', '<=', dateId),
-            where('inviteScope', 'in', ['all', 'community'])
+            where('startDate', '<=', dateId)
         );
-        return q;
-    }, [firestore, dateId, isUserFullyAuthenticated]);
+
+        if (isAdmin) {
+            return baseQuery;
+        }
+
+        return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
+
+    }, [firestore, dateId, isUserFullyAuthenticated, isAdmin]);
     
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
@@ -145,14 +158,6 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     
     const [optimisticRsvps, setOptimisticRsvps] = useState<Record<string, 'going' | 'notGoing' | 'maybe' | null>>({});
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
-
-    const userProfileRef = useMemoFirebase(() => {
-        if (!user || !firestore) return null;
-        return doc(firestore, 'users', user.uid);
-    }, [user, firestore]);
-
-    const { data: userProfile } = useDoc<{ role?: string }>(userProfileRef);
-    const isAdmin = userProfile?.role === 'admin';
 
     useEffect(() => {
         const initialState: Record<string, 'going' | 'notGoing' | 'maybe' | null> = {};
