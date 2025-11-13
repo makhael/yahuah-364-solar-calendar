@@ -20,7 +20,7 @@ service cloud.firestore {
     }
     
     match /appointments/{appointmentId} {
-      allow get: if isSignedIn();
+      allow get: if true;
       allow list: if isSignedIn();
       allow write: if isSignedIn();
     }
@@ -54,20 +54,24 @@ service cloud.firestore {
       allow write: if isOwner(userId) || isAdmin();
 
       match /glossaryProposals/{proposalId} {
-        allow get, list, update, delete, create: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
-    }
-    
-    match /users/{userId}/notes/{noteId} {
-      allow read, write: if isOwner(userId);
-    }
-    
-    match /users/{userId}/calendarPresets/{presetId} {
+      
+      match /notes/{noteId} {
         allow read, write: if isOwner(userId);
-    }
+      }
+      
+      match /calendarPresets/{presetId} {
+          allow read, write: if isOwner(userId);
+      }
 
-    match /users/{userId}/calendarPreferences/{prefId} {
-        allow read, write: if isOwner(userId);
+      match /calendarPreferences/{prefId} {
+          allow read, write: if isOwner(userId);
+      }
+
+      match /chatBookmarks/{bookmarkId} {
+          allow read, write: if isOwner(userId);
+      }
     }
 
     match /glossaryTerms/{termId} {
@@ -81,10 +85,10 @@ service cloud.firestore {
     }
     
     match /scriptureReadings/{readingId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+      allow list: if isSignedIn();
     }
 
     match /podcast_series/{podcastSeriesId} {
