@@ -151,22 +151,18 @@ export default function ScriptureManagement() {
 
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
   
-  const createScripturesQuery = (status: 'pending' | 'approved' | 'rejected') => {
-    return useMemoFirebase(() => {
-      if (!firestore || !isAdmin) return null;
-      return query(
-        collection(firestore, 'scriptureReadings'),
-        where('status', '==', status),
-        orderBy('createdAt', 'desc')
-      );
-    }, [firestore, isAdmin, status]);
-  };
-  
-  const { data: pendingScriptures, isLoading: pendingLoading } = useCollection<ScriptureReading>(createScripturesQuery('pending'));
-  const { data: approvedScriptures, isLoading: approvedLoading } = useCollection<ScriptureReading>(createScripturesQuery('approved'));
-  const { data: rejectedScriptures, isLoading: rejectedLoading } = useCollection<ScriptureReading>(createScripturesQuery('rejected'));
+  const scripturesQuery = useMemoFirebase(() => {
+    if (!firestore || !isAdmin) return null;
+    return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
+  }, [firestore, isAdmin]);
 
-  const isLoading = pendingLoading || approvedLoading || rejectedLoading;
+  const { data: allScriptures, isLoading: scripturesLoading } = useCollection<ScriptureReading>(scripturesQuery);
+  
+  const pendingScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'pending'), [allScriptures]);
+  const approvedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'approved'), [allScriptures]);
+  const rejectedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'rejected'), [allScriptures]);
+
+  const isLoading = scripturesLoading;
 
   const handleDelete = (scriptureId: string) => {
     if (!firestore) return;
@@ -222,7 +218,7 @@ export default function ScriptureManagement() {
     )
   }
 
-  const ScriptureList = ({ submissions }: { submissions: ScriptureReading[] | null }) => {
+  const ScriptureList = ({ submissions }: { submissions: ScriptureReading[] | undefined }) => {
     if (!submissions || submissions.length === 0) {
       return (
           <div className="flex flex-col items-center justify-center p-8 text-center bg-background/50 rounded-md border">
@@ -301,3 +297,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    

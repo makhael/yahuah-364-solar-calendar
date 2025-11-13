@@ -89,8 +89,7 @@ service cloud.firestore {
     }
 
     match /scriptureReadings {
-      allow list: if isAdmin() || 
-                    (request.query.where != null && request.query.where.hasAny(['status', 'in', ['approved', 'pending', 'rejected']]));
+      allow list: if isAdmin() || (request.query.where != null && request.query.where.hasAny(['status', '==', 'approved']));
     }
 
 
@@ -100,3 +99,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
