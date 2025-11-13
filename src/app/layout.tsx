@@ -8,6 +8,7 @@ import { UIProvider } from '@/context/UIContext';
 import { ModalRenderer } from '@/components/modals/ModalRenderer';
 import { CalendarFooter } from '@/components/calendar/CalendarFooter';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
+import { initializeFirebase } from '@/firebase';
 
 export const metadata: Metadata = {
   title: "Yahuah's 364-Day Solar Calendar",
@@ -35,11 +36,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const firebaseServices = initializeFirebase();
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <FirebaseClientProvider>
+          <FirebaseClientProvider {...firebaseServices}>
             <UIProvider>
               <div className="flex min-h-screen w-full flex-col bg-background">
                 <div className="container mx-auto p-4 sm:p-6 md:p-8">
