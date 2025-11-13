@@ -91,28 +91,34 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const { data: userProfile } = useDoc<{ role?: string }>(userProfileRef);
     const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
     
-    const appointmentsQuery = useMemoFirebase(() => {
+    // Query for public appointments, allowed for everyone
+    const publicAppointmentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        
-        const baseQuery = collection(firestore, 'appointments');
+        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
+    }, [firestore]);
 
-        if (isAdmin) {
-            // Admins can see everything, no filter needed for scope.
-            return baseQuery;
+    // Query for community appointments, only for signed-in users
+    const communityAppointmentsQuery = useMemoFirebase(() => {
+        if (!firestore || !isUserFullyAuthenticated) return null;
+        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'community'));
+    }, [firestore, isUserFullyAuthenticated]);
+
+    const { data: publicAppointments, isLoading: isLoadingPublic } = useCollection<Appointment>(publicAppointmentsQuery);
+    const { data: communityAppointments, isLoading: isLoadingCommunity } = useCollection<Appointment>(communityAppointmentsQuery);
+
+    const allAppointments = useMemo(() => {
+        const appointments = publicAppointments ? [...publicAppointments] : [];
+        if (communityAppointments) {
+            communityAppointments.forEach(commApp => {
+                if (!appointments.some(pubApp => pubApp.id === commApp.id)) {
+                    appointments.push(commApp);
+                }
+            });
         }
-        
-        if (isUserFullyAuthenticated) {
-            // Signed-in members can see 'public' and 'community'
-            return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
-        }
-        
-        // Guests (anonymous users) can only see 'public'
-        return query(baseQuery, where('inviteScope', '==', 'all'));
+        return appointments;
+    }, [publicAppointments, communityAppointments]);
 
-    }, [firestore, isUserFullyAuthenticated, isAdmin]);
-
-
-    const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
+    const areAppointmentsLoading = isLoadingPublic || (isUserFullyAuthenticated && isLoadingCommunity);
 
     const appointmentsForDay = useMemo(() => {
         if (!allAppointments) return [];

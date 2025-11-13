@@ -37,13 +37,17 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
     if (!firestore) return null;
     return query(
       collection(firestore, 'scriptureReadings'),
-      where('status', '==', 'approved'),
-      where('date', '==', dateId)
+      where('status', '==', 'approved')
     );
-  }, [firestore, dateId]);
+  }, [firestore]);
 
-  const { data: scripturesForDay, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
+  const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
+  const scripturesForDay = useMemo(() => {
+    if (!allScriptures) return [];
+    return allScriptures.filter(s => s.date === dateId);
+  }, [allScriptures, dateId]);
+  
   const sortedScriptures = useMemo(() => {
     if (!scripturesForDay) return [];
     return scripturesForDay.sort((a, b) => (b.upvoters?.length || 0) - (a.upvoters?.length || 0));
