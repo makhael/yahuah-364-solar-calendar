@@ -22,20 +22,28 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-function LoginFormComponent({ prefilledEmail }: { prefilledEmail: string | null }) {
+function LoginFormComponent() {
   const [error, setError] = useState<string | null>(null);
   const auth = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const prefilledEmail = searchParams.get('email');
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: prefilledEmail || '',
+      email: '',
       password: '',
     },
   });
 
-  const { formState: { isSubmitting } } = form;
+  const { formState: { isSubmitting }, setValue } = form;
+
+  useEffect(() => {
+    if (prefilledEmail) {
+      setValue('email', prefilledEmail);
+    }
+  }, [prefilledEmail, setValue]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
@@ -61,8 +69,7 @@ function LoginFormComponent({ prefilledEmail }: { prefilledEmail: string | null 
         <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
-      {/* The key forces a remount when the prefilledEmail changes from null to its actual value */}
-      <form key={prefilledEmail || 'initial'} onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -109,18 +116,12 @@ function LoginFormComponent({ prefilledEmail }: { prefilledEmail: string | null 
   );
 }
 
-function LoginPageContent() {
-  const searchParams = useSearchParams();
-  const email = searchParams.get('email');
-  
-  return <LoginFormComponent prefilledEmail={email} />;
-}
 
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Suspense fallback={<Card className="w-full max-w-sm h-[450px] animate-pulse" />}>
-        <LoginPageContent />
+        <LoginFormComponent />
       </Suspense>
     </div>
   );
