@@ -106,7 +106,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
         const { displayName, email, photoURL } = user;
         
         // Check for specific admin email, otherwise default to member
-        const role = email === 'sheldonharding@gmail.com' ? 'admin' : 'member';
+        const role = email?.toLowerCase() === 'sheldonharding@gmail.com' ? 'admin' : 'member';
 
         const userData = {
           displayName: displayName || email,
