@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase, useAuth } from '@/firebase';
+import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase, useAuth, useFirebaseApp } from '@/firebase';
 import { collection, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { LoaderCircle, Trash2, Edit, Save, X, UserPlus } from 'lucide-react';
@@ -22,7 +22,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth as getAuthSecondary } from 'firebase/auth';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
 
 
 interface User {
@@ -295,7 +297,7 @@ type CreateUserForm = z.infer<typeof createUserSchema>;
 
 function CreateUserDialog() {
   const [open, setOpen] = useState(false);
-  const auth = useAuth();
+  const mainApp = useFirebaseApp(); // Get the main Firebase app instance
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -312,12 +314,14 @@ function CreateUserDialog() {
   const { formState: { isSubmitting }, control, handleSubmit } = form;
 
   const onSubmit = async (data: CreateUserForm) => {
+    // Create a temporary, secondary Firebase app instance for user creation.
+    // This isolates the auth state from the main app, preventing the admin from being logged out.
+    const tempAppName = `temp-user-creation-${Date.now()}`;
+    const tempApp = initializeApp(firebaseConfig, tempAppName);
+    const tempAuth = getAuthSecondary(tempApp);
+
     try {
-      // We can't use the main auth instance for this, as it might be signed in.
-      // Firebase doesn't support creating users from the client SDK while another user is signed in.
-      // This is a simplified approach. A more robust solution would use a backend function.
-      
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await createUserWithEmailAndPassword(tempAuth, data.email, data.password);
       const newUser = userCredential.user;
 
       const userDocRef = doc(firestore, "users", newUser.uid);
@@ -350,6 +354,9 @@ function CreateUserDialog() {
         title: "Creation Failed",
         description: errorMessage,
       });
+    } finally {
+      // Clean up the temporary app instance to avoid memory leaks.
+      await deleteApp(tempApp);
     }
   };
 
