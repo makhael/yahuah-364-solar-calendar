@@ -91,34 +91,18 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const { data: userProfile } = useDoc<{ role?: string }>(userProfileRef);
     const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
     
-    // Query for public appointments, allowed for everyone
-    const publicAppointmentsQuery = useMemoFirebase(() => {
+    const appointmentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
-    }, [firestore]);
-
-    // Query for community appointments, only for signed-in users
-    const communityAppointmentsQuery = useMemoFirebase(() => {
-        if (!firestore || !isUserFullyAuthenticated) return null;
-        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'community'));
-    }, [firestore, isUserFullyAuthenticated]);
-
-    const { data: publicAppointments, isLoading: isLoadingPublic } = useCollection<Appointment>(publicAppointmentsQuery);
-    const { data: communityAppointments, isLoading: isLoadingCommunity } = useCollection<Appointment>(communityAppointmentsQuery);
-
-    const allAppointments = useMemo(() => {
-        const appointments = publicAppointments ? [...publicAppointments] : [];
-        if (communityAppointments) {
-            communityAppointments.forEach(commApp => {
-                if (!appointments.some(pubApp => pubApp.id === commApp.id)) {
-                    appointments.push(commApp);
-                }
-            });
+        if (isAdmin) {
+            return collection(firestore, 'appointments');
         }
-        return appointments;
-    }, [publicAppointments, communityAppointments]);
+        if (isUserFullyAuthenticated) {
+            return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', 'community']));
+        }
+        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
+    }, [firestore, isAdmin, isUserFullyAuthenticated]);
 
-    const areAppointmentsLoading = isLoadingPublic || (isUserFullyAuthenticated && isLoadingCommunity);
+    const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
     const appointmentsForDay = useMemo(() => {
         if (!allAppointments) return [];
