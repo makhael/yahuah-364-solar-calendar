@@ -49,17 +49,19 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
     return (
         <Card className={cn("transition-all flex flex-col", statusInfo.color)}>
             <CardHeader>
-                <div className="flex justify-between items-start gap-4">
-                    <div className="flex-grow">
+                <div className="flex flex-col gap-4">
+                    <div className="flex justify-center">
+                         <Badge variant="outline" className={cn("flex items-center gap-2", statusInfo.color)}>
+                            {statusInfo.icon}
+                            <span>{statusInfo.text}</span>
+                        </Badge>
+                    </div>
+                    <div className="text-center">
                         <CardTitle className="text-lg">{proposal.term}</CardTitle>
                         <CardDescription>
                             Submitted by {proposal.userDisplayName} on {proposal.createdAt ? new Date(proposal.createdAt.seconds * 1000).toLocaleDateString() : 'just now'}
                         </CardDescription>
                     </div>
-                     <Badge variant="outline" className={cn("flex-shrink-0 flex items-center gap-2", statusInfo.color)}>
-                        {statusInfo.icon}
-                        <span>{statusInfo.text}</span>
-                    </Badge>
                 </div>
             </CardHeader>
             <CardContent className="flex-grow">
