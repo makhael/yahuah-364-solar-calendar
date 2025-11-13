@@ -158,6 +158,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   // -- APPOINTMENT LOGIC -- //
   
   const allAppointmentsQuery = useMemoFirebase(() => {
+    // THIS IS THE FIX: Do not create the query until user loading is complete.
     if (isUserLoading || !firestore) {
       return null;
     }
