@@ -151,20 +151,22 @@ export default function ScriptureManagement() {
 
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
   
-  const scripturesQuery = useMemoFirebase(() => {
-    if (!firestore || !isAdmin) return null; // Prevent query if not admin
-    return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
-  }, [firestore, isAdmin]);
+  const createScripturesQuery = (status: 'pending' | 'approved' | 'rejected') => {
+    return useMemoFirebase(() => {
+      if (!firestore || !isAdmin) return null;
+      return query(
+        collection(firestore, 'scriptureReadings'),
+        where('status', '==', status),
+        orderBy('createdAt', 'desc')
+      );
+    }, [firestore, isAdmin, status]);
+  };
+  
+  const { data: pendingScriptures, isLoading: pendingLoading } = useCollection<ScriptureReading>(createScripturesQuery('pending'));
+  const { data: approvedScriptures, isLoading: approvedLoading } = useCollection<ScriptureReading>(createScripturesQuery('approved'));
+  const { data: rejectedScriptures, isLoading: rejectedLoading } = useCollection<ScriptureReading>(createScripturesQuery('rejected'));
 
-  const { data: allScriptures, isLoading, error } = useCollection<ScriptureReading>(scripturesQuery);
-
-  useEffect(() => {
-    if (error) {
-      console.error("Admin scripture fetch error", error);
-      toast({variant: 'destructive', title: "Error fetching scriptures", description: error.message});
-    }
-  }, [error, toast]);
-
+  const isLoading = pendingLoading || approvedLoading || rejectedLoading;
 
   const handleDelete = (scriptureId: string) => {
     if (!firestore) return;
@@ -179,10 +181,6 @@ export default function ScriptureManagement() {
     toast({ title: 'Status Updated', description: `Submission marked as ${status}.` });
   };
 
-  const pendingScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'pending') || [], [allScriptures]);
-  const approvedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'approved') || [], [allScriptures]);
-  const rejectedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'rejected') || [], [allScriptures]);
-  
   const totalLoading = isUserLoading || isProfileLoading;
 
   if (totalLoading) {
@@ -275,16 +273,16 @@ export default function ScriptureManagement() {
         <CardDescription>Review, edit, and moderate all community scripture submissions.</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading && isAdmin ? (
+        {isLoading ? (
           <div className="flex items-center justify-center p-8">
               <LoaderCircle className="animate-spin" />
           </div>
         ) : (
           <Tabs defaultValue="pending">
               <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="pending">Pending ({pendingScriptures.length})</TabsTrigger>
-                  <TabsTrigger value="approved">Approved ({approvedScriptures.length})</TabsTrigger>
-                  <TabsTrigger value="rejected">Rejected ({rejectedScriptures.length})</TabsTrigger>
+                  <TabsTrigger value="pending">Pending ({pendingScriptures?.length || 0})</TabsTrigger>
+                  <TabsTrigger value="approved">Approved ({approvedScriptures?.length || 0})</TabsTrigger>
+                  <TabsTrigger value="rejected">Rejected ({rejectedScriptures?.length || 0})</TabsTrigger>
               </TabsList>
               <div className="pt-6">
                   <TabsContent value="pending">
@@ -303,3 +301,5 @@ export default function ScriptureManagement() {
     </Card>
   );
 }
+
+    
