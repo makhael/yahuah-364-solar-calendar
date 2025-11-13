@@ -14,7 +14,7 @@ service cloud.firestore {
     function isAdmin() {
       // Use exists() instead of get() to avoid recursive loops and for efficiency.
       // This checks if a document exists for the user in the /users collection
-      // and if that document has the role 'admin'. This is non-recursive.
+      // and if that document has the role 'admin' or 'leader'.
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'leader');
     }
@@ -22,8 +22,8 @@ service cloud.firestore {
     match /appointments/{appointmentId} {
       allow get: if true;
       allow list: if isAdmin() || 
-                  (isSignedIn() && request.query.filters.hasAny(['inviteScope', 'in', ['all', 'community']])) ||
-                  (!isSignedIn() && request.query.filters.hasAny(['inviteScope', '==', 'all']));
+                  (isSignedIn() && request.query.where.hasAny(['inviteScope', 'in', ['all', 'community']])) ||
+                  (!isSignedIn() && request.query.where.hasAny(['inviteScope', '==', 'all']));
       allow write: if isSignedIn();
     }
 
@@ -89,9 +89,9 @@ service cloud.firestore {
     }
 
     match /scriptureReadings {
-       allow list: if (request.query.filters.hasAny(['status', '==', 'approved'])) ||
-                     (isSignedIn() && request.query.filters.hasAny(['userId', '==', request.auth.uid])) ||
-                     isAdmin();
+       allow list: if isAdmin() ||
+                     (request.query.where.hasAny(['status', '==', 'approved'])) ||
+                     (isSignedIn() && request.query.where.hasAny(['userId', '==', request.auth.uid]));
     }
 
     match /podcast_series/{podcastSeriesId} {

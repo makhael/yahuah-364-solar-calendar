@@ -162,6 +162,12 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     if (isUserLoading || !firestore) {
       return null;
     }
+    
+    // Admins can see all appointments regardless of scope
+    const userProfile = user ? doc(firestore, 'users', user.uid) : null;
+    if (userProfile && (userProfile.id === 'admin' || userProfile.id === 'leader')) {
+        return query(collection(firestore, 'appointments'));
+    }
 
     if (user && !user.isAnonymous) {
         return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', 'community']));
