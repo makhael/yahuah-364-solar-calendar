@@ -137,9 +137,9 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   }, []);
 
   const preferenceRef = useMemoFirebase(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
+    if (isUserLoading || !user || !user.uid || user.isAnonymous || !firestore) return null;
     return doc(firestore, 'users', user.uid, 'calendarPreferences', user.uid);
-  }, [user, firestore]);
+  }, [user, firestore, isUserLoading]);
   
   const presetsQuery = useMemoFirebase(() => {
     if (isUserLoading || !user || !user.uid || user.isAnonymous || !firestore) return null;
