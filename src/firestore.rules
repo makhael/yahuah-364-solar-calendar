@@ -21,13 +21,7 @@ service cloud.firestore {
     
     match /appointments/{appointmentId} {
       allow get: if true;
-      allow list: if isAdmin() || 
-                     (request.query.filters.size() > 0 && request.query.filters[0].field == 'inviteScope' && 
-                      (
-                        (request.query.filters[0].value == 'all') ||
-                        (isSignedIn() && request.query.filters[0].value.toSet().hasAll(['all', 'community']))
-                      )
-                     );
+      allow list: if isAdmin() || (isSignedIn() && request.query.filters[0].field == 'inviteScope' && request.query.filters[0].value.toSet().hasAll(['all', 'community']));
       allow write: if isSignedIn();
     }
 
