@@ -34,17 +34,19 @@ function LoginFormComponent() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    mode: 'onTouched', // Important for getFieldState to work correctly
     defaultValues: {
       email: prefilledEmail || '',
       password: '',
     },
   });
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues, trigger } = form;
+  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues, getFieldState } = form;
 
   const handlePasswordReset = async () => {
-    const emailIsValid = await trigger("email");
-    if (!emailIsValid) {
+    // Manually check the field state without triggering UI validation
+    const emailState = getFieldState('email');
+    if (emailState.invalid) {
       toast({
         variant: 'destructive',
         title: "Invalid Email",
@@ -61,7 +63,7 @@ function LoginFormComponent() {
         description: "If an account exists for this email, a password reset link has been sent.",
       });
     } catch (err: any) {
-      // We don't want to reveal if a user exists or not, so we show the same message
+      // For security, show the same confirmation message even if the email doesn't exist
       toast({
         title: "Password Reset Email Sent",
         description: "If an account exists for this email, a password reset link has been sent.",
