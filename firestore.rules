@@ -89,7 +89,7 @@ service cloud.firestore {
     }
 
     match /scriptureReadings {
-       allow list: if isAdmin() || (request.query.where.size() > 0 && request.query.where[1] == '==' && request.query.where[2] == 'approved');
+       allow list: if isAdmin() || (request.query.where.size() > 0 && request.query.where[0] == 'status' && request.query.where[2] == 'approved');
     }
 
     match /podcast_series/{podcastSeriesId} {
