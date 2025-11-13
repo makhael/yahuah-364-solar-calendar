@@ -127,6 +127,20 @@
         }
       }
     },
+    "GlossaryTerm": {
+      "title": "Glossary Term",
+      "description": "A term for the public glossary.",
+      "type": "object",
+      "properties": {
+        "term": { "type": "string" },
+        "definition": { "type": "string" },
+        "context": { "type": "string" },
+        "scripturalWitness": { "type": "string" },
+        "restorationNote": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["term", "definition"]
+    },
     "GlossaryProposal": {
       "title": "Glossary Proposal",
       "description": "A user's proposal for a new or updated glossary term.",
@@ -161,6 +175,12 @@
         "$ref": "#/entities/GlossaryProposal"
       },
       "description": "User-specific collection of their glossary proposals."
+    },
+    "/glossaryTerms/{termId}": {
+      "schema": {
+        "$ref": "#/entities/GlossaryTerm"
+      },
+      "description": "Collection of all public glossary terms."
     },
     "/communityTopics/{topicId}": {
         "schema": {

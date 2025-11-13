@@ -10,10 +10,6 @@
  * - Calendar events are stored under `/calendar_events/{calendarEventId}`.
  * - Glossary terms are stored under `/glossary_terms/{glossaryTermId}`.
  * - Podcast series are stored under `/podcast_series/{podcastSeriesId}`.
- *
- * Key Security Decisions:
- * - User settings are strictly controlled via path-based ownership.
- * - Calendar events, glossary terms, and podcast series are publicly readable and writable.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -48,23 +44,9 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && isOwner(userId);
     }
 
-    /**
-     * @description Allows public read and write access to glossary terms.
-     * @path /glossary_terms/{glossaryTermId}
-     * @allow (get) - Any user, authenticated or unauthenticated, can get a glossary term.
-     * @allow (list) - Any user, authenticated or unauthenticated, can list glossary terms.
-     * @allow (create) - Any authenticated user can create a glossary term.
-     * @allow (update) - Any authenticated user can update a glossary term.
-     * @allow (delete) - Any authenticated user can delete a glossary term.
-     * @deny (create) - An unauthenticated user cannot create a glossary term.
-     * @principle Grants public read access while restricting writes to authenticated users.
-     */
-    match /glossary_terms/{glossaryTermId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+    match /glossaryTerms/{termId} {
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
