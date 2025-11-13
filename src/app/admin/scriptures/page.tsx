@@ -2,9 +2,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, doc, orderBy, deleteDoc, where, updateDoc } from 'firebase/firestore';
-import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User, ThumbsUp, ThumbsDown, Hourglass } from 'lucide-react';
+import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User, ThumbsUp, ThumbsDown, Hourglass, Ban } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface ScriptureReading {
   id: string;
@@ -27,6 +28,10 @@ interface ScriptureReading {
   date: string;
   createdAt: { seconds: number };
   status: 'pending' | 'approved' | 'rejected';
+}
+
+interface UserProfileData {
+  role?: 'admin' | 'leader' | 'member';
 }
 
 const getStatusInfo = (status: ScriptureReading['status']) => {
@@ -132,14 +137,24 @@ const ScriptureCard = ({ submission, onEdit, onDelete, onUpdateStatus }: { submi
 }
 
 export default function ScriptureManagement() {
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
+  const router = useRouter();
 
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfileData>(userProfileRef);
+
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
+  
   const scripturesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !isAdmin) return null; // Prevent query if not admin
     return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
-  }, [firestore]);
+  }, [firestore, isAdmin]);
 
   const { data: allScriptures, isLoading, error } = useCollection<ScriptureReading>(scripturesQuery);
 
@@ -167,8 +182,10 @@ export default function ScriptureManagement() {
   const pendingScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'pending') || [], [allScriptures]);
   const approvedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'approved') || [], [allScriptures]);
   const rejectedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'rejected') || [], [allScriptures]);
+  
+  const totalLoading = isUserLoading || isProfileLoading;
 
-  if (isLoading) {
+  if (totalLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="relative flex h-24 w-24 items-center justify-center">
@@ -187,6 +204,24 @@ export default function ScriptureManagement() {
         </div>
       </div>
     );
+  }
+
+  if (!isAdmin) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                    <Ban className="w-6 h-6"/> Access Denied
+                </CardTitle>
+                <CardDescription>
+                    You do not have the required permissions to view this page.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground">This section is restricted to administrators.</p>
+            </CardContent>
+        </Card>
+    )
   }
 
   const ScriptureList = ({ submissions }: { submissions: ScriptureReading[] | null }) => {
@@ -240,6 +275,11 @@ export default function ScriptureManagement() {
         <CardDescription>Review, edit, and moderate all community scripture submissions.</CardDescription>
       </CardHeader>
       <CardContent>
+        {isLoading && isAdmin ? (
+          <div className="flex items-center justify-center p-8">
+              <LoaderCircle className="animate-spin" />
+          </div>
+        ) : (
           <Tabs defaultValue="pending">
               <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="pending">Pending ({pendingScriptures.length})</TabsTrigger>
@@ -258,6 +298,7 @@ export default function ScriptureManagement() {
                   </TabsContent>
               </div>
           </Tabs>
+        )}
       </CardContent>
     </Card>
   );
