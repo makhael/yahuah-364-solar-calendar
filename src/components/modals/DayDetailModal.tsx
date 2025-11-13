@@ -26,8 +26,8 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { MarkdownRenderer } from '../common/MarkdownRenderer';
 import { add, isBefore, isEqual, startOfDay, isAfter } from 'date-fns';
-import { ScriptureSubmission } from '@/components/scriptures/ScriptureSubmission';
-import { CommunityScriptures } from '@/components/scriptures/CommunityScriptures';
+import { ScriptureSubmission } from '../scriptures/ScriptureSubmission';
+import { CommunityScriptures } from '../scriptures/CommunityScriptures';
 
 
 const noteSchema = z.object({
@@ -100,11 +100,9 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
             return baseQuery;
         }
 
-        if (isUserFullyAuthenticated) {
-             return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
-        }
-        
-        return query(baseQuery, where('inviteScope', '==', 'all'));
+        // For both signed-in and anonymous users, we need to apply a filter.
+        // The security rules will enforce the correct visibility.
+        return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
 
     }, [firestore, user, isAdmin, isUserFullyAuthenticated]);
     
@@ -485,7 +483,9 @@ export const DayDetailModal = ({ info }: ModalProps) => {
   const { monthNum, yahuahDay } = useMemo(() => {
     if (startDate && gregorianDate) {
       const calculated = get364DateFromGregorian(gregorianDate, startDate);
-      return { monthNum: calculated?.month, yahuahDay: calculated?.day };
+      if (calculated) {
+        return { monthNum: calculated.month, yahuahDay: calculated.day };
+      }
     }
     return { monthNum: info.monthNum, yahuahDay: info.yahuahDay };
   }, [gregorianDate, startDate, info.monthNum, info.yahuahDay]);

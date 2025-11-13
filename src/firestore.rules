@@ -21,9 +21,8 @@ service cloud.firestore {
     
     match /appointments/{appointmentId} {
       allow get: if true;
-      allow list: if isAdmin() || 
-                  (isSignedIn() && request.query.where.hasAny(['inviteScope', 'in', ['all', 'community']])) ||
-                  (!isSignedIn() && request.query.where.hasAny(['inviteScope', '==', 'all']));
+      // Admins can list all. Signed-in users can list community/public. Guests can list public.
+      allow list: if isAdmin() || (request.query.where[0] == 'inviteScope' && request.query.where[1] == 'in' && request.query.where[2] == ['all', 'community']);
       allow write: if isSignedIn();
     }
 
@@ -87,9 +86,9 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
       // Admin can list all. Non-admins can only list approved scriptures, or their own submissions.
-      allow list: if isAdmin() ||
-                   (request.query.where != null && request.query.where[0] == 'status' && request.query.where[2] == 'approved') ||
-                   (isSignedIn() && request.query.where != null && request.query.where[0] == 'userId' && request.query.where[2] == request.auth.uid);
+      allow list: if isAdmin() || 
+                   (request.query.where[0] == 'status' && request.query.where[2] == 'approved') ||
+                   (isSignedIn() && request.query.where[0] == 'userId' && request.query.where[2] == request.auth.uid);
     }
 
     match /podcast_series/{podcastSeriesId} {
