@@ -7,6 +7,7 @@
 
 
 
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -29,6 +30,7 @@ import { PODCAST_SERIES_DATA } from '@/lib/calendar-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { LoaderCircle } from 'lucide-react';
 import { ScriptureSubmission } from '../scriptures/ScriptureSubmission';
+import { GlossaryProposalSubmission } from '../glossary/GlossaryProposalSubmission';
 
 
 export default function YahuahCalendar() {
@@ -151,6 +153,14 @@ export default function YahuahCalendar() {
                         <Card className="border shadow-lg" id="scripture-section">
                              <CardContent className="p-4 sm:p-6">
                                 <ScriptureSubmission dateId={today ? today.toISOString().split('T')[0] : ''} />
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {visibleSections.glossaryProposal && (
+                        <Card className="border shadow-lg" id="glossary-proposal-section">
+                            <CardContent className="p-4 sm:p-6">
+                                <GlossaryProposalSubmission />
                             </CardContent>
                         </Card>
                     )}

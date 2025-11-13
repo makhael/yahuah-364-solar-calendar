@@ -68,6 +68,7 @@ type VisibleSections = {
   calendar: boolean;
   scripture: boolean;
   controls: boolean;
+  glossaryProposal: boolean;
 };
 
 interface Appointment {
@@ -130,6 +131,7 @@ const defaultVisibleSections: VisibleSections = {
   calendar: true,
   scripture: true,
   controls: true,
+  glossaryProposal: true,
 };
 
 export const UIProvider = ({ children }: { children: ReactNode; }) => {
