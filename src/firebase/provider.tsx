@@ -7,6 +7,7 @@ import { Firestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firest
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { initiateAnonymousSignIn } from './non-blocking-login';
+import { LoaderCircle } from 'lucide-react';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -68,32 +69,36 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     isUserLoading: true, // Start loading until first auth event
     userError: null,
   });
+  
+  // New state to control rendering of children
+  const [servicesReady, setServicesReady] = useState(false);
 
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) {
       setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
+      setServicesReady(false);
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
-      } else if (userAuthState.user === null && !userAuthState.isUserLoading) {
-        // Only trigger anonymous sign-in if we've already checked and there's definitely no user.
-        // This prevents a loop on initial load.
+      setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+      // Services are ready once we have a user (even anonymous) or know there isn't one.
+      setServicesReady(true); 
+
+      // If user logs out (firebaseUser is null), immediately trigger anonymous sign-in.
+      if (!firebaseUser) {
+        setServicesReady(false); // Un-render children while we switch users
         initiateAnonymousSignIn(auth);
-      } else {
-        // This handles the initial state where user is null but we are still loading.
-        setUserAuthState(prev => ({ ...prev, isUserLoading: false }));
       }
     }, (error) => {
       console.error("FirebaseProvider: Auth state listener error:", error);
       setUserAuthState({ user: null, isUserLoading: false, userError: error });
+      setServicesReady(false);
     });
 
     return () => unsubscribe(); // Cleanup subscription on unmount
-  }, [auth, userAuthState.isUserLoading, userAuthState.user]);
+  }, [auth]);
 
 
   // Effect to create user document in Firestore on first login
@@ -127,10 +132,10 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     };
 
-    if (userAuthState.user) {
+    if (userAuthState.user && !userAuthState.isUserLoading) {
       createUserDocument(userAuthState.user);
     }
-  }, [userAuthState.user, firestore]);
+  }, [userAuthState.user, userAuthState.isUserLoading, firestore]);
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
@@ -149,7 +154,11 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   return (
     <FirebaseContext.Provider value={contextValue}>
       <FirebaseErrorListener />
-      {children}
+      {servicesReady ? children : (
+         <div className="flex min-h-screen w-full items-center justify-center bg-background">
+          <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      )}
     </FirebaseContext.Provider>
   );
 };
