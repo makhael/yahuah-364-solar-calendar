@@ -156,39 +156,58 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   const [navigationTarget, setNavigationTarget] = useState<string | null>(null);
   const clearNavigationTarget = useCallback(() => setNavigationTarget(null), []);
 
-  // -- APPOINTMENT LOGIC -- //
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user?.uid, firestore]);
+
+  const { data: userProfile } = useDoc<{role?: 'admin' | 'leader'}>(userProfileRef);
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
   
   const allAppointmentsQuery = useMemoFirebase(() => {
     if (isUserLoading || !firestore) {
       return null;
     }
-    
-    // Admins can see all appointments regardless of scope
-    const userProfile = user ? doc(firestore, 'users', user.uid) : null;
-    if (userProfile && (userProfile.id === 'admin' || userProfile.id === 'leader')) {
-        return query(collection(firestore, 'appointments'));
+    // Admins see all appointments.
+    if (isAdmin) {
+      return query(collection(firestore, 'appointments'));
     }
-
+    // Signed-in users see public and community appointments.
     if (user && !user.isAnonymous) {
-        return query(collection(firestore, 'appointments'), where('inviteScope', 'in', ['all', 'community']));
-    } else {
-        return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
+      return query(
+        collection(firestore, 'appointments'),
+        where('inviteScope', 'in', ['all', 'community'])
+      );
     }
-  }, [isUserLoading, firestore, user]);
-  
+    // Guests only see public appointments.
+    return query(
+      collection(firestore, 'appointments'),
+      where('inviteScope', '==', 'all')
+    );
+  }, [isUserLoading, firestore, user, isAdmin]);
+
   const myAppointmentsQuery = useMemoFirebase(() => {
-      if (isUserLoading || !firestore || !user || user.isAnonymous) return null;
-      return query(collection(firestore, 'appointments'), where('creatorId', '==', user.uid));
+    if (isUserLoading || !firestore || !user || user.isAnonymous) return null;
+    // Query for private events created by the user.
+    return query(
+      collection(firestore, 'appointments'),
+      where('creatorId', '==', user.uid),
+      where('inviteScope', '==', 'private')
+    );
   }, [isUserLoading, firestore, user?.uid]);
   
   const { data: publicAppointmentsData } = useCollection<any>(allAppointmentsQuery);
   const { data: privateAppointmentsData } = useCollection<any>(myAppointmentsQuery);
   
   const allAppointments = useMemo(() => {
-      const combined = new Map<string, any>();
-      if(publicAppointmentsData) publicAppointmentsData.forEach(app => combined.set(app.id, app));
-      if(privateAppointmentsData) privateAppointmentsData.forEach(app => combined.set(app.id, app));
-      return Array.from(combined.values());
+    const combined = new Map<string, any>();
+    if (publicAppointmentsData) {
+      publicAppointmentsData.forEach(app => combined.set(app.id, app));
+    }
+    if (privateAppointmentsData) {
+      privateAppointmentsData.forEach(app => combined.set(app.id, app));
+    }
+    return Array.from(combined.values());
   }, [publicAppointmentsData, privateAppointmentsData]);
 
 
@@ -555,3 +574,5 @@ export const useUI = (): UIContextType => {
   }
   return context;
 };
+
+    
