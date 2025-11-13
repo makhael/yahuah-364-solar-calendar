@@ -84,7 +84,7 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const isUserFullyAuthenticated = user && !user.isAnonymous;
     
     const userProfileRef = useMemoFirebase(() => {
-        if (!isUserFullyAuthenticated) return null;
+        if (!isUserFullyAuthenticated || !firestore) return null;
         return doc(firestore, 'users', user.uid);
     }, [isUserFullyAuthenticated, user?.uid, firestore]);
 
@@ -92,15 +92,15 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
 
     const appointmentsQuery = useMemoFirebase(() => {
-        if (!firestore || !isUserFullyAuthenticated) return null;
-        
-        let baseQuery = query(collection(firestore, 'appointments'));
+        if (!firestore) return null;
+
+        const baseQuery = collection(firestore, 'appointments');
         
         if (isAdmin) {
             return baseQuery;
         }
 
-        if (user) {
+        if (isUserFullyAuthenticated) {
              return query(baseQuery, where('inviteScope', 'in', ['all', 'community']));
         }
         
@@ -473,7 +473,8 @@ export const DayDetailModal = ({ info }: ModalProps) => {
       return info.gregorianDate;
     }
     if (info.dateId) {
-      return new Date(info.dateId + 'T00:00:00');
+      // Create a new Date object from the string, ensuring it's treated as UTC
+      return new Date(info.dateId + 'T00:00:00Z');
     }
     // This should not happen in normal flow, but provides a fallback
     return new Date();
@@ -481,22 +482,24 @@ export const DayDetailModal = ({ info }: ModalProps) => {
 
   const dateId = gregorianDate.toISOString().split('T')[0];
 
-  const calculated364Date = useMemo(() => {
+  const { monthNum, yahuahDay } = useMemo(() => {
     if (startDate && gregorianDate) {
-      return get364DateFromGregorian(gregorianDate, startDate);
+      const calculated = get364DateFromGregorian(gregorianDate, startDate);
+      return { monthNum: calculated?.month, yahuahDay: calculated?.day };
     }
-    return null;
-  }, [gregorianDate, startDate]);
-
-  const yahuahDay = info.yahuahDay ?? calculated364Date?.day;
-  const monthNum = info.monthNum ?? calculated364Date?.month;
+    return { monthNum: info.monthNum, yahuahDay: info.yahuahDay };
+  }, [gregorianDate, startDate, info.monthNum, info.yahuahDay]);
   
   const dayOfWeek = useMemo(() => {
       if (yahuahDay === undefined) return 0;
-      return (yahuahDay -1) % 7;
+      // Day 1 is Yom Rishon (index 0), so we subtract 1
+      return (yahuahDay - 1) % 7;
   }, [yahuahDay]);
 
-  const isSabbath = info.isSabbath ?? (yahuahDay !== undefined && yahuahDay % 7 === 0 && yahuahDay <= 28);
+  const isSabbath = useMemo(() => {
+      if (yahuahDay === undefined) return false;
+      return yahuahDay % 7 === 0 && yahuahDay <= 28;
+  }, [yahuahDay]);
   
   const special = useMemo(() => {
       if (info.special) return info.special;
@@ -513,32 +516,14 @@ export const DayDetailModal = ({ info }: ModalProps) => {
   }, [info.isToday, gregorianDate]);
 
   const onNavigate = useCallback(async (direction: number) => {
-    if (monthNum === undefined || yahuahDay === undefined) return;
-  
-    let nextDay = yahuahDay + direction;
-    let nextMonth = monthNum;
-  
-    const is31Day = TEKUFAH_MONTHS.includes(monthNum);
-    const daysInMonth = is31Day ? 31 : 30;
-  
-    if (nextDay > daysInMonth) {
-      nextDay = 1;
-      nextMonth = monthNum === 12 ? 1 : monthNum + 1;
-    } else if (nextDay < 1) {
-      nextMonth = monthNum === 1 ? 12 : monthNum - 1;
-      const prevMonthIs31Day = TEKUFAH_MONTHS.includes(nextMonth);
-      nextDay = prevMonthIs31Day ? 31 : 30;
-    }
-  
-    const nextGregorianDate = getGregorianDate(startDate, nextMonth, nextDay);
+    const nextGregorianDate = new Date(gregorianDate);
+    nextGregorianDate.setDate(nextGregorianDate.getDate() + direction);
     
     openModal('dayDetail', {
-      yahuahDay: nextDay,
-      gregorianDate: nextGregorianDate,
-      monthNum: nextMonth,
+      dateId: nextGregorianDate.toISOString().split('T')[0],
     });
   
-  }, [monthNum, yahuahDay, startDate, openModal]);
+  }, [gregorianDate, openModal]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -551,7 +536,6 @@ export const DayDetailModal = ({ info }: ModalProps) => {
   }, [closeAllModals, onNavigate]);
 
   if (monthNum === undefined || yahuahDay === undefined) {
-    // This can happen briefly while calculated364Date is computed.
     return (
        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-0 sm:p-4 z-50">
          <div className="bg-card rounded-none sm:rounded-2xl w-full max-w-xl h-full sm:h-auto flex items-center justify-center">
@@ -568,7 +552,7 @@ export const DayDetailModal = ({ info }: ModalProps) => {
   const paganOriginInfo = WEEKDAY_ORIGINS[dayOfWeek] || null;
 
   const formattedGregorian = gregorianDate.toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
   });
   
   const handleSignIn = () => {
