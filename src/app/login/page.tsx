@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -32,18 +32,12 @@ function LoginFormComponent() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      email: prefilledEmail || '',
       password: '',
     },
   });
 
-  const { formState: { isSubmitting }, setValue } = form;
-
-  useEffect(() => {
-    if (prefilledEmail) {
-      setValue('email', prefilledEmail);
-    }
-  }, [prefilledEmail, setValue]);
+  const { formState: { isSubmitting } } = form;
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
@@ -117,12 +111,19 @@ function LoginFormComponent() {
 }
 
 
-export default function LoginPage() {
+function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Suspense fallback={<Card className="w-full max-w-sm h-[450px] animate-pulse" />}>
-        <LoginFormComponent />
-      </Suspense>
+      <LoginFormComponent />
     </div>
   );
+}
+
+// Wrap the page in a Suspense boundary to ensure searchParams are available
+export default function LoginPageWithSuspense() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+      <LoginPage />
+    </Suspense>
+  )
 }
