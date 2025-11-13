@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -34,8 +35,6 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
 
   const scripturesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    // This query is now secure because of the updated rules.
-    // It is also more efficient as it only fetches scriptures for the relevant day.
     return query(
       collection(firestore, 'scriptureReadings'),
       where('status', '==', 'approved'),

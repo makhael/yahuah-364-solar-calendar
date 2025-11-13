@@ -98,7 +98,6 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
 
         if (isAdmin) {
             // Admins can see everything, no filter needed for scope.
-            // The component will filter by date locally.
             return baseQuery;
         }
         
