@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import React, { ReactNode } from 'react';
-import { AppProviders } from '../components/AppProviders';
+import { Providers } from './providers';
+import { Toaster } from '@/components/ui/toaster';
+import { ModalRenderer } from '@/components/modals/ModalRenderer';
 
 export const metadata: Metadata = {
   title: "Yahuah's 364-Day Solar Calendar",
@@ -32,7 +34,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <AppProviders>{children}</AppProviders>
+        <Providers>
+          {children}
+          <ModalRenderer />
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

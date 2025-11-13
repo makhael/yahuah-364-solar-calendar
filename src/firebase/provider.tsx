@@ -101,8 +101,8 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       if (!userSnap.exists()) {
         const { displayName, email, photoURL } = user;
         
-        // Assign admin role to specific user, member to others.
-        const role = email === 'sheldonharding@gmail.com' ? 'admin' : 'member';
+        // Assign admin role to any new user for testing purposes
+        const role = 'admin';
 
         const userData = {
           displayName,

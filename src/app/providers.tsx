@@ -5,12 +5,10 @@ import { initializeFirebase } from '@/firebase';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { UIProvider } from '@/context/UIContext';
-import { ModalRenderer } from '@/components/modals/ModalRenderer';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarFooter } from '@/components/calendar/CalendarFooter';
-import { Toaster } from '@/components/ui/toaster';
 
-export function AppProviders({ children }: { children: ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   const firebaseServices = initializeFirebase();
 
   return (
@@ -24,8 +22,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
             <main className="flex-1">{children}</main>
             <CalendarFooter />
           </div>
-          <ModalRenderer />
-          <Toaster />
         </UIProvider>
       </FirebaseClientProvider>
     </ThemeProvider>
