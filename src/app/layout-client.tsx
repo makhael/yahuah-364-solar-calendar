@@ -7,7 +7,7 @@ import { ReactNode } from 'react';
 
 export default function RootLayoutClient({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password';
 
   if (isAuthPage) {
     return <>{children}</>;
