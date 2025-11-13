@@ -151,22 +151,17 @@ export default function ScriptureManagement() {
 
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
   
-  const createScripturesQuery = (status: 'pending' | 'approved' | 'rejected') => {
-    return useMemoFirebase(() => {
-        if (!firestore || !isAdmin) return null;
-        return query(
-            collection(firestore, 'scriptureReadings'),
-            where('status', '==', status),
-            orderBy('createdAt', 'desc')
-        );
-    }, [firestore, isAdmin, status]);
-  };
+  const scripturesQuery = useMemoFirebase(() => {
+      if (!firestore || !isAdmin) return null;
+      return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
+  }, [firestore, isAdmin]);
 
-  const { data: pendingScriptures, isLoading: pendingLoading } = useCollection<ScriptureReading>(createScripturesQuery('pending'));
-  const { data: approvedScriptures, isLoading: approvedLoading } = useCollection<ScriptureReading>(createScripturesQuery('approved'));
-  const { data: rejectedScriptures, isLoading: rejectedLoading } = useCollection<ScriptureReading>(createScripturesQuery('rejected'));
+  const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
-  const isLoading = pendingLoading || approvedLoading || rejectedLoading;
+  const pendingScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'pending') || [], [allScriptures]);
+  const approvedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'approved') || [], [allScriptures]);
+  const rejectedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'rejected') || [], [allScriptures]);
+
 
   const handleDelete = (scriptureId: string) => {
     if (!firestore) return;
