@@ -130,13 +130,16 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
                 >
                     <XCircle className="w-8 h-8" />
                 </button>
-                <div className="flex items-center gap-2 pr-10">
+                <div className="text-center">
                     <h2 className="text-2xl font-bold text-foreground">
                         Glossary: Return to the Original Witness
                     </h2>
-                    <Button variant="ghost" size="icon" onClick={handleOpenInfo} className="h-6 w-6 flex-shrink-0">
-                        <Info className="w-4 h-4 text-muted-foreground" />
-                    </Button>
+                    <button 
+                        onClick={handleOpenInfo} 
+                        className="mt-2 inline-block bg-secondary/50 border border-border rounded-md px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                        See Instructions
+                    </button>
                 </div>
             </div>
             
