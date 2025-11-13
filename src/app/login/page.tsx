@@ -7,13 +7,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Loader2, LogIn } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -28,6 +29,7 @@ function LoginFormComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefilledEmail = searchParams.get('email');
+  const { toast } = useToast();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -37,7 +39,28 @@ function LoginFormComponent() {
     },
   });
 
-  const { formState: { isSubmitting } } = form;
+  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues, trigger } = form;
+
+  const handlePasswordReset = async () => {
+    const emailIsValid = await trigger("email");
+    if (!emailIsValid) return;
+
+    const email = getValues("email");
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: "Password Reset Email Sent",
+        description: "If an account exists for this email, a password reset link has been sent.",
+      });
+    } catch (err: any) {
+      // We don't want to reveal if a user exists or not, so we show the same message
+      toast({
+        title: "Password Reset Email Sent",
+        description: "If an account exists for this email, a password reset link has been sent.",
+      });
+      console.error("Password reset error:", err);
+    }
+  };
 
   const onSubmit = async (data: LoginFormValues) => {
     setError(null);
@@ -63,7 +86,7 @@ function LoginFormComponent() {
         <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -71,23 +94,32 @@ function LoginFormComponent() {
               id="email"
               type="email"
               placeholder="m@example.com"
-              {...form.register('email')}
+              {...register('email')}
               disabled={isSubmitting}
             />
-            {form.formState.errors.email && (
-              <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+            {errors.email && (
+              <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <button
+                type="button"
+                onClick={handlePasswordReset}
+                className="text-xs text-primary hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
             <Input
               id="password"
               type="password"
-              {...form.register('password')}
+              {...register('password')}
               disabled={isSubmitting}
             />
-            {form.formState.errors.password && (
-              <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+            {errors.password && (
+              <p className="text-xs text-destructive">{errors.password.message}</p>
             )}
           </div>
           {error && <p className="text-sm text-destructive text-center">{error}</p>}
