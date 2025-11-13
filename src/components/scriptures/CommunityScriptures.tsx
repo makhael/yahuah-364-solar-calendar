@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 interface ScriptureReading {
   id: string;
   scripture: string;
+  date: string;
   userId: string;
   userDisplayName?: string;
   upvoters: string[];
@@ -31,21 +32,28 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
 
   const isUserFullyAuthenticated = user && !user.isAnonymous;
 
+  // Fetch all approved scriptures to comply with security rules.
+  // We will filter by date on the client-side.
   const scripturesQuery = useMemoFirebase(() => {
     if (!firestore || !isUserFullyAuthenticated) return null;
     return query(
       collection(firestore, 'scriptureReadings'),
-      where('date', '==', dateId),
       where('status', '==', 'approved')
     );
-  }, [firestore, dateId, isUserFullyAuthenticated]);
+  }, [firestore, isUserFullyAuthenticated]);
 
-  const { data: scriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
+  const { data: allApprovedScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
+
+  // Client-side filtering
+  const scripturesForDay = useMemo(() => {
+    if (!allApprovedScriptures) return [];
+    return allApprovedScriptures.filter(s => s.date === dateId);
+  }, [allApprovedScriptures, dateId]);
 
   const sortedScriptures = useMemo(() => {
-    if (!scriptures) return [];
-    return scriptures.sort((a, b) => (b.upvoters?.length || 0) - (a.upvoters?.length || 0));
-  }, [scriptures]);
+    if (!scripturesForDay) return [];
+    return scripturesForDay.sort((a, b) => (b.upvoters?.length || 0) - (a.upvoters?.length || 0));
+  }, [scripturesForDay]);
 
   const handleUpvote = (id: string) => {
     if (!isUserFullyAuthenticated) {
@@ -53,7 +61,7 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
       return;
     }
     const docRef = doc(firestore, 'scriptureReadings', id);
-    const isUpvoted = scriptures?.find(s => s.id === id)?.upvoters.includes(user.uid);
+    const isUpvoted = sortedScriptures?.find(s => s.id === id)?.upvoters.includes(user.uid);
     
     updateDocumentNonBlocking(docRef, {
       upvoters: isUpvoted ? arrayRemove(user.uid) : arrayUnion(user.uid)
