@@ -83,11 +83,22 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
 
     const appointmentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        return query(
+        
+        let q = query(
             collection(firestore, 'appointments'),
             where('startDate', '<=', dateId)
         );
-    }, [firestore, dateId]);
+
+        if (user && !user.isAnonymous) {
+            // Logged-in users can see 'all' and 'community' events
+             q = query(q, where('inviteScope', 'in', ['all', 'community']));
+        } else {
+            // Guests can only see 'all' events
+            q = query(q, where('inviteScope', '==', 'all'));
+        }
+
+        return q;
+    }, [firestore, dateId, user]);
     
     const { data: allAppointments, isLoading: areAppointmentsLoading } = useCollection<Appointment>(appointmentsQuery);
 
@@ -125,12 +136,11 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
                 combined.push(recApp);
             }
         });
-
-        // Final filter based on user role and inviteScope
+        
         if (!user || user.isAnonymous) {
             return combined.filter(app => app.inviteScope === 'all');
         }
-        
+
         return combined.filter(app => 
             app.inviteScope === 'all' || 
             app.inviteScope === 'community' ||
@@ -207,8 +217,9 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
       }
     };
 
+    const isGuest = !user || user.isAnonymous;
 
-    if (areAppointmentsLoading) {
+    if (areAppointmentsLoading && !isGuest) {
         return (
             <div className="bg-secondary/50 p-4 rounded-lg border h-20 flex items-center justify-center">
                 <LoaderCircle className="animate-spin" />
@@ -216,11 +227,27 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
         )
     }
 
+    if (isGuest && areAppointmentsLoading) {
+      // Don't show loader for guests, wait for query to return empty or with public events
+      return null;
+    }
+    
+    if (isGuest && appointmentsForDay.length === 0) {
+      return (
+          <div className="bg-secondary/50 p-4 rounded-lg border">
+              <h3 className="text-base font-semibold text-foreground mb-2 flex items-center gap-2"><CalendarDays className="w-5 h-5"/> Community Appointments</h3>
+              <p className="text-sm text-muted-foreground">Sign in to view and RSVP to community events for this day.</p>
+              <Button onClick={() => { closeAllModals(); router.push('/login')}} className="mt-3" size="sm">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+              </Button>
+          </div>
+      )
+    }
+
     if (!appointmentsForDay || appointmentsForDay.length === 0) {
         return null;
     }
-    
-    const isGuest = !user || user.isAnonymous;
     
     const handleSignIn = () => {
         closeAllModals();
