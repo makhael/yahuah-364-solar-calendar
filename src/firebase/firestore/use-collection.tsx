@@ -91,11 +91,11 @@ export function useCollection<T = any>(
             ? (memoizedTargetRefOrQuery as CollectionReference).path
             : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
 
-        // GRACEFUL HANDLING: If we get a permission error, it's likely because the collection
-        // doesn't exist yet. Instead of crashing, we'll set the data to an empty array
-        // and stop loading. This allows the UI to render and the user to add the first document.
+        // GRACEFUL HANDLING: If we get a permission error, it's likely because the user is not yet authenticated
+        // on initial load. Instead of crashing, we'll set the data to an empty array. The hook will re-run
+        // once auth state changes.
         if (snapshotError.code === 'permission-denied') {
-          console.warn(`Firestore permission denied for path: "${path}". This might be because the collection is empty. Treating as empty array.`);
+          console.warn(`Firestore permission denied for path: "${path}". This can happen on initial load before authentication is complete. Treating as empty array for now.`);
           setData([]); // Set data to empty array to allow UI to render
           setIsLoading(false);
           setError(null); // Set local error to null to prevent crash.
