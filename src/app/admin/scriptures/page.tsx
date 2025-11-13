@@ -144,9 +144,9 @@ export default function ScriptureManagement() {
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
   const scripturesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !currentUser) return null;
     return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
-  }, [firestore]);
+  }, [firestore, currentUser]);
 
   const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
   
