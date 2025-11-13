@@ -327,7 +327,7 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
 };
 
 const NoteSection = ({ dateId }: { dateId: string }) => {
-    const { user } = useUser();
+    const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
 
@@ -368,7 +368,7 @@ const NoteSection = ({ dateId }: { dateId: string }) => {
         toast({ title: "Note Saved!", description: "Your thoughts for this day have been recorded." });
     };
 
-    if (isLoading) {
+    if (isUserLoading || isLoading) {
         return (
             <div className="bg-secondary/50 p-4 rounded-lg border flex items-center justify-center h-48">
                 <LoaderCircle className="animate-spin" />
