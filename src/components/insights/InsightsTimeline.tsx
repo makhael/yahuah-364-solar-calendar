@@ -25,18 +25,18 @@ interface Note {
 }
 
 export const InsightsTimeline = () => {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { startDate, handleGoToDate } = useUI();
   const { toast } = useToast();
 
   const revelationNotesQuery = useMemoFirebase(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
+    if (isUserLoading || !user || user.isAnonymous || !firestore) return null;
     return query(
       collection(firestore, 'users', user.uid, 'notes'),
       where('isRevelation', '==', true)
     );
-  }, [user, firestore]);
+  }, [user, firestore, isUserLoading]);
 
   const { data: revelationNotes, isLoading } = useCollection<Note>(revelationNotesQuery);
   
