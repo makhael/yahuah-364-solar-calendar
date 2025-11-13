@@ -32,23 +32,18 @@ export const CommunityScriptures = ({ dateId }: { dateId: string }) => {
 
   const isUserFullyAuthenticated = user && !user.isAnonymous;
 
-  // Fetch all approved scriptures to comply with security rules.
-  // We will filter by date on the client-side.
   const scripturesQuery = useMemoFirebase(() => {
-    if (!firestore || !isUserFullyAuthenticated) return null;
+    if (!firestore) return null;
+    // This query is now secure because of the updated rules.
+    // It is also more efficient as it only fetches scriptures for the relevant day.
     return query(
       collection(firestore, 'scriptureReadings'),
-      where('status', '==', 'approved')
+      where('status', '==', 'approved'),
+      where('date', '==', dateId)
     );
-  }, [firestore, isUserFullyAuthenticated]);
+  }, [firestore, dateId]);
 
-  const { data: allApprovedScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
-
-  // Client-side filtering
-  const scripturesForDay = useMemo(() => {
-    if (!allApprovedScriptures) return [];
-    return allApprovedScriptures.filter(s => s.date === dateId);
-  }, [allApprovedScriptures, dateId]);
+  const { data: scripturesForDay, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
   const sortedScriptures = useMemo(() => {
     if (!scripturesForDay) return [];
