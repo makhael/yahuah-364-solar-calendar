@@ -112,6 +112,11 @@ export function UserProfile({ onOpenInstructions }: UserProfileProps) {
           </Link>
         </DropdownMenuItem>
         
+        <DropdownMenuItem onClick={() => openModal('editProfile')}>
+          <Edit className="mr-2 h-4 w-4" />
+          <span>Edit Profile</span>
+        </DropdownMenuItem>
+
         <DropdownMenuItem onClick={onOpenInstructions}>
           <BookOpen className="mr-2 h-4 w-4" />
           <span>Instructions</span>

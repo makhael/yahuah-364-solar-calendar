@@ -17,6 +17,7 @@ import { InstructionsModal } from './InstructionsModal';
 import { useUser } from '@/firebase';
 import { AppointmentModal } from './AppointmentModal';
 import { FullScripturesModal } from '../scriptures/FullScripturesModal';
+import { EditProfileModal } from './EditProfileModal';
 
 
 export const ModalRenderer = () => {
@@ -106,6 +107,12 @@ export const ModalRenderer = () => {
       {modalState.appointment.isOpen && (
         <AppointmentModal
           {...modalState.appointment.data!}
+          onClose={closeAllModals}
+        />
+      )}
+      {modalState.editProfile.isOpen && (
+        <EditProfileModal
+          isOpen={true}
           onClose={closeAllModals}
         />
       )}
