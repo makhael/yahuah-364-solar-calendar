@@ -79,7 +79,6 @@ export const ScriptureSubmission = ({ dateId }: { dateId: string }) => {
             
             {!stagedScripture && (
                 <>
-                    <p className="text-sm text-center text-muted-foreground mb-4">Your submission will be visible to administrators for approval.</p>
                     {user && !user.isAnonymous ? (
                         <form onSubmit={handleSubmit(handleStageScripture)} className="flex items-start gap-2">
                             <div className="flex-grow">
@@ -95,7 +94,7 @@ export const ScriptureSubmission = ({ dateId }: { dateId: string }) => {
                             </Button>
                         </form>
                     ) : (
-                        <p className="text-sm text-center text-muted-foreground">Please sign in to submit a scripture.</p>
+                        <p className="text-sm text-center text-muted-foreground p-4">Please sign in to submit a scripture.</p>
                     )}
                 </>
             )}
