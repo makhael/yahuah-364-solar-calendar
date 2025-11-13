@@ -5,6 +5,7 @@ import React, { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarFooter } from '@/components/calendar/CalendarFooter';
+import { UIProvider } from '@/context/UIContext';
 
 export function MainApp({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -15,12 +16,14 @@ export function MainApp({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
-      <div className="container mx-auto p-4 sm:p-6 md:p-8">
-        <CalendarHeader />
+    <UIProvider>
+      <div className="flex min-h-screen w-full flex-col bg-background">
+        <div className="container mx-auto p-4 sm:p-6 md:p-8">
+          <CalendarHeader />
+        </div>
+        <main className="flex-1">{children}</main>
+        <CalendarFooter />
       </div>
-      <main className="flex-1">{children}</main>
-      <CalendarFooter />
-    </div>
+    </UIProvider>
   );
 }
