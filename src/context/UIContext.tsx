@@ -167,24 +167,19 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   
   const allAppointmentsQuery = useMemoFirebase(() => {
     if (isUserLoading || !firestore) {
-      return null;
+        return null;
     }
+    const appointmentsCollection = collection(firestore, 'appointments');
     if (isAdmin) {
-      // Admins can see everything
-      return query(collection(firestore, 'appointments'));
+        // Admins can see everything, no filter needed.
+        return query(appointmentsCollection);
     }
     if (user && !user.isAnonymous) {
-      // Signed-in non-admins can see 'all' and 'community'
-      return query(
-        collection(firestore, 'appointments'),
-        where('inviteScope', 'in', ['all', 'community'])
-      );
+        // Signed-in non-admins can see 'all' and 'community' scopes.
+        return query(appointmentsCollection, where('inviteScope', 'in', ['all', 'community']));
     }
-    // Guests (not signed in) can only see 'all'
-    return query(
-      collection(firestore, 'appointments'),
-      where('inviteScope', '==', 'all')
-    );
+    // Guests (not signed in) can only see 'all' scope.
+    return query(appointmentsCollection, where('inviteScope', '==', 'all'));
   }, [isUserLoading, firestore, user, isAdmin]);
 
   const myAppointmentsQuery = useMemoFirebase(() => {
