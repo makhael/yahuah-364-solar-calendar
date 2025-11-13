@@ -16,11 +16,14 @@ service cloud.firestore {
       // This checks if a document exists for the user in the /users collection
       // and if that document has the role 'admin'. This is non-recursive.
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'leader');
     }
     
     match /appointments/{appointmentId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if isAdmin() || 
+                  (isSignedIn() && request.query.filters.hasAny(['inviteScope', 'in', ['all', 'community']])) ||
+                  (!isSignedIn() && request.query.filters.hasAny(['inviteScope', '==', 'all']));
       allow write: if isSignedIn();
     }
 
@@ -53,8 +56,7 @@ service cloud.firestore {
       allow write: if isOwner(userId) || isAdmin();
 
       match /glossaryProposals/{proposalId} {
-        allow get, update, delete, create: if isOwner(userId);
-        allow list: if isOwner(userId);
+        allow get, list, update, delete, create: if isOwner(userId);
       }
     }
     
@@ -87,9 +89,9 @@ service cloud.firestore {
     }
 
     match /scriptureReadings {
-       allow list: if request.query.where.size() > 0 && 
-                     (request.query.where[0][0] == 'status' || 
-                      (isSignedIn() && request.query.where[0][0] == 'userId' && request.query.where[0][2] == request.auth.uid));
+       allow list: if (request.query.filters.hasAny(['status', '==', 'approved'])) ||
+                     (isSignedIn() && request.query.filters.hasAny(['userId', '==', request.auth.uid])) ||
+                     isAdmin();
     }
 
     match /podcast_series/{podcastSeriesId} {
@@ -98,5 +100,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
