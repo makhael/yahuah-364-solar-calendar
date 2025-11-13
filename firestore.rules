@@ -39,7 +39,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Admins can list all users and read/write any user profile
-      allow list: if isSignedIn() && isAdmin();
+      allow list: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
       // Any signed in user can read/write their own profile
       allow read, write: if isSignedIn() && isOwner(userId);
     }
@@ -57,13 +57,13 @@ service cloud.firestore {
 
     match /glossaryTerms/{termId} {
       allow read: if true;
-      allow create, update, delete: if isSignedIn() && isAdmin();
+      allow create, update, delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     match /scriptureReadings/{readingId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow update, delete: if isSignedIn() && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || resource.data.userId == request.auth.uid);
     }
 
     /**
@@ -96,10 +96,6 @@ service cloud.firestore {
     return request.auth.uid == userId;
   }
   
-  function isAdmin() {
-    return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-  }
-
     // Helper function to determine if the user is the existing owner of the resource.
   function isExistingOwner(userId) {
     return isSignedIn() && isOwner(userId) && resource != null;
