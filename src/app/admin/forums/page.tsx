@@ -221,11 +221,11 @@ export default function ForumManagement() {
                       <Textarea id="description" value={newTopicDescription} onChange={(e) => setNewTopicDescription(e.target.value)} />
                   </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
                   <DialogClose asChild>
-                      <Button type="button" variant="secondary">Cancel</Button>
+                      <Button type="button" variant="secondary" className="w-full sm:w-auto">Cancel</Button>
                   </DialogClose>
-                  <Button type="button" onClick={handleCreateTopic}>Create Topic</Button>
+                  <Button type="button" onClick={handleCreateTopic} className="w-full sm:w-auto">Create Topic</Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>
