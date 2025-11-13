@@ -63,7 +63,8 @@ const ScriptureCard = ({ submission, onEdit, onDelete, onUpdateStatus }: { submi
         setEditText('');
     };
 
-    const statusInfo = getStatusInfo(submission.status);
+    const statusInfo = getStatusInfo(submission.status || 'pending');
+    const displayStatus = submission.status || 'pending';
     
     return (
         <div className={cn("p-3 border rounded-lg bg-background/50 flex justify-between items-start gap-4", statusInfo.color)}>
@@ -118,7 +119,7 @@ const ScriptureCard = ({ submission, onEdit, onDelete, onUpdateStatus }: { submi
                         </>
                     )}
                 </div>
-                {submission.status === 'pending' && (
+                {displayStatus === 'pending' && (
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => onUpdateStatus(submission.id, 'rejected')}>
                             <ThumbsDown className="w-4 h-4 mr-2" /> Reject
@@ -180,7 +181,7 @@ export default function ScriptureManagement() {
     toast({ title: 'Status Updated', description: `Submission marked as ${status}.` });
   };
 
-  const pendingScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'pending') || [], [allScriptures]);
+  const pendingScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'pending' || !s.status) || [], [allScriptures]);
   const approvedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'approved') || [], [allScriptures]);
   const rejectedScriptures = useMemo(() => allScriptures?.filter(s => s.status === 'rejected') || [], [allScriptures]);
 
