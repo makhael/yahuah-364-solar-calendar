@@ -17,7 +17,6 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { collection, query, where } from 'firebase/firestore';
-import { MyScriptures } from '@/components/auth/MyScriptures';
 
 interface PendingInvitation {
     id: string;
@@ -81,22 +80,23 @@ export default function JournalPage() {
                         </Link>
                     </Button>
                 </header>
-
-                <Tabs defaultValue="journal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
-                        <TabsTrigger value="journal">My Journal</TabsTrigger>
-                        <TabsTrigger value="bookmarks">My Bookmarks</TabsTrigger>
-                        <TabsTrigger value="scriptures">My Scriptures</TabsTrigger>
-                        <TabsTrigger value="invitations" className="relative">
-                            My Invitations
-                             {pendingInvitations && pendingInvitations.length > 0 && (
-                                <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-xs text-white">
-                                    {pendingInvitations.length}
-                                </span>
-                            )}
-                        </TabsTrigger>
-                    </TabsList>
-                    <div className="mt-6">
+                <div className="flex flex-col md:flex-row gap-6">
+                    <Tabs defaultValue="journal" orientation="vertical" className="flex-shrink-0 md:w-48">
+                        <TabsList className="grid grid-cols-2 md:grid-cols-1 w-full h-auto">
+                            <TabsTrigger value="journal">My Journal</TabsTrigger>
+                            <TabsTrigger value="bookmarks">My Bookmarks</TabsTrigger>
+                            <TabsTrigger value="proposals">My Proposals</TabsTrigger>
+                            <TabsTrigger value="invitations" className="relative">
+                                My Invitations
+                                 {pendingInvitations && pendingInvitations.length > 0 && (
+                                    <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-xs text-white">
+                                        {pendingInvitations.length}
+                                    </span>
+                                )}
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                    <div className="flex-1">
                         <Card>
                              <CardContent className="pt-6">
                                 <TabsContent value="journal">
@@ -105,8 +105,8 @@ export default function JournalPage() {
                                 <TabsContent value="bookmarks">
                                     <MyBookmarks userId={user.uid} />
                                 </TabsContent>
-                                <TabsContent value="scriptures">
-                                    <MyScriptures userId={user.uid} />
+                                <TabsContent value="proposals">
+                                    <MyProposals userId={user.uid} />
                                 </TabsContent>
                                  <TabsContent value="invitations">
                                     <MyInvitations userId={user.uid} />
@@ -114,7 +114,7 @@ export default function JournalPage() {
                             </CardContent>
                         </Card>
                     </div>
-                </Tabs>
+                </div>
             </div>
         </div>
     );
