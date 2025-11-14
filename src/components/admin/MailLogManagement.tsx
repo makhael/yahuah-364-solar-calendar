@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { LoaderCircle, Mail, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { LoaderCircle, Mail, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -47,17 +47,36 @@ const getStatusInfo = (state?: MailLog['delivery']['state']) => {
 const MailLogItem = ({ log }: { log: MailLog }) => {
   const statusInfo = getStatusInfo(log.delivery?.state);
   const subject = log.message?.subject || (log.template ? `Template: ${log.template.name}` : 'No Subject');
-  const htmlContent = log.message?.html || `<p>Email content is being generated from the '${log.template?.name || 'unknown'}' template...</p>`;
+  
+  const hasRenderedContent = !!log.message?.html;
+  const hasSucceeded = log.delivery?.state === 'SUCCESS';
+  const isProcessing = log.delivery?.state === 'PENDING' || log.delivery?.state === 'PROCESSING';
+
+  let htmlContent;
+  if (hasRenderedContent) {
+    htmlContent = log.message!.html;
+  } else if (hasSucceeded && !hasRenderedContent) {
+    // This is the error case: the extension finished but failed to render the template.
+    htmlContent = `<div style="padding: 1rem; background-color: #fef2f2; border-left: 4px solid #ef4444; color: #b91c1c;">
+        <p style="font-weight: bold; display: flex; align-items: center; gap: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.25rem; height: 1.25rem;"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>Template Rendering Failed</p>
+        <p style="font-size: 0.875rem;">The email was sent, but the template content could not be generated. Please check your template ('${log.template?.name || 'unknown'}') for errors, like incorrect placeholder syntax (use {{variableName}}).</p>
+      </div>`;
+  } else if (isProcessing) {
+    htmlContent = `<p>Email content is being generated from the '${log.template?.name || 'unknown'}' template...</p>`;
+  } else {
+    htmlContent = `<p>Email content not available.</p>`;
+  }
+
 
   return (
     <AccordionItem value={log.id}>
       <AccordionTrigger className="hover:no-underline p-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2">
             <div className="flex-grow text-left">
-                <p className="font-semibold text-foreground">{subject}</p>
+                <p className="font-semibold text-foreground truncate" title={subject}>{subject}</p>
                 <p className="text-xs text-muted-foreground">To: {log.to.join(', ')}</p>
             </div>
-             <Badge variant="outline" className={cn("flex-shrink-0 items-center gap-2", statusInfo.color)}>
+             <Badge variant="outline" className={cn("flex-shrink-0 items-center gap-2 self-end sm:self-center", statusInfo.color)}>
                 {statusInfo.icon}
                 <span>{statusInfo.text}</span>
             </Badge>
