@@ -19,12 +19,8 @@ import { GlossaryInfoModal } from '../glossary/GlossaryInfoModal';
 
 
 export const ModalRenderer = () => {
-  const { modalState, closeModal, openModal, handleSavePreset } = useUI();
+  const { modalState, closeModal, handleSavePreset } = useUI();
   const { user } = useUser();
-
-  const handleOpenGlossaryFromFull = (termKey: string) => {
-    openModal('glossary', { termKey });
-  };
 
   const isAnyModalOpen = Object.values(modalState).some(m => m.isOpen);
 
@@ -34,27 +30,6 @@ export const ModalRenderer = () => {
 
   return (
     <>
-      {modalState.glossary.isOpen && (
-        <GlossaryModal 
-          {...modalState.glossary.data!} 
-          onClose={() => closeModal('glossary')} 
-        />
-      )}
-      {modalState.fullGlossary.isOpen && (
-        <FullGlossaryModal 
-          isOpen={true} 
-          onClose={() => closeModal('fullGlossary')} 
-          onOpenGlossary={handleOpenGlossaryFromFull} 
-          user={user} 
-          {...modalState.fullGlossary.data} 
-        />
-      )}
-      {modalState.glossaryInfo.isOpen && (
-        <GlossaryInfoModal 
-          isOpen={true}
-          onClose={() => closeModal('glossaryInfo')}
-        />
-      )}
       {modalState.series.isOpen && (
         <SeriesModal {...modalState.series.data!} />
       )}
@@ -105,6 +80,28 @@ export const ModalRenderer = () => {
         <EditProfileModal
           isOpen={true}
           onClose={() => closeModal('editProfile')}
+        />
+      )}
+
+      {/* Glossaries are last to ensure they render on top if needed */}
+      {modalState.fullGlossary.isOpen && (
+        <FullGlossaryModal 
+          isOpen={true} 
+          onClose={() => closeModal('fullGlossary')} 
+          user={user} 
+          {...modalState.fullGlossary.data} 
+        />
+      )}
+      {modalState.glossaryInfo.isOpen && (
+        <GlossaryInfoModal 
+          isOpen={true}
+          onClose={() => closeModal('glossaryInfo')}
+        />
+      )}
+      {modalState.glossary.isOpen && (
+        <GlossaryModal 
+          {...modalState.glossary.data!} 
+          onClose={() => closeModal('glossary')} 
         />
       )}
     </>

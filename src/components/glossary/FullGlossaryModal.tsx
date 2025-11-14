@@ -17,7 +17,6 @@ import { useUI } from '@/context/UIContext';
 interface FullGlossaryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenGlossary: (termKey: string) => void;
   user: User | null;
   targetTerm?: string;
 }
@@ -56,7 +55,7 @@ const Highlight = ({ text, highlight }: { text: string; highlight: string }) => 
   );
 };
 
-export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targetTerm }: FullGlossaryModalProps) => {
+export const FullGlossaryModal = ({ isOpen, onClose, user, targetTerm }: FullGlossaryModalProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [highlightedTerm, setHighlightedTerm] = useState<string | undefined>(targetTerm);
     const firestore = useFirestore();
@@ -133,6 +132,10 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
 
     const handleOpenInfo = () => {
         openModal('glossaryInfo');
+    }
+
+    const onOpenGlossary = (termKey: string) => {
+        openModal('glossary', { termKey });
     }
 
     if (!isOpen) return null;
