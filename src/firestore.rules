@@ -52,6 +52,11 @@ service cloud.firestore {
       allow read, list: if isAdmin();
     }
 
+    match /emailTemplates/{templateId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+    }
+
     match /users/{userId} {
       // An admin can get any user's profile. A user can get their own.
       allow get: if isOwner(userId) || isAdmin();
