@@ -113,22 +113,17 @@ export const FullGlossaryModal = ({ isOpen, onClose, user, targetTerm }: FullGlo
     useEffect(() => {
         if (isOpen && targetTerm) {
             setHighlightedTerm(targetTerm);
-            const element = document.getElementById(`glossary-term-${targetTerm}`);
-            if (element) {
-                setTimeout(() => {
+            // Use a small timeout to ensure the DOM has updated before scrolling
+            setTimeout(() => {
+                const element = document.getElementById(`glossary-term-${targetTerm}`);
+                if (element) {
                     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            }
+                }
+            }, 100);
         } else {
             setHighlightedTerm(undefined);
         }
     }, [isOpen, targetTerm]);
-
-    useEffect(() => {
-        if (targetTerm) {
-            setHighlightedTerm(targetTerm);
-        }
-    }, [targetTerm]);
 
     const handleOpenInfo = () => {
         openModal('glossaryInfo');
