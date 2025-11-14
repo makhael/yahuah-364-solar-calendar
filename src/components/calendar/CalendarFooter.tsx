@@ -30,11 +30,9 @@ export const CalendarFooter = () => {
                                 <ScrollText className="font-sans mr-2 h-4 w-4" />
                                 Full Glossary
                             </Button>
-                            <Button variant="outline" asChild className="w-full sm:w-auto flex-shrink-0">
-                                <Link href="/scriptures">
-                                    <BookOpen className="font-sans mr-2 h-4 w-4" />
-                                    Community Scriptures
-                                </Link>
+                            <Button variant="outline" className="w-full sm:w-auto flex-shrink-0" disabled>
+                                <BookOpen className="font-sans mr-2 h-4 w-4" />
+                                Community Scriptures
                             </Button>
                         </div>
                         <div className="mt-4 text-center text-xs text-muted-foreground/80 space-y-2">
