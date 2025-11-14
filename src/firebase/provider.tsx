@@ -103,37 +103,22 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   // Effect to create user document in Firestore on first login
   useEffect(() => {
-    const createUserDocument = async (user: User) => {
+    const checkAndCreateUserDocument = async (user: User) => {
       if (!firestore || user.isAnonymous) return;
 
       const userRef = doc(firestore, 'users', user.uid);
       const userSnap = await getDoc(userRef);
 
+      // This function now only CHECKS. The user document is created on sign-up.
+      // We log if a signed-in, non-anonymous user doesn't have a doc. This could happen
+      // if the doc creation failed during signup or if they were created via the Firebase console.
       if (!userSnap.exists()) {
-        const { displayName, email, photoURL } = user;
-        
-        // Check for specific admin email, otherwise default to member
-        const role = email?.toLowerCase() === 'sheldonharding@gmail.com' ? 'admin' : 'member';
-
-        const userData = {
-          displayName: displayName || email,
-          email,
-          photoURL,
-          role,
-          status: 'approved', // Automatically approve new users
-          createdAt: serverTimestamp(),
-        };
-
-        try {
-          await setDoc(userRef, userData);
-        } catch (error) {
-          console.error("Error creating user document:", error);
-        }
+        console.warn(`User document for ${user.uid} not found. This may need to be created manually if the user wasn't registered through the app's signup form.`);
       }
     };
 
     if (userAuthState.user && !userAuthState.isUserLoading) {
-      createUserDocument(userAuthState.user);
+      checkAndCreateUserDocument(userAuthState.user);
     }
   }, [userAuthState.user, userAuthState.isUserLoading, firestore]);
 

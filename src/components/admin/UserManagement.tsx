@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase, useAuth, useFirebaseApp } from '@/firebase';
 import { collection, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { LoaderCircle, Trash2, Edit, Save, X, UserPlus, LogIn } from 'lucide-react';
+import { LoaderCircle, Trash2, Edit, Save, X, UserPlus, LogIn, Send } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,8 @@ import { createUserWithEmailAndPassword, getAuth as getAuthSecondary, signInWith
 import { initializeApp, deleteApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import { useRouter } from 'next/navigation';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Checkbox } from '../ui/checkbox';
 
 
 interface User {
@@ -331,6 +333,7 @@ const createUserSchema = z.object({
   email: z.string().email("Invalid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   role: z.enum(['member', 'leader', 'admin']),
+  sendWelcomeEmail: z.boolean().default(true),
 });
 
 type CreateUserForm = z.infer<typeof createUserSchema>;
@@ -352,6 +355,7 @@ function CreateUserDialog() {
       email: '',
       password: '',
       role: 'member',
+      sendWelcomeEmail: true,
     },
   });
 
@@ -391,6 +395,24 @@ function CreateUserDialog() {
             status: 'approved',
             createdAt: new Date().toISOString(),
         });
+        
+        if (data.sendWelcomeEmail) {
+            const mailColRef = collection(firestore, "mail");
+            await addDocumentNonBlocking(mailColRef, {
+                 to: [data.email],
+                 message: {
+                   subject: "Welcome to Yahuah's Calendar!",
+                   html: `
+                        <p>Shalom ${data.displayName},</p>
+                        <p>An account has been created for you on Yahuah's 364-Day Solar Calendar.</p>
+                        <p>You can now sign in using your email and the password that was set for you.</p>
+                        <p>To learn how to use the calendar, please review the instructions by clicking the 'Instructions' button in your user profile menu after signing in.</p>
+                        <p>Yahuah Bless,</p>
+                        <p>364-Day Calendar Restoration Team</p>
+                    `,
+                 }
+            });
+        }
         
         toast({
             title: "User Created",
@@ -491,6 +513,18 @@ function CreateUserDialog() {
                       </Select>
                   )}
               />
+            </div>
+             <div className="flex items-center space-x-2 justify-end pt-2">
+                <Controller
+                    name="sendWelcomeEmail"
+                    control={control}
+                    render={({ field }) => (
+                       <Checkbox id="sendWelcomeEmail" checked={field.value} onCheckedChange={field.onChange} />
+                    )}
+                />
+                <Label htmlFor="sendWelcomeEmail" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Send welcome email
+                </Label>
             </div>
           </div>
           <DialogFooter>

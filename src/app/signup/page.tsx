@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -5,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { setDoc, doc, serverTimestamp, collection } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const signupSchema = z.object({
   displayName: z.string().min(3, { message: "Display name must be at least 3 characters." }),
@@ -27,6 +30,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -45,12 +49,40 @@ export default function SignupPage() {
     setError(null);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      await updateProfile(userCredential.user, {
+      const user = userCredential.user;
+      
+      await updateProfile(user, {
         displayName: data.displayName,
       });
+
+      const userDocRef = doc(firestore, "users", user.uid);
+      await setDoc(userDocRef, {
+          displayName: data.displayName,
+          email: data.email,
+          role: 'member',
+          status: 'pending',
+          createdAt: serverTimestamp(),
+      });
+
+      const mailColRef = collection(firestore, "mail");
+      addDocumentNonBlocking(mailColRef, {
+           to: [data.email],
+           message: {
+             subject: "Welcome to Yahuah's Calendar!",
+             html: `
+                  <p>Shalom ${data.displayName},</p>
+                  <p>Thank you for joining Yahuah's 364-Day Solar Calendar community. Your registration is complete and your account is now pending approval by an administrator.</p>
+                  <p>You will be notified once your account is approved. In the meantime, you can review the calendar's features and instructions by clicking the "Instructions" button in your user profile menu after signing in.</p>
+                  <p>We're excited to have you with us as we restore true time together.</p>
+                  <p>Yahuah Bless,</p>
+                  <p>364-Day Calendar Restoration Team</p>
+              `,
+           }
+      });
+      
       toast({
         title: "Account Created!",
-        description: "You have been successfully signed in.",
+        description: "Your account is pending approval. You've been signed in.",
       });
       router.push('/');
     } catch (err: any) {
