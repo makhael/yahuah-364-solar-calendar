@@ -179,7 +179,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
             <Card key={user.id} className="bg-background/50">
               <CardHeader>
                 {isEditing ? (
-                  <Input value={editingUser.displayName} onChange={(e) => setEditingUser({...editingUser, displayName: e.target.value})} className="text-lg font-bold p-0 border-0 shadow-none focus-visible:ring-0 h-auto" />
+                  <Input value={editingUser.displayName} onChange={(e) => setEditingUser({...editingUser, displayName: e.target.value})} className="text-lg font-bold" />
                 ) : (
                   <CardTitle className="text-lg">{user.displayName} {isCurrentUser && <span className="text-sm font-normal text-muted-foreground">(You)</span>}</CardTitle>
                 )}
@@ -742,4 +742,5 @@ export function UserManagement() {
     </>
   );
 }
+
 
