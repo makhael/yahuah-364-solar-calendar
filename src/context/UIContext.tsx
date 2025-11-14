@@ -108,9 +108,8 @@ interface UIContextType {
   handleSaveAppointment: (appointment: any, id?: string) => Promise<void>;
   handleSaveGlossaryProposal: (proposalData: any, id?: string) => Promise<void>;
   openChatModal: (dateId?: string) => void;
-  handleGoToDate: (elementIdOrDate: string) => void;
+  navigateToTarget: (elementId: string) => void;
   handleGoToGlossaryTerm: (termKey: string) => void;
-  scrollToSection: (sectionId: string) => void;
 
   visibleSections: VisibleSections;
   toggleSection: (section: keyof VisibleSections) => void;
@@ -290,7 +289,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   const closeModal = useCallback((modal: ModalType) => {
     setModalState(prev => ({
       ...prev,
-      [modal]: { isOpen: false, data: undefined },
+      [modal]: { isOpen: false, data: prev[modal].data },
     }));
   }, []);
 
@@ -370,11 +369,10 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
       payload.recurrence = null;
     }
     
-    // Set invited users and pending RSVPs for private events
     if (appointmentData.inviteScope === 'private') {
         payload.invitedUserIds = invitedUserIds || [];
         payload.rsvps = {
-            ...payload.rsvps, // Keep existing rsvps
+            ...payload.rsvps, 
             pending: invitedUserIds || []
         };
     } else {
@@ -437,17 +435,14 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     
     try {
         if (id) {
-            // This is an update to an existing proposal in the user's subcollection
             const proposalRef = doc(firestore, 'users', user.uid, 'glossaryProposals', id);
             await updateDocumentNonBlocking(proposalRef, { ...payload, updatedAt: serverTimestamp() });
             
-            // Also update the global proposal
             const globalProposalRef = doc(firestore, 'glossaryProposals', id);
             await updateDocumentNonBlocking(globalProposalRef, { ...payload, updatedAt: serverTimestamp() });
 
             toast({ title: 'Proposal Updated!', description: 'Your changes have been submitted for review.' });
         } else {
-            // This is a new proposal
             const userProposalsCol = collection(firestore, 'users', user.uid, 'glossaryProposals');
             const newProposalRef = doc(userProposalsCol);
             
@@ -483,7 +478,6 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     let targetDateId = dateId;
     if (!targetDateId) {
       const today = new Date();
-      // Use local date parts to prevent timezone shifts
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, '0');
       const day = String(today.getDate()).padStart(2, '0');
@@ -492,34 +486,9 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     openModal('dailyChat', { dateId: targetDateId });
   }, [openModal]);
   
-  const handleGoToDate = useCallback((elementIdOrDate: string) => {
-    let targetId: string;
-    const isElementId = elementIdOrDate.startsWith('day-') || elementIdOrDate.startsWith('month-');
-    
-    if (isElementId) {
-        targetId = elementIdOrDate;
-    } else {
-        const gregorianDate = new Date(elementIdOrDate + 'T00:00:00');
-        const date364 = get364DateFromGregorian(gregorianDate, startDate);
-        if (date364) {
-            targetId = `day-${date364.month}-${date364.day}`;
-        } else {
-            toast({
-                variant: 'destructive',
-                title: 'Date Out of Range',
-                description: 'The selected date is outside the current calendar year.',
-            });
-            return;
-        }
-    }
+  const navigateToTarget = useCallback((elementId: string) => {
     closeAllModals();
-    setNavigationTarget(targetId);
-    router.push('/#');
-  }, [startDate, toast, router, closeAllModals]);
-
-  const scrollToSection = useCallback((sectionId: string) => {
-    closeAllModals();
-    setNavigationTarget(sectionId);
+    setNavigationTarget(elementId);
     router.push('/#');
   }, [router, closeAllModals]);
 
@@ -552,9 +521,8 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     handleSaveAppointment,
     handleSaveGlossaryProposal,
     openChatModal,
-    handleGoToDate,
+    navigateToTarget,
     handleGoToGlossaryTerm,
-    scrollToSection,
     visibleSections,
     toggleSection,
     navigationTarget,
@@ -569,7 +537,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
       startDate, gregorianStart, setGregorianStart, presets, arePresetsLoading,
       activePresetId, handleSelectPreset, editingPreset, 
       handleSavePreset, handleDeletePreset, handleSaveAppointment, handleSaveGlossaryProposal,
-      openChatModal, handleGoToDate, handleGoToGlossaryTerm, scrollToSection,
+      openChatModal, navigateToTarget, handleGoToGlossaryTerm,
       visibleSections, toggleSection, navigationTarget, clearNavigationTarget,
       appointmentDates, appointmentThemesByDate, allAppointments,
       today364, currentGregorianYear

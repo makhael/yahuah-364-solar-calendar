@@ -248,7 +248,7 @@ export const Month = ({ monthNum, startDate, onDayClick, today, theme }: MonthPr
     <div
       id={`month-${monthNum}`}
       data-month-id={monthNum}
-      className="w-full bg-card p-4 sm:p-6 rounded-2xl border shadow-2xl month-bg-pattern"
+      className="w-full bg-card p-4 sm:p-6 rounded-2xl border shadow-2xl month-bg-pattern scroll-mt-20"
     >
       <header className="mb-6 relative">
         {isTorahNamed && (
