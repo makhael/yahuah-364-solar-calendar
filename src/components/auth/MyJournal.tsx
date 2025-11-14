@@ -16,6 +16,7 @@ import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
+import { get364DateFromGregorian } from '@/lib/calendar-utils';
 
 interface Note {
   id: string;
@@ -29,7 +30,7 @@ interface Note {
 export const MyJournal = ({ userId }: { userId: string }) => {
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { openModal, handleGoToDate } = useUI();
+  const { openModal, navigateToTarget, startDate } = useUI();
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -55,6 +56,13 @@ export const MyJournal = ({ userId }: { userId: string }) => {
     const docRef = doc(firestore, `users/${userId}/notes`, noteId);
     deleteDocumentNonBlocking(docRef);
     toast({ title: 'Note Deleted' });
+  };
+  
+  const handleGoToDate = (gregorianDateStr: string) => {
+    const yahuahDate = get364DateFromGregorian(new Date(gregorianDateStr + 'T00:00:00'), startDate);
+    if (yahuahDate) {
+      navigateToTarget(`day-${yahuahDate.month}-${yahuahDate.day}`);
+    }
   };
 
   if (isLoading) {
