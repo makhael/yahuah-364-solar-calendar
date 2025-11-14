@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase, useAuth, useFirebaseApp } from '@/firebase';
 import { collection, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { LoaderCircle, Trash2, Edit, Save, X, UserPlus, LogIn, Send } from 'lucide-react';
+import { LoaderCircle, Trash2, Edit, Save, X, UserPlus, LogIn, Send, Search } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -547,6 +547,7 @@ export function UserManagement() {
   const { toast } = useToast();
   const auth = useAuth();
   const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const usersQuery = useMemoFirebase(() => {
     if (isUserLoading || !firestore) return null;
@@ -608,13 +609,32 @@ export function UserManagement() {
     });
   };
 
-  const approvedUsers = useMemo(() => users?.filter(u => u.status === 'approved') || [], [users]);
-  const pendingUsers = useMemo(() => users?.filter(u => u.status === 'pending' || !u.status) || [], [users]);
-  const deniedUsers = useMemo(() => users?.filter(u => u.status === 'denied') || [], [users]);
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    if (!searchTerm) return users;
+    const lowercasedSearch = searchTerm.toLowerCase();
+    return users.filter(user => 
+      user.displayName.toLowerCase().includes(lowercasedSearch) ||
+      user.email.toLowerCase().includes(lowercasedSearch)
+    );
+  }, [users, searchTerm]);
+
+  const approvedUsers = useMemo(() => filteredUsers?.filter(u => u.status === 'approved') || [], [filteredUsers]);
+  const pendingUsers = useMemo(() => filteredUsers?.filter(u => u.status === 'pending' || !u.status) || [], [filteredUsers]);
+  const deniedUsers = useMemo(() => filteredUsers?.filter(u => u.status === 'denied') || [], [filteredUsers]);
 
   return (
     <>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between items-center mb-4 gap-4">
+        <div className="relative flex-grow">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+              placeholder="Search by name or email..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
         <CreateUserDialog />
       </div>
       <Card>
