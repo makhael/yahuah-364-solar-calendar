@@ -466,7 +466,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
 
   const openModal = useCallback(<T extends ModalType>(modal: T, data?: T extends keyof ModalDataPayloads ? ModalDataPayloads[T] : undefined) => {
     setModalState(prev => ({
-      ...initialModalState,
+      ...prev,
       [modal]: { isOpen: true, data },
     }));
   }, []);

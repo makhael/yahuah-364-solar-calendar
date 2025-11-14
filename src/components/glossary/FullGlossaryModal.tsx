@@ -60,7 +60,7 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
     const [searchTerm, setSearchTerm] = useState('');
     const [highlightedTerm, setHighlightedTerm] = useState<string | undefined>(targetTerm);
     const firestore = useFirestore();
-    const { openModal, closeAllModals } = useUI();
+    const { openModal } = useUI();
 
     const glossaryTermsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -132,7 +132,6 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
     }, [targetTerm]);
 
     const handleOpenInfo = () => {
-        closeAllModals();
         openModal('glossaryInfo');
     }
 
