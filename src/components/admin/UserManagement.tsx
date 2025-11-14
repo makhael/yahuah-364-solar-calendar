@@ -482,7 +482,9 @@ function CreateUserDialog() {
 
             if (templateSnap.exists()) {
                 const template = templateSnap.data();
-                const html = (template.html || '').replace(/{{displayName}}/g, data.displayName);
+                let html = (template.html || '').replace(/{{displayName}}/g, data.displayName);
+                 html = html.replace(/{{password}}/g, data.password);
+                 html = html.replace(/{{email}}/g, data.email);
                 const subject = (template.subject || '').replace(/{{displayName}}/g, data.displayName);
 
                 await addDocumentNonBlocking(mailColRef, {
@@ -751,6 +753,3 @@ export function UserManagement() {
     </>
   );
 }
-
-
-
