@@ -67,16 +67,11 @@ export default function SignupPage() {
       const mailColRef = collection(firestore, "mail");
       addDocumentNonBlocking(mailColRef, {
            to: [data.email],
-           message: {
-             subject: "Welcome to Yahuah's Calendar!",
-             html: `
-                  <p>Shalom ${data.displayName},</p>
-                  <p>Thank you for joining Yahuah's 364-Day Solar Calendar community. Your registration is complete and your account is now pending approval by an administrator.</p>
-                  <p>You will be notified once your account is approved. In the meantime, you can review the calendar's features and instructions by clicking the "Instructions" button in your user profile menu after signing in.</p>
-                  <p>We're excited to have you with us as we restore true time together.</p>
-                  <p>Yahuah Bless,</p>
-                  <p>364-Day Calendar Restoration Team</p>
-              `,
+           template: {
+             name: 'welcome',
+             data: {
+               displayName: data.displayName,
+             }
            }
       });
       

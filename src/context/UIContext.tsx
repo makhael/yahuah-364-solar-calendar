@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { get364DateFromGregorian, getGregorianDate } from '@/lib/calendar-utils';
-import { collection, query, where, orderBy, doc, arrayUnion, serverTimestamp, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, arrayUnion, serverTimestamp, writeBatch, getDocs, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { add, isBefore, isEqual, startOfDay, isAfter } from 'date-fns';
 import { hebrewDays } from '@/lib/calendar-data';
@@ -420,18 +420,14 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
             const mailRef = collection(firestore, 'mail');
             addDocumentNonBlocking(mailRef, {
                 to: emails,
-                message: {
-                    subject: `You're Invited: ${payload.title}`,
-                    html: `
-                        <p>Shalom,</p>
-                        <p>You have been invited to a private event by ${user.displayName}:</p>
-                        <p><strong>Event:</strong> ${payload.title}</p>
-                        <p><strong>Date:</strong> ${new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
-                        <p>Please log in to the calendar to view details and RSVP.</p>
-                        <p>Yahuah Bless,</p>
-                        <p>364-Day Calendar Restoration Team</p>
-                    `,
-                },
+                template: {
+                  name: 'invitation',
+                  data: {
+                    inviterName: user.displayName,
+                    eventName: payload.title,
+                    eventDate: new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
+                  }
+                }
             });
         }
     }

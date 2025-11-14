@@ -400,16 +400,11 @@ function CreateUserDialog() {
             const mailColRef = collection(firestore, "mail");
             await addDocumentNonBlocking(mailColRef, {
                  to: [data.email],
-                 message: {
-                   subject: "Welcome to Yahuah's Calendar!",
-                   html: `
-                        <p>Shalom ${data.displayName},</p>
-                        <p>An account has been created for you on Yahuah's 364-Day Solar Calendar.</p>
-                        <p>You can now sign in using your email and the password that was set for you.</p>
-                        <p>To learn how to use the calendar, please review the instructions by clicking the 'Instructions' button in your user profile menu after signing in.</p>
-                        <p>Yahuah Bless,</p>
-                        <p>364-Day Calendar Restoration Team</p>
-                    `,
+                 template: {
+                    name: 'welcome-admin-created',
+                    data: {
+                        displayName: data.displayName,
+                    }
                  }
             });
         }

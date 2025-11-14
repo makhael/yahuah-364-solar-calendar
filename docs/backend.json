@@ -201,13 +201,12 @@
           "type": "array",
           "items": { "type": "string", "format": "email" }
         },
-        "message": {
+        "template": {
           "type": "object",
           "properties": {
-            "subject": { "type": "string" },
-            "html": { "type": "string" }
-          },
-          "required": ["subject", "html"]
+            "name": { "type": "string" },
+            "data": { "type": "object" }
+          }
         },
         "delivery": {
           "type": "object",
@@ -219,7 +218,17 @@
           }
         }
       },
-      "required": ["to", "message"]
+      "required": ["to"]
+    },
+    "EmailTemplate": {
+      "title": "Email Template",
+      "description": "An email template with a subject and HTML body.",
+      "type": "object",
+      "properties": {
+        "subject": { "type": "string" },
+        "html": { "type": "string" }
+      },
+      "required": ["subject", "html"]
     }
   },
   "auth": {
@@ -285,8 +294,12 @@
         "$ref": "#/entities/Mail"
       },
       "description": "Collection for triggering emails."
+    },
+    "/emailTemplates/{templateId}": {
+      "schema": {
+        "$ref": "#/entities/EmailTemplate"
+      },
+      "description": "Collection of email templates for the Trigger Email extension."
     }
   }
 }
-
-    
