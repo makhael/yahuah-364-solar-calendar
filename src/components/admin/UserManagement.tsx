@@ -4,8 +4,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase, useAuth, useFirebaseApp } from '@/firebase';
 import { collection, doc, deleteDoc, setDoc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { LoaderCircle, Trash2, Edit, Save, X, UserPlus, LogIn, Send, Search } from 'lucide-react';
+import { setDocumentNonBlocking, updateUserPassword } from '@/firebase/non-blocking-updates';
+import { LoaderCircle, Trash2, Edit, Save, X, UserPlus, LogIn, Send, Search, KeyRound } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,89 @@ interface EditingUserState {
     displayName: string;
 }
 
+const passwordChangeSchema = z.object({
+  newPassword: z.string().min(6, "Password must be at least 6 characters."),
+  confirmPassword: z.string(),
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+type PasswordChangeForm = z.infer<typeof passwordChangeSchema>;
+
+const ChangePasswordDialog = ({ user, open, onOpenChange }: { user: User | null; open: boolean; onOpenChange: (open: boolean) => void }) => {
+  const { toast } = useToast();
+  const form = useForm<PasswordChangeForm>({
+    resolver: zodResolver(passwordChangeSchema),
+    defaultValues: { newPassword: '', confirmPassword: '' },
+  });
+
+  const { formState: { isSubmitting }, handleSubmit, reset } = form;
+
+  useEffect(() => {
+    if (!open) {
+      reset();
+    }
+  }, [open, reset]);
+
+  const onSubmit = async (data: PasswordChangeForm) => {
+    if (!user) return;
+    try {
+      // This is a placeholder for a secure, server-side password change.
+      // In a real app, this would call a Cloud Function.
+      await updateUserPassword(user.id, data.newPassword);
+      toast({
+        title: "Password Updated",
+        description: `Password for ${user.displayName} has been changed.`,
+      });
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: "Could not change password. See console for details.",
+      });
+      console.error("Password update error:", error);
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Change Password for {user.displayName}</DialogTitle>
+          <DialogDescription>
+            Enter a new password for this user. They will be notified if you choose.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input id="newPassword" type="password" {...form.register('newPassword')} />
+              {form.formState.errors.newPassword && <p className="text-xs text-destructive">{form.formState.errors.newPassword.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input id="confirmPassword" type="password" {...form.register('confirmPassword')} />
+              {form.formState.errors.confirmPassword && <p className="text-xs text-destructive">{form.formState.errors.confirmPassword.message}</p>}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+              Set New Password
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 const getRoleVariant = (role: User['role']) => {
   switch (role) {
     case 'admin':
@@ -56,6 +139,7 @@ const getRoleVariant = (role: User['role']) => {
 
 const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUsers, onSwitchUser, currentUserId }: { users: User[], onRoleChange: Function, onStatusChange: Function, onDelete: Function, updatingUsers: Record<string, boolean>, onSwitchUser: (email: string) => void, currentUserId: string | null }) => {
   const [editingUser, setEditingUser] = useState<EditingUserState | null>(null);
+  const [passwordChangeUser, setPasswordChangeUser] = useState<User | null>(null);
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -84,6 +168,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
 
   return (
     <>
+      <ChangePasswordDialog user={passwordChangeUser} open={!!passwordChangeUser} onOpenChange={(isOpen) => !isOpen && setPasswordChangeUser(null)} />
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
         {users.map(user => {
@@ -125,7 +210,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                     <div className="flex justify-end gap-2">
                         <Button variant="outline" size="sm" onClick={() => handleEditClick(user)}>
                             <Edit className="w-4 h-4 mr-2"/>
-                            Edit User
+                            Edit Name
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -149,15 +234,9 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                         </AlertDialog>
                     </div>
                 )}
-
-
-                {updatingUsers[user.id] && !isEditing ? (
-                  <div className="flex justify-center py-4">
-                    <LoaderCircle className="animate-spin h-5 w-5" />
-                  </div>
-                ) : (
-                  !isEditing && 
-                  <div className="space-y-4">
+                
+                <div className="space-y-4">
+                    <Button variant="outline" className="w-full" onClick={() => setPasswordChangeUser(user)}><KeyRound className="w-4 h-4 mr-2"/> Change Password</Button>
                     <div>
                       <Label className="text-muted-foreground">Change Role</Label>
                       <Select value={user.role} onValueChange={(value) => onRoleChange(user.id, value as User['role'])} >
@@ -198,7 +277,6 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
-                )}
               </CardContent>
             </Card>
           )
@@ -214,7 +292,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right w-[380px]">Actions</TableHead>
+              <TableHead className="text-right w-[450px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -257,6 +335,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                         </>
                       ) : (
                         <>
+                          <Button variant="outline" size="sm" onClick={() => setPasswordChangeUser(user)}><KeyRound className="w-4 h-4"/></Button>
                           <Select value={user.role} onValueChange={(value) => onRoleChange(user.id, value as User['role'])} >
                             <SelectTrigger className="w-[120px]"> <SelectValue placeholder="Change role" /> </SelectTrigger>
                             <SelectContent>
