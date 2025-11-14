@@ -30,10 +30,19 @@ export const CalendarFooter = () => {
                                 <ScrollText className="font-sans mr-2 h-4 w-4" />
                                 Full Glossary
                             </Button>
-                            <Button variant="outline" disabled className="w-full sm:w-auto flex-shrink-0">
-                                <BookOpen className="font-sans mr-2 h-4 w-4" />
-                                Community Scriptures
+                            <Button variant="outline" asChild className="w-full sm:w-auto flex-shrink-0">
+                                <Link href="/scriptures">
+                                    <BookOpen className="font-sans mr-2 h-4 w-4" />
+                                    Community Scriptures
+                                </Link>
                             </Button>
+                        </div>
+                        <div className="mt-4 text-center text-xs text-muted-foreground/80 space-y-2">
+                          <div className="flex items-center justify-center gap-x-4">
+                            <button className="hover:underline" disabled>Change Log</button>
+                            <a href="mailto:support@yahuahscalendar.org?subject=Bug%20Report" className="hover:underline">Bug Report</a>
+                          </div>
+                          <p>Version 1.0 Alpha</p>
                         </div>
                     </div>
                 </div>

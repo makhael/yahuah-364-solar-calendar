@@ -62,7 +62,7 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
     const { user, isUserLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
-    const { startDate, handleGoToDate, closeAllModals, openModal } = useUI();
+    const { startDate, navigateToTarget, closeAllModals, openModal } = useUI();
 
     const myScripturesQuery = useMemoFirebase(() => {
         if (!firestore || !user || user.isAnonymous) return null;
@@ -187,7 +187,7 @@ export const FullScripturesModal = ({ isOpen, onClose }: FullScripturesModalProp
                                             </h3>
                                             <p className="text-xs text-muted-foreground">{sacredDateString}</p>
                                         </div>
-                                        <Button variant="ghost" size="sm" onClick={() => { closeAllModals(); handleGoToDate(date); }}>Go to Day</Button>
+                                        <Button variant="ghost" size="sm" onClick={() => { closeAllModals(); navigateToTarget(`day-${date364?.month}-${date364?.day}`); }}>Go to Day</Button>
                                     </div>
                                     <div className="space-y-3">
                                         {scriptures.map(s => {
