@@ -434,7 +434,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
                   template: {
                     name: 'invitation',
                     data: {
-                      inviterName: user.displayName,
+                      inviterName: user.displayName || 'A member of the community',
                       eventName: payload.title,
                       eventDate: new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
                     }
@@ -605,5 +605,3 @@ export const useUI = (): UIContextType => {
   }
   return context;
 };
-
-    
