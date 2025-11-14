@@ -44,6 +44,7 @@ const appointmentSchema = z.object({
 
   inviteScope: z.enum(["all", "community", "private"]),
   invitedUserIds: z.array(z.string()).optional(),
+  sendNotification: z.boolean().optional(),
   
   recurrenceFrequency: z.enum(["none", "weekly", "bi-weekly"]),
 }).refine(data => {
@@ -113,6 +114,7 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
       colorTheme: 'default',
       inviteScope: 'community',
       invitedUserIds: [],
+      sendNotification: true,
       recurrenceFrequency: 'none',
     }
   });
@@ -179,6 +181,7 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
             colorTheme: appointment.colorTheme || 'default',
             inviteScope: appointment.inviteScope,
             invitedUserIds: appointment.invitedUserIds || [],
+            sendNotification: true, // Default to true for edits
             recurrenceFrequency: appointment.recurrence?.frequency || 'none',
         });
     } else if (date) { // Pre-fill date for new appointment
@@ -197,6 +200,7 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
             colorTheme: 'default',
             inviteScope: 'community',
             invitedUserIds: [],
+            sendNotification: true,
             recurrenceFrequency: 'none',
         });
     } else {
@@ -214,6 +218,7 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
           colorTheme: 'default',
           inviteScope: 'community',
           invitedUserIds: [],
+          sendNotification: true,
           recurrenceFrequency: 'none',
         });
     }
@@ -442,6 +447,12 @@ export const AppointmentModal = ({ appointment, date, onClose }: AppointmentModa
                               </Popover>
                           )}
                       />
+                  </div>
+                )}
+                 {watchInviteScope === 'private' && watchInvitedUsers && watchInvitedUsers.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <Controller name="sendNotification" control={control} render={({ field }) => <Switch id="sendNotification" checked={field.value} onCheckedChange={field.onChange} />} />
+                    <Label htmlFor="sendNotification">Send email notification to invited users</Label>
                   </div>
                 )}
               </div>

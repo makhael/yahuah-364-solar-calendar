@@ -338,7 +338,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         return;
     }
 
-    const { recurrenceFrequency, recurrenceDay, startMonth, startDay, endMonth, endDay, isMultiDay, tags, invitedUserIds, ...rest } = appointmentData;
+    const { recurrenceFrequency, recurrenceDay, startMonth, startDay, endMonth, endDay, isMultiDay, tags, invitedUserIds, sendNotification, ...rest } = appointmentData;
 
     const gregorianStartDate = getGregorianDate(startDate, startMonth, startDay);
     const startDateString = gregorianStartDate.toISOString().split('T')[0];
@@ -408,8 +408,8 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
 
     await batch.commit();
 
-    // After successful save, send emails for private events with invited users
-    if (payload.inviteScope === 'private' && payload.invitedUserIds.length > 0) {
+    // After successful save, send emails for private events with invited users, if requested
+    if (sendNotification && payload.inviteScope === 'private' && payload.invitedUserIds.length > 0) {
         const usersRef = collection(firestore, 'users');
         const q = query(usersRef, where('__name__', 'in', payload.invitedUserIds));
         const userDocs = await getDocs(q);
