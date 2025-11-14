@@ -49,6 +49,7 @@ service cloud.firestore {
 
     match /mail/{mailId} {
       allow create: if isSignedIn();
+      allow read, list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'leader';
     }
 
     match /users/{userId} {
