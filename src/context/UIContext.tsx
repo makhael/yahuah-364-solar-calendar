@@ -429,17 +429,25 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
           
           if (emails.length > 0) {
               const mailRef = collection(firestore, 'mail');
-              await addDocumentNonBlocking(mailRef, {
-                  to: emails,
-                  template: {
-                    name: 'invitation',
-                    data: {
-                      inviterName: user.displayName || 'A member of the community',
-                      eventName: payload.title,
-                      eventDate: new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
-                    }
-                  }
-              });
+              const templateRef = doc(firestore, 'emailTemplates', 'invitation');
+              const templateSnap = await getDoc(templateRef);
+
+              if (templateSnap.exists()) {
+                  const template = templateSnap.data();
+                  const subject = (template.subject || '').replace(/{{eventName}}/g, payload.title);
+                  let html = (template.html || '');
+                  html = html.replace(/{{inviterName}}/g, user.displayName || 'A member');
+                  html = html.replace(/{{eventName}}/g, payload.title);
+                  html = html.replace(/{{eventDate}}/g, new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }));
+
+                  await addDocumentNonBlocking(mailRef, {
+                      to: emails,
+                      message: {
+                        subject,
+                        html,
+                      }
+                  });
+              }
           }
       }
       

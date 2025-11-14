@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useFirestore, useCollection, useUser, useDoc, useMemoFirebase, useAuth, useFirebaseApp } from '@/firebase';
-import { collection, doc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, deleteDoc, setDoc, getDoc } from 'firebase/firestore';
 import { setDocumentNonBlocking, updateUserPassword } from '@/firebase/non-blocking-updates';
 import { LoaderCircle, Trash2, Edit, Save, X, UserPlus, LogIn, Send, Search, KeyRound } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -477,15 +477,24 @@ function CreateUserDialog() {
         
         if (data.sendWelcomeEmail) {
             const mailColRef = collection(firestore, "mail");
-            await addDocumentNonBlocking(mailColRef, {
-                 to: [data.email],
-                 template: {
-                    name: 'welcome-admin-created',
-                    data: {
-                        displayName: data.displayName,
+            const templateRef = doc(firestore, 'emailTemplates', 'welcome-admin-created');
+            const templateSnap = await getDoc(templateRef);
+
+            if (templateSnap.exists()) {
+                const template = templateSnap.data();
+                const html = (template.html || '').replace(/{{displayName}}/g, data.displayName);
+                const subject = (template.subject || '').replace(/{{displayName}}/g, data.displayName);
+
+                await addDocumentNonBlocking(mailColRef, {
+                    to: [data.email],
+                    message: {
+                        subject,
+                        html,
                     }
-                 }
-            });
+                });
+            } else {
+                console.warn("welcome-admin-created email template not found. Skipping email.");
+            }
         }
         
         toast({
@@ -742,5 +751,6 @@ export function UserManagement() {
     </>
   );
 }
+
 
 

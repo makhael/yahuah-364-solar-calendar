@@ -15,8 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { setDoc, doc, serverTimestamp, collection, writeBatch } from 'firebase/firestore';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDoc, doc, serverTimestamp, collection, writeBatch, getDoc } from 'firebase/firestore';
 
 const signupSchema = z.object({
   displayName: z.string().min(3, { message: "Display name must be at least 3 characters." }),
@@ -72,15 +71,28 @@ export default function SignupPage() {
           createdAt: serverTimestamp(),
       });
       
-      batch.set(doc(mailColRef), {
-           to: [data.email],
-           template: {
-             name: 'welcome',
-             data: {
-               displayName: data.displayName,
-             }
-           }
-      });
+      // Manually render the email content
+      const welcomeTemplateRef = doc(firestore, 'emailTemplates', 'welcome');
+      const templateSnap = await getDoc(welcomeTemplateRef);
+
+      if (templateSnap.exists()) {
+        const templateData = templateSnap.data();
+        let htmlContent = templateData.html || '';
+        let subjectContent = templateData.subject || '';
+
+        htmlContent = htmlContent.replace(/{{displayName}}/g, data.displayName);
+        subjectContent = subjectContent.replace(/{{displayName}}/g, data.displayName);
+
+        batch.set(doc(mailColRef), {
+            to: [data.email],
+            message: {
+                subject: subjectContent,
+                html: htmlContent,
+            },
+        });
+      } else {
+        console.warn("Welcome email template not found. Skipping email.");
+      }
       
       await batch.commit();
       
