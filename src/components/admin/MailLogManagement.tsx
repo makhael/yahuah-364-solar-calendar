@@ -16,10 +16,13 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 interface MailLog {
   id: string;
   to: string[];
-  message: {
+  message?: {
     subject: string;
     html: string;
   };
+  template?: {
+    name: string;
+  }
   delivery?: {
     state: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'ERROR';
     startTime: { seconds: number };
@@ -43,13 +46,15 @@ const getStatusInfo = (state?: MailLog['delivery']['state']) => {
 
 const MailLogItem = ({ log }: { log: MailLog }) => {
   const statusInfo = getStatusInfo(log.delivery?.state);
+  const subject = log.message?.subject || (log.template ? `Template: ${log.template.name}` : 'No Subject');
+  const htmlContent = log.message?.html || `<p>Email content is being generated from the '${log.template?.name || 'unknown'}' template...</p>`;
 
   return (
     <AccordionItem value={log.id}>
       <AccordionTrigger className="hover:no-underline">
         <div className="flex justify-between items-center w-full pr-4">
             <div className="flex-grow text-left">
-                <p className="font-semibold text-foreground truncate">{log.message.subject}</p>
+                <p className="font-semibold text-foreground truncate">{subject}</p>
                 <p className="text-xs text-muted-foreground">To: {log.to.join(', ')}</p>
             </div>
              <Badge variant="outline" className={cn("flex-shrink-0 items-center gap-2", statusInfo.color)}>
@@ -79,7 +84,7 @@ const MailLogItem = ({ log }: { log: MailLog }) => {
           <div className="pt-3 border-t">
             <h4 className="font-semibold text-sm text-foreground/90">Email Content</h4>
             <div className="mt-2 border rounded-md p-2 bg-white max-h-60 overflow-y-auto">
-              <div dangerouslySetInnerHTML={{ __html: log.message.html }} className="prose prose-sm max-w-none text-black" />
+              <div dangerouslySetInnerHTML={{ __html: htmlContent }} className="prose prose-sm max-w-none text-black" />
             </div>
           </div>
         </div>
@@ -148,5 +153,3 @@ export default function MailLogManagement() {
     </Card>
   );
 }
-
-    
