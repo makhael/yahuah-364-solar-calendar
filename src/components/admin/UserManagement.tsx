@@ -41,7 +41,6 @@ interface User {
 interface EditingUserState {
     id: string;
     displayName: string;
-    email: string;
 }
 
 const getRoleVariant = (role: User['role']) => {
@@ -55,13 +54,13 @@ const getRoleVariant = (role: User['role']) => {
   }
 };
 
-const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUsers, onSwitchUser }: { users: User[], onRoleChange: Function, onStatusChange: Function, onDelete: Function, updatingUsers: Record<string, boolean>, onSwitchUser: (email: string) => void }) => {
+const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUsers, onSwitchUser, currentUserId }: { users: User[], onRoleChange: Function, onStatusChange: Function, onDelete: Function, updatingUsers: Record<string, boolean>, onSwitchUser: (email: string) => void, currentUserId: string | null }) => {
   const [editingUser, setEditingUser] = useState<EditingUserState | null>(null);
   const firestore = useFirestore();
   const { toast } = useToast();
 
   const handleEditClick = (user: User) => {
-    setEditingUser({ id: user.id, displayName: user.displayName, email: user.email });
+    setEditingUser({ id: user.id, displayName: user.displayName });
   };
 
   const handleCancelEdit = () => {
@@ -72,9 +71,9 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
     if (!editingUser || !firestore) return;
 
     const userRef = doc(firestore, 'users', editingUser.id);
-    setDocumentNonBlocking(userRef, { displayName: editingUser.displayName, email: editingUser.email }, { merge: true });
+    setDocumentNonBlocking(userRef, { displayName: editingUser.displayName }, { merge: true });
 
-    toast({ title: 'User Updated', description: `Details for ${editingUser.displayName} have been saved.` });
+    toast({ title: 'User Updated', description: `Display name for ${editingUser.displayName} has been saved.` });
     setEditingUser(null);
   };
 
@@ -89,19 +88,17 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
       <div className="md:hidden space-y-4">
         {users.map(user => {
           const isEditing = editingUser?.id === user.id;
+          const isCurrentUser = user.id === currentUserId;
+
           return (
             <Card key={user.id} className="bg-background/50">
               <CardHeader>
                 {isEditing ? (
-                  <Input value={editingUser.displayName} onChange={(e) => setEditingUser({...editingUser, displayName: e.target.value})} className="text-lg font-bold p-0 border-0 shadow-none focus-visible:ring-0" />
+                  <Input value={editingUser.displayName} onChange={(e) => setEditingUser({...editingUser, displayName: e.target.value})} className="text-lg font-bold p-0 border-0 shadow-none focus-visible:ring-0 h-auto" />
                 ) : (
-                  <CardTitle className="text-lg">{user.displayName}</CardTitle>
+                  <CardTitle className="text-lg">{user.displayName} {isCurrentUser && <span className="text-sm font-normal text-muted-foreground">(You)</span>}</CardTitle>
                 )}
-                {isEditing ? (
-                  <Input value={editingUser.email} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="text-sm p-0 border-0 shadow-none focus-visible:ring-0" />
-                ) : (
-                  <CardDescription>{user.email}</CardDescription>
-                )}
+                <CardDescription>{user.email}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -185,7 +182,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                     </div>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" className="w-full">Delete User</Button>
+                        <Button variant="destructive" className="w-full" disabled={isCurrentUser}>Delete User</Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
@@ -223,17 +220,20 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
           <TableBody>
             {users.map(user => {
               const isEditing = editingUser?.id === user.id;
+              const isCurrentUser = user.id === currentUserId;
               return (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">
                   {isEditing ? (
                     <Input value={editingUser!.displayName} onChange={(e) => setEditingUser({...editingUser!, displayName: e.target.value})} />
-                  ) : user.displayName}
+                  ) : (
+                    <>
+                     {user.displayName} {isCurrentUser && <span className="text-sm font-normal text-muted-foreground">(You)</span>}
+                    </>
+                  )}
                 </TableCell>
                 <TableCell>
-                  {isEditing ? (
-                    <Input value={editingUser!.email} onChange={(e) => setEditingUser({...editingUser!, email: e.target.value})} />
-                  ) : user.email}
+                  {user.email}
                 </TableCell>
                 <TableCell>
                   <Badge variant={getRoleVariant(user.role)} className="capitalize">{user.role}</Badge>
@@ -297,7 +297,7 @@ const UserTable = ({ users, onRoleChange, onStatusChange, onDelete, updatingUser
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="icon">
+                              <Button variant="destructive" size="icon" disabled={isCurrentUser}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
@@ -538,7 +538,7 @@ function CreateUserDialog() {
 
 export function UserManagement() {
   const firestore = useFirestore();
-  const { isUserLoading } = useUser();
+  const { user: currentUser, isUserLoading } = useUser();
   const { toast } = useToast();
   const auth = useAuth();
   const router = useRouter();
@@ -648,13 +648,13 @@ export function UserManagement() {
             </CardHeader>
             <CardContent className="p-2 sm:p-6 sm:pt-0">
               <TabsContent value="approved" className="mt-0">
-                <UserTable users={approvedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} />
+                <UserTable users={approvedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} currentUserId={currentUser?.uid || null} />
               </TabsContent>
               <TabsContent value="pending" className="mt-0">
-                <UserTable users={pendingUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} />
+                <UserTable users={pendingUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} currentUserId={currentUser?.uid || null} />
               </TabsContent>
               <TabsContent value="denied" className="mt-0">
-                <UserTable users={deniedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} />
+                <UserTable users={deniedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} currentUserId={currentUser?.uid || null} />
               </TabsContent>
             </CardContent>
           </Tabs>
@@ -663,3 +663,4 @@ export function UserManagement() {
     </>
   );
 }
+
