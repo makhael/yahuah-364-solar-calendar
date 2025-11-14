@@ -8,13 +8,14 @@ import { z } from 'zod';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { LoaderCircle, MessageSquare, Trash2, Send } from 'lucide-react';
+import { LoaderCircle, MessageSquare, Trash2, Send, LogIn, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import Link from 'next/link';
 
 const chatSchema = z.object({
   text: z.string().min(1, { message: "Message cannot be empty." }).max(500, { message: "Message is too long." }),
@@ -66,12 +67,12 @@ export const TopicChat = ({ topic }: TopicChatProps) => {
 
 
   const chatQuery = useMemoFirebase(() => {
-    if (!firestore || !topic) return null;
+    if (!firestore || !topic || !user || user.isAnonymous) return null;
     return query(
       collection(firestore, 'communityTopics', topic.id, 'messages'),
       orderBy('createdAt', 'asc')
     );
-  }, [firestore, topic]);
+  }, [firestore, topic, user]);
 
   const { data: messages, isLoading } = useCollection<ChatMessage>(chatQuery);
   
@@ -125,11 +126,20 @@ export const TopicChat = ({ topic }: TopicChatProps) => {
     }
   }, [messages]);
 
-  if (!user) {
+  if (!user || user.isAnonymous) {
     return (
-      <div className="bg-secondary p-4 rounded-lg text-center flex flex-col items-center justify-center h-full">
+      <div className="bg-secondary/50 border rounded-lg p-6 text-center flex flex-col items-center justify-center h-full">
         <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
-        <p className="text-sm text-muted-foreground">Please sign in to view the discussion.</p>
+        <h3 className="font-semibold text-lg">Join the Discussion</h3>
+        <p className="text-sm text-muted-foreground mt-1 mb-4">Sign in or create an account to view and participate in this forum.</p>
+        <div className="flex gap-4">
+          <Button asChild>
+            <Link href="/login"><LogIn className="mr-2 h-4 w-4" />Sign In</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/signup"><UserPlus className="mr-2 h-4 w-4" />Sign Up</Link>
+          </Button>
+        </div>
       </div>
     );
   }
