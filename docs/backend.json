@@ -232,7 +232,12 @@
     }
   },
   "auth": {
-    "providers": ["anonymous", "google.com"]
+    "providers": ["anonymous", "google.com"],
+    "claims": {
+        "admin": {
+            "type": "boolean"
+        }
+    }
   },
   "firestore": {
     "/users/{userId}": {

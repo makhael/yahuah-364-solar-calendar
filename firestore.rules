@@ -12,11 +12,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Use exists() instead of get() to avoid recursive loops and for efficiency.
-      // This checks if a document exists for the user in the /users collection
-      // and if that document has the role 'admin' or 'leader'.
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'leader');
+      // Check for a custom claim 'admin' on the user's auth token.
+      // This is the correct and performant way to check for roles in list queries.
+      return request.auth.token.admin == true;
     }
     
     match /appointments/{appointmentId} {
@@ -49,7 +47,7 @@ service cloud.firestore {
 
     match /mail/{mailId} {
       allow create: if isSignedIn();
-      allow read, list: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'leader';
+      allow read, list: if isAdmin();
     }
 
     match /emailTemplates/{templateId} {
