@@ -376,13 +376,10 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         payload.invitedUserIds = [];
     }
     
-    // Logic for handling RSVPs on new vs existing appointments
     if (id) {
-        // For existing appointments, we only modify the pending list if the invitees have changed.
         const existingAppointment = allAppointments?.find(a => a.id === id);
         if (existingAppointment && appointmentData.inviteScope === 'private') {
             const existingInvites = new Set(existingAppointment.rsvps?.pending || []);
-            const newInvites = new Set(invitedUserIds || []);
             const usersToAdd = (invitedUserIds || []).filter((uid: string) => !existingInvites.has(uid));
             if (usersToAdd.length > 0) {
                  payload.rsvps = {
@@ -392,7 +389,6 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
             }
         }
     } else {
-        // For new appointments, set the initial RSVP lists.
         payload.createdAt = serverTimestamp();
         payload.rsvps = { going: [], notGoing: [], maybe: [], pending: [] };
         if (appointmentData.inviteScope === 'private') {
@@ -609,3 +605,5 @@ export const useUI = (): UIContextType => {
   }
   return context;
 };
+
+    
