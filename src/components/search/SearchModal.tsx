@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { useUI } from '@/context/UIContext';
 import { get364DateFromGregorian } from '@/lib/calendar-utils';
 import { parse, isValid, format } from 'date-fns';
-import { useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useCollection, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 
 interface SearchModalProps {
@@ -118,13 +118,14 @@ const baseSearchIndex: SearchResult[] = [...monthResults, ...feastResults, ...gl
 
 export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
   const { navigateToTarget, handleGoToGlossaryTerm, startDate, allAppointments } = useUI();
-  const { user, firestore } = useUser();
+  const { user } = useUser();
+  const firestore = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [activeScope, setActiveScope] = useState<SearchScope>('all');
   
   const notesQuery = useMemoFirebase(() => {
-    if (!user || user.isAnonymous) return null;
+    if (!user || user.isAnonymous || !firestore) return null;
     return collection(firestore, 'users', user.uid, 'notes');
   }, [user, firestore]);
   const { data: userNotes } = useCollection(notesQuery);
