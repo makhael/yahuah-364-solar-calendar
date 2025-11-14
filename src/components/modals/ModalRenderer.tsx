@@ -19,7 +19,7 @@ import { GlossaryInfoModal } from '../glossary/GlossaryInfoModal';
 
 
 export const ModalRenderer = () => {
-  const { modalState, closeAllModals, openModal, handleSavePreset } = useUI();
+  const { modalState, closeModal, openModal, handleSavePreset } = useUI();
   const { user } = useUser();
 
   const handleOpenGlossaryFromFull = (termKey: string) => {
@@ -37,13 +37,13 @@ export const ModalRenderer = () => {
       {modalState.glossary.isOpen && (
         <GlossaryModal 
           {...modalState.glossary.data!} 
-          onClose={closeAllModals} 
+          onClose={() => closeModal('glossary')} 
         />
       )}
       {modalState.fullGlossary.isOpen && (
         <FullGlossaryModal 
           isOpen={true} 
-          onClose={closeAllModals} 
+          onClose={() => closeModal('fullGlossary')} 
           onOpenGlossary={handleOpenGlossaryFromFull} 
           user={user} 
           {...modalState.fullGlossary.data} 
@@ -52,7 +52,7 @@ export const ModalRenderer = () => {
       {modalState.glossaryInfo.isOpen && (
         <GlossaryInfoModal 
           isOpen={true}
-          onClose={closeAllModals}
+          onClose={() => closeModal('glossaryInfo')}
         />
       )}
       {modalState.series.isOpen && (
@@ -61,13 +61,13 @@ export const ModalRenderer = () => {
       {modalState.monthInfo.isOpen && (
         <MonthInfoModal 
           {...modalState.monthInfo.data!} 
-          onClose={closeAllModals} 
+          onClose={() => closeModal('monthInfo')} 
         />
       )}
        {modalState.preset.isOpen && (
         <PresetModal 
           isOpen={true}
-          onClose={closeAllModals}
+          onClose={() => closeModal('preset')}
           onSave={handleSavePreset}
           {...modalState.preset.data!}
         />
@@ -80,31 +80,31 @@ export const ModalRenderer = () => {
       {modalState.dailyChat.isOpen && (
         <DailyChatModal 
           {...modalState.dailyChat.data!} 
-          onClose={closeAllModals} 
+          onClose={() => closeModal('dailyChat')} 
         />
       )}
       {modalState.search.isOpen && (
         <SearchModal 
           isOpen={true} 
-          onClose={closeAllModals} 
+          onClose={() => closeModal('search')} 
         />
       )}
       {modalState.instructions.isOpen && (
         <InstructionsModal 
           isOpen={true} 
-          onClose={closeAllModals} 
+          onClose={() => closeModal('instructions')} 
         />
       )}
       {modalState.appointment.isOpen && (
         <AppointmentModal
           {...modalState.appointment.data!}
-          onClose={closeAllModals}
+          onClose={() => closeModal('appointment')}
         />
       )}
       {modalState.editProfile.isOpen && (
         <EditProfileModal
           isOpen={true}
-          onClose={closeAllModals}
+          onClose={() => closeModal('editProfile')}
         />
       )}
     </>

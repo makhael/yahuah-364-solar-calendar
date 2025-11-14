@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { add, isBefore, isEqual, startOfDay, isAfter } from 'date-fns';
 import { hebrewDays } from '@/lib/calendar-data';
 
-type ModalType = 
+export type ModalType = 
   | 'dayDetail' 
   | 'monthInfo' 
   | 'series' 
@@ -26,7 +26,7 @@ type ModalType =
   | 'editProfile';
 
 // Data shapes for modals that require it
-type ModalDataPayloads = {
+export type ModalDataPayloads = {
   dayDetail: { yahuahDay?: number, gregorianDate?: Date, dayOfWeek?: number, isSabbath?: boolean, special?: any, monthNum?: number, isToday?: boolean, dateId?: string };
   monthInfo: { monthNum: number };
   series: { series: any; allSeries: any[]; seriesIndex: number; };
@@ -87,6 +87,7 @@ interface Appointment {
 interface UIContextType {
   modalState: ModalState;
   openModal: <T extends ModalType>(modal: T, data?: T extends keyof ModalDataPayloads ? ModalDataPayloads[T] : undefined) => void;
+  closeModal: (modal: ModalType) => void;
   closeAllModals: () => void;
   isAnyModalOpen: boolean;
   
@@ -286,6 +287,13 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     }
   }, [user, preferenceRef]);
 
+  const closeModal = useCallback((modal: ModalType) => {
+    setModalState(prev => ({
+      ...prev,
+      [modal]: { isOpen: false, data: undefined },
+    }));
+  }, []);
+
   const closeAllModals = useCallback(() => {
     setModalState(initialModalState);
     setEditingPreset(null);
@@ -304,8 +312,8 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
       handleSelectPreset(newPresetRef.id);
     }
     
-    closeAllModals();
-  }, [user, firestore, editingPreset, handleSelectPreset, closeAllModals]);
+    closeModal('preset');
+  }, [user, firestore, editingPreset, handleSelectPreset, closeModal]);
   
   const handleDeletePreset = useCallback((e: React.MouseEvent, presetId: string) => {
     e.stopPropagation();
@@ -402,9 +410,9 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     await batch.commit();
 
     toast({ title: id ? 'Appointment Updated!' : 'Appointment Created!', description: 'Your changes have been saved to the calendar.' });
-    closeAllModals();
+    closeModal('appointment');
 
-  }, [user, firestore, toast, closeAllModals, startDate]);
+  }, [user, firestore, toast, closeModal, startDate]);
   
   const handleSaveGlossaryProposal = useCallback(async (proposalData: any, id?: string) => {
     if (!user || user.isAnonymous || !firestore) {
@@ -527,6 +535,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   const value = useMemo(() => ({
     modalState,
     openModal,
+    closeModal,
     closeAllModals,
     isAnyModalOpen,
     startDate,
@@ -556,7 +565,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     today364,
     currentGregorianYear,
   }), [
-      modalState, openModal, closeAllModals, isAnyModalOpen,
+      modalState, openModal, closeModal, closeAllModals, isAnyModalOpen,
       startDate, gregorianStart, setGregorianStart, presets, arePresetsLoading,
       activePresetId, handleSelectPreset, editingPreset, 
       handleSavePreset, handleDeletePreset, handleSaveAppointment, handleSaveGlossaryProposal,

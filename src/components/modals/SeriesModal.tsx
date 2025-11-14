@@ -13,7 +13,7 @@ type SeriesModalProps = {
 };
 
 export const SeriesModal = ({ series, allSeries, seriesIndex }: SeriesModalProps) => {
-  const { openModal, closeAllModals } = useUI();
+  const { openModal, closeModal } = useUI();
   
   const handleNavigate = (direction: number) => {
     let nextIndex = seriesIndex + direction;
@@ -33,7 +33,7 @@ export const SeriesModal = ({ series, allSeries, seriesIndex }: SeriesModalProps
     : 'bg-red-600';
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={closeAllModals}>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={() => closeModal('series')}>
       <Button
           variant="ghost"
           size="icon"
@@ -50,7 +50,7 @@ export const SeriesModal = ({ series, allSeries, seriesIndex }: SeriesModalProps
       >
         <div className="p-6 pb-4 flex-shrink-0 border-b">
           <button
-            onClick={closeAllModals}
+            onClick={() => closeModal('series')}
             className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors z-10"
             aria-label="Close"
           >

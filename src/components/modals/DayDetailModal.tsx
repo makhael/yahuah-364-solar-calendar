@@ -78,7 +78,7 @@ const CommunityAppointments = ({ dateId, dayOfWeek }: { dateId: string, dayOfWee
     const firestore = useFirestore();
     const { user } = useUser();
     const router = useRouter();
-    const { openModal, closeAllModals } = useUI();
+    const { openModal, closeModal } = useUI();
     const { toast } = useToast();
 
     const userProfileRef = useMemoFirebase(() => {
@@ -426,7 +426,7 @@ const NoteSection = ({ dateId }: { dateId: string }) => {
 
 
 export const DayDetailModal = ({ info }: ModalProps) => {
-  const { closeAllModals, openModal, startDate, openChatModal } = useUI();
+  const { closeModal, closeAllModals, openModal, startDate, openChatModal } = useUI();
   const { toast } = useToast();
   const { user } = useUser();
   const router = useRouter();
@@ -489,13 +489,13 @@ export const DayDetailModal = ({ info }: ModalProps) => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeAllModals();
+      if (e.key === "Escape") closeModal('dayDetail');
       if (e.key === "ArrowLeft") onNavigate(-1);
       if (e.key === "ArrowRight") onNavigate(1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [closeAllModals, onNavigate]);
+  }, [closeModal, onNavigate]);
 
   if (monthNum === undefined || yahuahDay === undefined) {
     return (
@@ -585,14 +585,14 @@ export const DayDetailModal = ({ info }: ModalProps) => {
   const colorClass = typeToColorClass[type] || typeToColorClass.default;
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-0 sm:p-4 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" onClick={closeAllModals}>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-0 sm:p-4 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" onClick={() => closeModal('dayDetail')}>
       <Button variant="ghost" size="icon" className="fixed left-0 sm:left-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-background/80 hover:bg-background border text-muted-foreground hover:text-foreground z-50 flex" onClick={(e) => { e.stopPropagation(); onNavigate(-1); }} aria-label="Previous day" >
         <ChevronLeft className="h-6 w-6" />
       </Button>
 
       <div className="bg-card rounded-none sm:rounded-2xl shadow-2xl w-full max-w-xl h-full sm:h-auto relative modal-bg-pattern border flex flex-col sm:max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 pb-4 flex-shrink-0">
-           <button onClick={closeAllModals} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors z-10" aria-label="Close">
+           <button onClick={() => closeModal('dayDetail')} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors z-10" aria-label="Close">
             <XCircle className="w-8 h-8" />
           </button>
           <div className="pr-10">
