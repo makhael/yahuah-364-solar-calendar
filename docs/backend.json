@@ -191,6 +191,35 @@
         "status": { "enum": ["pending", "approved", "rejected"] }
       },
       "required": ["scripture", "date", "userId", "status"]
+    },
+    "Mail": {
+      "title": "Mail",
+      "description": "An email to be sent by the Trigger Email extension.",
+      "type": "object",
+      "properties": {
+        "to": {
+          "type": "array",
+          "items": { "type": "string", "format": "email" }
+        },
+        "message": {
+          "type": "object",
+          "properties": {
+            "subject": { "type": "string" },
+            "html": { "type": "string" }
+          },
+          "required": ["subject", "html"]
+        },
+        "delivery": {
+          "type": "object",
+          "properties": {
+            "state": { "enum": ["PENDING", "PROCESSING", "SUCCESS", "ERROR"] },
+            "startTime": { "type": "string", "format": "date-time" },
+            "endTime": { "type": "string", "format": "date-time" },
+            "error": { "type": "string" }
+          }
+        }
+      },
+      "required": ["to", "message"]
     }
   },
   "auth": {
@@ -250,6 +279,14 @@
         "$ref": "#/entities/ScriptureReading"
       },
       "description": "Collection of all community-submitted scripture readings."
+    },
+    "/mail/{mailId}": {
+      "schema": {
+        "$ref": "#/entities/Mail"
+      },
+      "description": "Collection for triggering emails."
     }
   }
 }
+
+    

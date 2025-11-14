@@ -5,13 +5,14 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { LoaderCircle, Shield, Users, CalendarClock, MessageSquare, BookOpen, ScrollText, Ban, ArrowLeft } from 'lucide-react';
+import { LoaderCircle, Shield, Users, CalendarClock, MessageSquare, BookOpen, ScrollText, Ban, ArrowLeft, Mail } from 'lucide-react';
 import Image from 'next/image';
 import { UserManagement } from '@/components/admin/UserManagement';
 import AppointmentManagement from '@/components/admin/AppointmentManagement';
 import ForumManagement from './forums/page';
 import GlossaryManagement from './glossary/page';
 import ScriptureManagement from './scriptures/page';
+import MailLogManagement from '@/components/admin/MailLogManagement';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -21,7 +22,7 @@ interface UserProfileData {
   role?: 'admin' | 'leader' | 'member';
 }
 
-type AdminView = 'users' | 'appointments' | 'forums' | 'glossary' | 'scriptures';
+type AdminView = 'users' | 'appointments' | 'forums' | 'glossary' | 'scriptures' | 'mail';
 
 const allMenuItems: { id: AdminView; label: string; icon: React.ReactNode; adminOnly: boolean }[] = [
     { id: 'users', label: 'User Management', icon: <Users className="w-5 h-5" />, adminOnly: true },
@@ -29,6 +30,7 @@ const allMenuItems: { id: AdminView; label: string; icon: React.ReactNode; admin
     { id: 'forums', label: 'Forums', icon: <MessageSquare className="w-5 h-5" />, adminOnly: false },
     { id: 'glossary', label: 'Glossary', icon: <ScrollText className="w-5 h-5" />, adminOnly: false },
     { id: 'scriptures', label: 'Scriptures', icon: <BookOpen className="w-5 h-5" />, adminOnly: false },
+    { id: 'mail', label: 'Mail Logs', icon: <Mail className="w-5 h-5" />, adminOnly: true },
 ];
 
 export default function AdminDashboardPage() {
@@ -115,6 +117,8 @@ export default function AdminDashboardPage() {
         return <GlossaryManagement />;
       case 'scriptures':
         return <ScriptureManagement />;
+      case 'mail':
+        return isAdmin ? <MailLogManagement /> : null;
       default:
         return isAdmin ? <UserManagement /> : <AppointmentManagement />;
     }
@@ -181,3 +185,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
