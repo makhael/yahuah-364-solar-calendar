@@ -406,32 +406,32 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         batch.set(newAppointmentRef, payload);
     }
 
-    await batch.commit();
-
-    // After successful save, send emails for private events with invited users, if requested
-    if (sendNotification && payload.inviteScope === 'private' && payload.invitedUserIds.length > 0) {
-        const usersRef = collection(firestore, 'users');
-        const q = query(usersRef, where('__name__', 'in', payload.invitedUserIds));
-        const userDocs = await getDocs(q);
-        
-        const emails = userDocs.docs.map(doc => doc.data().email).filter(Boolean);
-        
-        if (emails.length > 0) {
-            const mailRef = collection(firestore, 'mail');
-            addDocumentNonBlocking(mailRef, {
-                to: emails,
-                template: {
-                  name: 'invitation',
-                  data: {
-                    inviterName: user.displayName,
-                    eventName: payload.title,
-                    eventDate: new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
-                  }
-                }
-            });
+    // After setting up the batch, commit it.
+    await batch.commit().then(async () => {
+        // After successful save, send emails for private events with invited users, if requested
+        if (sendNotification && payload.inviteScope === 'private' && payload.invitedUserIds.length > 0) {
+            const usersRef = collection(firestore, 'users');
+            const q = query(usersRef, where('__name__', 'in', payload.invitedUserIds));
+            const userDocs = await getDocs(q);
+            
+            const emails = userDocs.docs.map(doc => doc.data().email).filter(Boolean);
+            
+            if (emails.length > 0) {
+                const mailRef = collection(firestore, 'mail');
+                addDocumentNonBlocking(mailRef, {
+                    to: emails,
+                    template: {
+                      name: 'invitation',
+                      data: {
+                        inviterName: user.displayName,
+                        eventName: payload.title,
+                        eventDate: new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
+                      }
+                    }
+                });
+            }
         }
-    }
-
+    });
 
     toast({ title: id ? 'Appointment Updated!' : 'Appointment Created!', description: 'Your changes have been saved to the calendar.' });
     closeModal('appointment');

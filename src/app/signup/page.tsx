@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { setDoc, doc, serverTimestamp, collection } from 'firebase/firestore';
+import { setDoc, doc, serverTimestamp, collection, writeBatch } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const signupSchema = z.object({
@@ -47,6 +47,10 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupFormValues) => {
     setError(null);
+    if (!firestore || !auth) {
+        toast({ variant: 'destructive', title: 'Firebase not initialized.' });
+        return;
+    }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const user = userCredential.user;
@@ -56,16 +60,19 @@ export default function SignupPage() {
       });
 
       const userDocRef = doc(firestore, "users", user.uid);
-      await setDoc(userDocRef, {
+      const mailColRef = collection(firestore, "mail");
+      
+      const batch = writeBatch(firestore);
+
+      batch.set(userDocRef, {
           displayName: data.displayName,
           email: data.email,
           role: 'member',
           status: 'pending',
           createdAt: serverTimestamp(),
       });
-
-      const mailColRef = collection(firestore, "mail");
-      addDocumentNonBlocking(mailColRef, {
+      
+      batch.set(doc(mailColRef), {
            to: [data.email],
            template: {
              name: 'welcome',
@@ -74,6 +81,8 @@ export default function SignupPage() {
              }
            }
       });
+      
+      await batch.commit();
       
       toast({
         title: "Account Created!",
