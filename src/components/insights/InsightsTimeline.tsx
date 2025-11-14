@@ -27,7 +27,7 @@ interface Note {
 export const InsightsTimeline = () => {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const { startDate, handleGoToDate } = useUI();
+  const { startDate, navigateToTarget } = useUI();
   const { toast } = useToast();
 
   const revelationNotesQuery = useMemoFirebase(() => {
@@ -85,6 +85,14 @@ export const InsightsTimeline = () => {
     deleteDocumentNonBlocking(noteRef);
     toast({ title: "Note Deleted", description: "The revelation note has been removed from your journal." });
   };
+  
+  const handleGoToDate = (gregorianDateStr: string) => {
+    const yahuahDate = get364DateFromGregorian(new Date(gregorianDateStr + 'T00:00:00'), startDate);
+    if (yahuahDate) {
+      navigateToTarget(`day-${yahuahDate.month}-${yahuahDate.day}`);
+    }
+  };
+
 
   if (isUserLoading || !user || user.isAnonymous) {
     return null;
