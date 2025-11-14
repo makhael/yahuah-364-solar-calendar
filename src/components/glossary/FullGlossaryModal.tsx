@@ -158,31 +158,33 @@ export const FullGlossaryModal = ({ isOpen, onClose, user, targetTerm }: FullGlo
                     <h2 className="text-2xl font-bold text-foreground">
                         Glossary: Return to the Original Witness
                     </h2>
+                </div>
+            </div>
+
+            <div className="p-6 flex-shrink-0 border-b space-y-4">
+                 <div className="text-center">
                     <button 
                         onClick={handleOpenInfo} 
-                        className="mt-2 inline-block bg-secondary/50 border border-border rounded-md px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                        className="inline-block bg-secondary/50 border border-border rounded-md px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                     >
                         See Instructions
                     </button>
+                </div>
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                    <Input 
+                        type="text"
+                        placeholder="Search terms, definitions, or Hebrew..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 bg-background/50"
+                    />
                 </div>
             </div>
             
             <div className="flex-grow overflow-y-auto">
                 <ScrollArea className="h-full">
                     <div className="p-6">
-                        <div className="mb-8">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                                <Input 
-                                    type="text"
-                                    placeholder="Search terms, definitions, or Hebrew..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 bg-background/50"
-                                />
-                            </div>
-                        </div>
-
                         {areTermsLoading ? (
                             <div className="flex justify-center p-8">
                                 <LoaderCircle className="animate-spin" />
