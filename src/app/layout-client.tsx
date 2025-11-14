@@ -4,6 +4,7 @@
 import { usePathname } from 'next/navigation';
 import { MainApp } from '@/components/layout/main-app';
 import { ReactNode } from 'react';
+import { BackToTopButton } from '@/components/common/BackToTopButton';
 
 export default function RootLayoutClient({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -13,5 +14,10 @@ export default function RootLayoutClient({ children }: { children: ReactNode }) 
     return <>{children}</>;
   }
 
-  return <MainApp>{children}</MainApp>;
+  return (
+    <MainApp>
+      {children}
+      <BackToTopButton />
+    </MainApp>
+  );
 }
