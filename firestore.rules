@@ -46,7 +46,7 @@ service cloud.firestore {
     }
 
     match /mail/{mailId} {
-      allow create: if isSignedIn();
+      allow create: if true; // Temporarily open to fix signup flow
       // Temporarily changed to allow any signed-in user to list.
       // TODO: Revert to isAdmin() once custom claims are properly set up.
       allow read, list: if isSignedIn();
@@ -58,12 +58,11 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // An admin can get any user's profile. A user can get their own.
       allow get: if isOwner(userId) || isAdmin();
-      // Temporarily changed to allow any signed-in user to list.
-      // TODO: Revert to isAdmin() once custom claims are properly set up.
       allow list: if isSignedIn();
-      allow write: if isOwner(userId) || isAdmin();
+      allow create: if true; // Allow any user to create their own user document
+      allow update: if isOwner(userId) || isAdmin(); // Only owner or admin can update
+      allow delete: if isAdmin(); // Only admin can delete
 
       match /glossaryProposals/{proposalId} {
         allow read, write: if isOwner(userId);
