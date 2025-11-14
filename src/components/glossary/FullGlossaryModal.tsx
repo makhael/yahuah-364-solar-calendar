@@ -34,6 +34,28 @@ interface FirestoreGlossaryTerm {
     restorationNote?: string;
 }
 
+const Highlight = ({ text, highlight }: { text: string; highlight: string }) => {
+  if (!text || !highlight || !highlight.trim()) {
+    return <>{text}</>;
+  }
+  const regex = new RegExp(`(${highlight.replace(/[.*+?^${'()'}|\\[\\]\\\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === highlight.toLowerCase() ? (
+          <span key={i} className="bg-primary/20 text-primary font-bold">
+            {part}
+          </span>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+};
+
 export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targetTerm }: FullGlossaryModalProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [highlightedTerm, setHighlightedTerm] = useState<string | undefined>(targetTerm);
@@ -177,28 +199,31 @@ export const FullGlossaryModal = ({ isOpen, onClose, onOpenGlossary, user, targe
                                     onClick={() => !term.isCustom && onOpenGlossary(term.id)}
                                 >
                                     <div className="p-2">
-                                        <h4 className="text-lg font-bold text-primary">{term.term} <span className="font-normal" lang="he" dir="rtl">{term.hebrew}</span></h4>
+                                        <h4 className="text-lg font-bold text-primary">
+                                            <Highlight text={term.term} highlight={searchTerm} />
+                                            {term.hebrew && <span className="font-normal" lang="he" dir="rtl"> (<Highlight text={term.hebrew} highlight={searchTerm} />)</span>}
+                                        </h4>
                                         <dl className="mt-2 text-sm space-y-2">
                                             <div>
                                                 <dt className="font-semibold text-foreground">Definition:</dt>
-                                                <dd>{term.definition}</dd>
+                                                <dd><Highlight text={term.definition} highlight={searchTerm} /></dd>
                                             </div>
                                             {term.context && (
                                                 <div>
                                                     <dt className="font-semibold text-foreground">Context:</dt>
-                                                    <dd>{term.context}</dd>
+                                                    <dd><Highlight text={term.context} highlight={searchTerm} /></dd>
                                                 </div>
                                             )}
                                             {term.scripturalWitness && (
                                                 <div>
                                                     <dt className="font-semibold text-foreground">Scriptural Witness:</dt>
-                                                    <dd>{term.scripturalWitness}</dd>
+                                                    <dd><Highlight text={term.scripturalWitness} highlight={searchTerm} /></dd>
                                                 </div>
                                             )}
                                             {term.restorationNote && (
                                                 <div>
                                                     <dt className="font-semibold text-foreground">Restoration Note:</dt>
-                                                    <dd className="italic">{term.restorationNote}</dd>
+                                                    <dd className="italic"><Highlight text={term.restorationNote} highlight={searchTerm} /></dd>
                                                 </div>
                                             )}
                                         </dl>
