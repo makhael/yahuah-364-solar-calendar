@@ -500,6 +500,18 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
   }, [openModal, closeAllModals]);
   
   const isAnyModalOpen = useMemo(() => Object.values(modalState).some(m => m.isOpen), [modalState]);
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    // Cleanup function to ensure the style is removed if the component unmounts while a modal is open
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isAnyModalOpen]);
   
   const value = useMemo(() => ({
     modalState,
