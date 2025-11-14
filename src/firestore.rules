@@ -89,8 +89,9 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
       // A user can list their own submissions, anyone can list approved submissions, and admins can list all.
-      allow list: if (isSignedIn() && request.query.filters.userId == request.auth.uid) || 
-                   (request.query.filters.status == 'approved') || 
+      // This structure avoids OR conditions on different fields in a single list rule.
+      allow list: if (request.query.get("status") == "approved" && isSignedIn()) || 
+                   (request.query.get("userId") == request.auth.uid && isSignedIn()) ||
                    isAdmin();
     }
 
