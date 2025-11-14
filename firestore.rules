@@ -88,7 +88,9 @@ service cloud.firestore {
       allow get: if resource.data.status == 'approved' || (isSignedIn() && (isOwner(resource.data.userId) || isAdmin()));
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-      allow list: if isAdmin();
+      // Allow listing all documents for admins, or only approved ones for other signed-in users.
+      // This matches the queries being made in the app.
+      allow list: if (isSignedIn() && request.query.get("status") == "approved") || isAdmin();
     }
 
     match /podcast_series/{podcastSeriesId} {
