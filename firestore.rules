@@ -60,7 +60,9 @@ service cloud.firestore {
     match /users/{userId} {
       // An admin can get any user's profile. A user can get their own.
       allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin();
+      // Temporarily changed to allow any signed-in user to list.
+      // TODO: Revert to isAdmin() once custom claims are properly set up.
+      allow list: if isSignedIn();
       allow write: if isOwner(userId) || isAdmin();
 
       match /glossaryProposals/{proposalId} {
