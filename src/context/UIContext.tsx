@@ -372,12 +372,32 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     
     if (appointmentData.inviteScope === 'private') {
         payload.invitedUserIds = invitedUserIds || [];
-        payload.rsvps = {
-            ...payload.rsvps, 
-            pending: invitedUserIds || []
-        };
     } else {
         payload.invitedUserIds = [];
+    }
+    
+    // Logic for handling RSVPs on new vs existing appointments
+    if (id) {
+        // For existing appointments, we only modify the pending list if the invitees have changed.
+        const existingAppointment = allAppointments?.find(a => a.id === id);
+        if (existingAppointment && appointmentData.inviteScope === 'private') {
+            const existingInvites = new Set(existingAppointment.rsvps?.pending || []);
+            const newInvites = new Set(invitedUserIds || []);
+            const usersToAdd = (invitedUserIds || []).filter((uid: string) => !existingInvites.has(uid));
+            if (usersToAdd.length > 0) {
+                 payload.rsvps = {
+                    ...existingAppointment.rsvps,
+                    pending: arrayUnion(...usersToAdd)
+                 }
+            }
+        }
+    } else {
+        // For new appointments, set the initial RSVP lists.
+        payload.createdAt = serverTimestamp();
+        payload.rsvps = { going: [], notGoing: [], maybe: [], pending: [] };
+        if (appointmentData.inviteScope === 'private') {
+            payload.rsvps.pending = invitedUserIds || [];
+        }
     }
 
     const batch = writeBatch(firestore);
@@ -397,46 +417,44 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
         const appointmentRef = doc(firestore, 'appointments', id);
         batch.update(appointmentRef, payload);
     } else {
-        payload.createdAt = serverTimestamp();
-        payload.rsvps = payload.rsvps || { going: [], notGoing: [], maybe: [], pending: [] };
-        if (appointmentData.inviteScope === 'private') {
-            payload.rsvps.pending = invitedUserIds || [];
-        }
         const newAppointmentRef = doc(collection(firestore, 'appointments'));
         batch.set(newAppointmentRef, payload);
     }
 
-    // After setting up the batch, commit it.
-    await batch.commit().then(async () => {
-        // After successful save, send emails for private events with invited users, if requested
-        if (sendNotification && payload.inviteScope === 'private' && payload.invitedUserIds.length > 0) {
-            const usersRef = collection(firestore, 'users');
-            const q = query(usersRef, where('__name__', 'in', payload.invitedUserIds));
-            const userDocs = await getDocs(q);
-            
-            const emails = userDocs.docs.map(doc => doc.data().email).filter(Boolean);
-            
-            if (emails.length > 0) {
-                const mailRef = collection(firestore, 'mail');
-                addDocumentNonBlocking(mailRef, {
-                    to: emails,
-                    template: {
-                      name: 'invitation',
-                      data: {
-                        inviterName: user.displayName,
-                        eventName: payload.title,
-                        eventDate: new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
-                      }
+    try {
+      await batch.commit();
+      
+      if (sendNotification && payload.inviteScope === 'private' && payload.invitedUserIds.length > 0) {
+          const usersRef = collection(firestore, 'users');
+          const q = query(usersRef, where('__name__', 'in', payload.invitedUserIds));
+          const userDocs = await getDocs(q);
+          
+          const emails = userDocs.docs.map(doc => doc.data().email).filter(Boolean);
+          
+          if (emails.length > 0) {
+              const mailRef = collection(firestore, 'mail');
+              await addDocumentNonBlocking(mailRef, {
+                  to: emails,
+                  template: {
+                    name: 'invitation',
+                    data: {
+                      inviterName: user.displayName,
+                      eventName: payload.title,
+                      eventDate: new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
                     }
-                });
-            }
-        }
-    });
+                  }
+              });
+          }
+      }
+      
+      toast({ title: id ? 'Appointment Updated!' : 'Appointment Created!', description: 'Your changes have been saved to the calendar.' });
+      closeModal('appointment');
 
-    toast({ title: id ? 'Appointment Updated!' : 'Appointment Created!', description: 'Your changes have been saved to the calendar.' });
-    closeModal('appointment');
-
-  }, [user, firestore, toast, closeModal, startDate]);
+    } catch (error) {
+       console.error("Error saving appointment: ", error);
+       toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save the appointment.' });
+    }
+  }, [user, firestore, toast, closeModal, startDate, allAppointments]);
   
   const handleSaveGlossaryProposal = useCallback(async (proposalData: any, id?: string) => {
     if (!user || user.isAnonymous || !firestore) {
@@ -591,3 +609,5 @@ export const useUI = (): UIContextType => {
   }
   return context;
 };
+
+    
