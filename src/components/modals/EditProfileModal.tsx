@@ -67,8 +67,9 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       await updateProfile(user, {
         displayName: data.displayName,
         photoURL: data.photoURL,
+        // The client-side updateProfile function cannot update phone number directly
+        // for security reasons. We only update it in our Firestore document.
       });
-      // Note: Updating phone number with updateProfile requires re-authentication, so we'll just update the Firestore doc.
 
       const userDocRef = doc(firestore, 'users', user.uid);
       updateDocumentNonBlocking(userDocRef, {
@@ -132,6 +133,10 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
                             {user.displayName?.charAt(0).toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" value={user.email || 'No email associated'} readOnly disabled className="bg-muted/50" />
                 </div>
                 <div className="space-y-2">
                 <Label htmlFor="displayName">Display Name</Label>
