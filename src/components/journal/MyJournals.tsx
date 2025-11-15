@@ -14,6 +14,7 @@ import { useUI } from '@/context/UIContext';
 import { useToast } from '@/hooks/use-toast';
 import { MarkdownRenderer } from '../common/MarkdownRenderer';
 import { TEKUFAH_MONTHS } from '@/lib/calendar-data';
+import { Badge } from '@/components/ui/badge';
 
 
 interface Note {
