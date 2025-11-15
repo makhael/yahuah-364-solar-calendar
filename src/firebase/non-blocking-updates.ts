@@ -1,7 +1,7 @@
 
 'use client';
 
-import { DocumentReference, WriteBatch, doc, writeBatch, collection, addDoc, updateDoc, deleteDoc, getFirestore } from "firebase/firestore";
+import { DocumentReference, WriteBatch, doc, writeBatch, collection, addDoc, updateDoc, deleteDoc, getFirestore, serverTimestamp } from "firebase/firestore";
 import { initializeFirebase } from "@/firebase";
 
 // This is a placeholder for a secure, server-side function.
@@ -50,19 +50,21 @@ export const setDocumentNonBlocking = (docRef: DocumentReference, data: any, opt
 };
 
 export const addDocumentNonBlocking = (colRef: any, data: any) => {
-    return addDoc(colRef, data).catch(error => {
+    const enrichedData = { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+    return addDoc(colRef, enrichedData).catch(error => {
         console.error("Non-blocking add failed:", error);
     });
 };
 
 export const updateDocumentNonBlocking = (docRef: DocumentReference, data: any) => {
-    updateDoc(docRef, data).catch(error => {
+    const enrichedData = { ...data, updatedAt: serverTimestamp() };
+    updateDoc(docRef, enrichedData).catch(error => {
         console.error("Non-blocking update failed:", error);
     });
 };
 
 export const deleteDocumentNonBlocking = (docRef: DocumentReference) => {
     deleteDoc(docRef).catch(error => {
-        console.error("Non-blocking delete failed:", error);
+        console.error("Non-blocking delete failed: ", error);
     });
 };

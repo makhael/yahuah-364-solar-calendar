@@ -164,7 +164,7 @@ export const MyJournals = () => {
     if (isUserLoading || !user || user.isAnonymous || !firestore) return null;
     return query(
       collection(firestore, 'users', user.uid, 'notes'),
-       orderBy('updatedAt', 'desc')
+       orderBy('id', 'desc')
     );
   }, [isUserLoading, user?.uid, firestore]);
 
@@ -206,8 +206,8 @@ export const MyJournals = () => {
         content: data.content,
         isRevelation: data.isRevelation,
         tags: data.tags?.split(',').map(t => t.trim()).filter(Boolean) || [],
-        updatedAt: serverTimestamp(),
-        createdAt: entryId ? (journalDoc?.entries.find(e => e.id === entryId)?.createdAt || serverTimestamp()) : serverTimestamp(),
+        updatedAt: new Date(),
+        createdAt: entryId ? (journalDoc?.entries.find(e => e.id === entryId)?.createdAt || new Date()) : new Date(),
     };
 
     if (journalDoc) { // Document for this day exists
@@ -297,6 +297,7 @@ export const MyJournals = () => {
                     <div className="relative pl-6 pt-4 space-y-8 z-0">
                         <div className="absolute left-[36px] top-0 bottom-0 w-0.5 bg-border -z-10"></div>
                         {doc.entries?.sort((a,b) => b.createdAt?.seconds - a.createdAt?.seconds).map((entry) => {
+                            const createdAtDate = entry.createdAt?.toDate ? entry.createdAt.toDate() : (entry.createdAt ? new Date(entry.createdAt) : null);
                             return (
                                 <div key={entry.id} className="relative flex items-start gap-6">
                                     <div className="relative z-10 flex h-full items-start pt-2">
@@ -307,9 +308,9 @@ export const MyJournals = () => {
                                     <div className="flex-1 -ml-2">
                                     <div className="flex justify-between items-start">
                                         <div className="bg-card pr-2 pt-1">
-                                         {entry.createdAt && (
+                                         {createdAtDate && (
                                             <p className="font-semibold text-muted-foreground text-sm">
-                                                {new Date(entry.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
+                                                {createdAtDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
                                             </p>
                                           )}
                                         </div>
