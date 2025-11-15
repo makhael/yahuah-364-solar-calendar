@@ -41,7 +41,7 @@ interface JournalEntry {
     content: string;
     isRevelation: boolean;
     tags?: string[];
-    createdAt: any; // Firestore Timestamp
+    createdAt: any; // Can be Date or Firestore Timestamp
     updatedAt: any;
 }
 
@@ -206,7 +206,8 @@ export const MyJournals = () => {
   const handleSaveNote = async (data: NoteEntryFormData, entryId?: string) => {
     if (!user || !firestore) return;
     
-    const dateId = (editingEntry ? editingEntry.docId : creationDate.toISOString().split('T')[0]);
+    const dateForDoc = editingEntry ? new Date(editingEntry.docId + "T00:00:00") : creationDate;
+    const dateId = dateForDoc.toISOString().split('T')[0];
     const docRef = doc(firestore, 'users', user.uid, 'notes', dateId);
     
     const journalDoc = allJournalDocs?.find(d => d.id === dateId);
@@ -221,14 +222,19 @@ export const MyJournals = () => {
     };
 
     if (journalDoc) { // Document for this day exists
-        const existingEntries = journalDoc.entries || [];
-        let newEntries;
         if (entryId) { // Editing an existing entry
-            newEntries = existingEntries.map(e => e.id === entryId ? payload : e);
+            const existingEntry = journalDoc.entries.find(e => e.id === entryId);
+            if(existingEntry) {
+                 await updateDoc(docRef, {
+                    entries: arrayRemove(existingEntry)
+                 });
+                 await updateDoc(docRef, {
+                    entries: arrayUnion(payload)
+                 })
+            }
         } else { // Adding a new entry
-            newEntries = [...existingEntries, payload];
+            await updateDoc(docRef, { entries: arrayUnion(payload) });
         }
-        await updateDoc(docRef, { entries: newEntries, updatedAt: new Date() });
     } else { // No document for this day, create it
         await setDocumentNonBlocking(docRef, { entries: [payload], updatedAt: new Date(), userId: user.uid }, { merge: true });
     }
@@ -273,7 +279,7 @@ export const MyJournals = () => {
     
     if (!allJournalDocs || allJournalDocs.length === 0) {
       return (
-        <div className="text-center p-6 bg-secondary/30 rounded-lg">
+        <div className="text-center p-6 bg-background rounded-lg min-h-[150px] flex flex-col items-center justify-center">
             <BookMarked className="w-8 h-8 text-muted-foreground mx-auto mb-3"/>
             <h3 className="font-semibold text-foreground">No Journal Entries Yet</h3>
             <p className="text-sm text-muted-foreground mt-1">Click the 'Create New Entry' button to add your first note.</p>
@@ -291,6 +297,8 @@ export const MyJournals = () => {
             const monthLabel = `Month ${date364.month}: ${getSacredMonthName(date364.month)}`;
             const entryCount = doc.entries?.length || 0;
 
+            if (entryCount === 0) return null;
+
             return (
               <AccordionItem value={doc.id} key={doc.id}>
                 <AccordionTrigger className="hover:no-underline">
@@ -306,7 +314,11 @@ export const MyJournals = () => {
                 <AccordionContent>
                     <div className="relative pl-6 pt-4 space-y-8 z-0">
                         <div className="absolute left-[36px] top-0 bottom-0 w-0.5 bg-border -z-10"></div>
-                        {doc.entries?.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).map((entry) => {
+                        {doc.entries?.sort((a,b) => {
+                           const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+                           const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+                           return bTime - aTime;
+                        }).map((entry) => {
                             const createdAtDate = entry.createdAt?.toDate ? entry.createdAt.toDate() : (entry.createdAt ? new Date(entry.createdAt) : null);
                             return (
                                 <div key={entry.id} className="relative flex items-start gap-6">
