@@ -4,8 +4,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, where, getDocs, deleteDoc, setDoc } from 'firebase/firestore';
-import { LoaderCircle, Check, X, Hourglass, ThumbsUp, ThumbsDown, Trash2, Edit } from 'lucide-react';
+import { collection, doc, query, orderBy, where, getDocs, deleteDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { LoaderCircle, Check, X, Hourglass, ThumbsUp, ThumbsDown, Trash2, Edit, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -17,7 +17,9 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useUI } from '@/context/UIContext';
-import { GlossaryProposalModal } from '@/components/glossary/GlossaryProposalModal';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Proposal {
     id: string;
@@ -33,8 +35,12 @@ interface Proposal {
     tags?: string[];
 }
 
-const ProposalCard = ({ proposal, onUpdate, onDelete, onEdit }: { proposal: Proposal, onUpdate: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void, onEdit: (proposal: Proposal) => void }) => {
-    
+const ProposalCard = ({ proposal, onUpdateStatus, onDelete }: { proposal: Proposal, onUpdateStatus: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void }) => {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedProposal, setEditedProposal] = useState({ ...proposal, tags: proposal.tags?.join(', ') || '' });
+
     const getStatusInfo = (status: Proposal['status']) => {
         switch (status) {
             case 'approved':
@@ -48,32 +54,83 @@ const ProposalCard = ({ proposal, onUpdate, onDelete, onEdit }: { proposal: Prop
     }
     const statusInfo = getStatusInfo(proposal.status);
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setEditedProposal(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSave = () => {
+        if (!firestore) return;
+        const proposalRef = doc(firestore, 'glossaryProposals', proposal.id);
+        const { tags, ...rest } = editedProposal;
+        const tagsArray = typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
+        
+        updateDocumentNonBlocking(proposalRef, { ...rest, tags: tagsArray, updatedAt: new Date().toISOString() });
+
+        toast({ title: 'Proposal Updated', description: `Changes to "${editedProposal.term}" have been saved.` });
+        setIsEditing(false);
+    };
+
     return (
         <Card className={cn("transition-all flex flex-col", statusInfo.color)}>
             <CardHeader>
-                <CardTitle className="text-lg">{proposal.term}</CardTitle>
+                {isEditing ? (
+                    <div className="space-y-1">
+                        <Label htmlFor="term">Term</Label>
+                        <Input id="term" name="term" value={editedProposal.term} onChange={handleInputChange} className="text-lg font-bold bg-background/50" />
+                    </div>
+                ) : (
+                    <CardTitle className="text-lg">{proposal.term}</CardTitle>
+                )}
                 <CardDescription>
                     Submitted by {proposal.userDisplayName} on {proposal.createdAt ? new Date(proposal.createdAt.seconds * 1000).toLocaleDateString() : 'just now'}
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow">
                 <div className="space-y-4">
-                    <div>
-                        <h4 className="font-semibold text-sm text-foreground/90">Definition</h4>
-                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">{proposal.definition}</p>
-                    </div>
-                    {proposal.context && <div>
-                        <h4 className="font-semibold text-sm text-foreground/90">Context</h4>
-                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">{proposal.context}</p>
-                    </div>}
-                    {proposal.scripturalWitness && <div>
-                        <h4 className="font-semibold text-sm text-foreground/90">Scriptural Witness</h4>
-                        <p className="text-sm text-foreground/80 whitespace-pre-wrap">{proposal.scripturalWitness}</p>
-                    </div>}
-                    {proposal.restorationNote && <div>
-                        <h4 className="font-semibold text-sm text-foreground/90">Restoration Note</h4>
-                        <p className="text-sm text-foreground/80 whitespace-pre-wrap italic">{proposal.restorationNote}</p>
-                    </div>}
+                    {isEditing ? (
+                        <>
+                            <div className="space-y-1">
+                                <Label htmlFor="definition">Definition</Label>
+                                <Textarea id="definition" name="definition" value={editedProposal.definition} onChange={handleInputChange} rows={4} className="bg-background/50" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="context">Context</Label>
+                                <Textarea id="context" name="context" value={editedProposal.context || ''} onChange={handleInputChange} rows={2} className="bg-background/50" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="scripturalWitness">Scriptural Witness</Label>
+                                <Input id="scripturalWitness" name="scripturalWitness" value={editedProposal.scripturalWitness || ''} onChange={handleInputChange} className="bg-background/50" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="restorationNote">Restoration Note</Label>
+                                <Textarea id="restorationNote" name="restorationNote" value={editedProposal.restorationNote || ''} onChange={handleInputChange} rows={2} className="bg-background/50" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                                <Input id="tags" name="tags" value={editedProposal.tags} onChange={handleInputChange} className="bg-background/50" />
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div>
+                                <h4 className="font-semibold text-sm text-foreground/90">Definition</h4>
+                                <p className="text-sm text-foreground/80 whitespace-pre-wrap">{proposal.definition}</p>
+                            </div>
+                            {proposal.context && <div>
+                                <h4 className="font-semibold text-sm text-foreground/90">Context</h4>
+                                <p className="text-sm text-foreground/80 whitespace-pre-wrap">{proposal.context}</p>
+                            </div>}
+                            {proposal.scripturalWitness && <div>
+                                <h4 className="font-semibold text-sm text-foreground/90">Scriptural Witness</h4>
+                                <p className="text-sm text-foreground/80 whitespace-pre-wrap">{proposal.scripturalWitness}</p>
+                            </div>}
+                            {proposal.restorationNote && <div>
+                                <h4 className="font-semibold text-sm text-foreground/90">Restoration Note</h4>
+                                <p className="text-sm text-foreground/80 whitespace-pre-wrap italic">{proposal.restorationNote}</p>
+                            </div>}
+                        </>
+                    )}
                 </div>
             </CardContent>
             <CardFooter className="pt-4 mt-4 border-t flex flex-col items-end gap-4">
@@ -82,52 +139,61 @@ const ProposalCard = ({ proposal, onUpdate, onDelete, onEdit }: { proposal: Prop
                     <span>{statusInfo.text}</span>
                 </Badge>
                 <div className="w-full flex flex-col sm:flex-row sm:justify-end items-stretch gap-2">
-                    <Button variant={proposal.status === 'rejected' ? 'destructive' : 'outline'} size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
-                        <ThumbsDown className="w-4 h-4 mr-2" />
-                        Reject
-                    </Button>
-                    <Button variant={proposal.status === 'approved' ? 'default' : 'outline'} size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className={cn(proposal.status === 'approved' && 'bg-green-600 hover:bg-green-700')}>
-                        <ThumbsUp className="w-4 h-4 mr-2" />
-                        Approve
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => onEdit(proposal)}>
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                    </Button>
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="destructive" size="sm">
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
+                    {isEditing ? (
+                        <>
+                            <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
+                            <Button size="sm" onClick={handleSave}><Save className="w-4 h-4 mr-2" />Save Changes</Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button variant={proposal.status === 'rejected' ? 'destructive' : 'outline'} size="sm" onClick={() => onUpdateStatus(proposal.id, 'rejected')}>
+                                <ThumbsDown className="w-4 h-4 mr-2" />
+                                Reject
                             </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently remove the proposal for "{proposal.term}". Are you sure?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(proposal.id)}>Yes, Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                            <Button variant={proposal.status === 'approved' ? 'default' : 'outline'} size="sm" onClick={() => onUpdateStatus(proposal.id, 'approved')} className={cn(proposal.status === 'approved' && 'bg-green-600 hover:bg-green-700')}>
+                                <ThumbsUp className="w-4 h-4 mr-2" />
+                                Approve
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                            </Button>
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                   <Button variant="destructive" size="sm">
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete this proposal?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will permanently remove the proposal for "{proposal.term}". Are you sure?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => onDelete(proposal.id)}>Yes, Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </>
+                    )}
                 </div>
             </CardFooter>
         </Card>
     );
 }
 
-const ProposalsList = ({ proposals, onUpdate, onDelete, onEdit }: { proposals: Proposal[], onUpdate: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void, onEdit: (proposal: Proposal) => void }) => {
+const ProposalsList = ({ proposals, onUpdate, onDelete }: { proposals: Proposal[], onUpdate: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void }) => {
     if (proposals.length === 0) {
         return <p className="text-center text-muted-foreground py-8">No proposals in this category.</p>;
     }
 
     return (
         <div className="space-y-4">
-            {proposals.map(p => <ProposalCard key={p.id} proposal={p} onUpdate={onUpdate} onDelete={onDelete} onEdit={onEdit} />)}
+            {proposals.map(p => <ProposalCard key={p.id} proposal={p} onUpdateStatus={onUpdate} onDelete={onDelete} />)}
         </div>
     )
 }
@@ -136,9 +202,6 @@ export default function GlossaryManagement() {
     const firestore = useFirestore();
     const { toast } = useToast();
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
-    const { openModal, closeModal } = useUI();
-    const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
-
 
     const proposalsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -198,14 +261,6 @@ export default function GlossaryManagement() {
             toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
         }
     };
-
-    const handleEdit = (proposal: Proposal) => {
-        setEditingProposal(proposal);
-    };
-
-    const handleCloseModal = () => {
-        setEditingProposal(null);
-    }
     
     const pendingProposals = useMemo(() => allProposals?.filter(p => p.status === 'pending') || [], [allProposals]);
     const approvedProposals = useMemo(() => allProposals?.filter(p => p.status === 'approved') || [], [allProposals]);
@@ -254,23 +309,18 @@ export default function GlossaryManagement() {
                         </TabsList>
                         <div className="pt-6">
                             <TabsContent value="pending">
-                                <ProposalsList proposals={pendingProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} onEdit={handleEdit} />
+                                <ProposalsList proposals={pendingProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
                             </TabsContent>
                             <TabsContent value="approved">
-                                <ProposalsList proposals={approvedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} onEdit={handleEdit} />
+                                <ProposalsList proposals={approvedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
                             </TabsContent>
                             <TabsContent value="rejected">
-                                <ProposalsList proposals={rejectedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} onEdit={handleEdit} />
+                                <ProposalsList proposals={rejectedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
                             </TabsContent>
                         </div>
                     </Tabs>
                 </CardContent>
             </Card>
-            <GlossaryProposalModal
-                isOpen={!!editingProposal}
-                onClose={handleCloseModal}
-                proposal={editingProposal}
-            />
         </>
     );
 }
