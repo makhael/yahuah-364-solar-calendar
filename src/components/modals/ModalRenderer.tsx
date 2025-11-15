@@ -16,6 +16,7 @@ import { useUser } from '@/firebase';
 import { AppointmentModal } from './AppointmentModal';
 import { EditProfileModal } from './EditProfileModal';
 import { GlossaryInfoModal } from '../glossary/GlossaryInfoModal';
+import { GlossaryProposalModal } from '../glossary/GlossaryProposalModal';
 
 
 export const ModalRenderer = () => {
@@ -80,6 +81,13 @@ export const ModalRenderer = () => {
         <EditProfileModal
           isOpen={true}
           onClose={() => closeModal('editProfile')}
+        />
+      )}
+       {modalState.glossaryProposal.isOpen && (
+        <GlossaryProposalModal
+          isOpen={true}
+          onClose={() => closeModal('glossaryProposal')}
+          {...modalState.glossaryProposal.data!}
         />
       )}
 
