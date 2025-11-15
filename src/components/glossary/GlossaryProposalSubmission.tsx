@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
+import { collection, serverTimestamp, doc } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { LoaderCircle, PlusCircle, ScrollText, Send, Edit, Trash2 } from 'lucide-react';
 import { Label } from '../ui/label';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+
 
 const proposalSchema = z.object({
   term: z.string().min(2, "Term must be at least 2 characters."),
@@ -76,18 +78,8 @@ export const GlossaryProposalSubmission = () => {
         };
 
         try {
-            const userProposalsCol = collection(firestore, 'users', user.uid, 'glossaryProposals');
-            const newProposalRef = doc(userProposalsCol);
-            
             const globalProposalsCol = collection(firestore, 'glossaryProposals');
-            const newGlobalProposalRef = doc(globalProposalsCol, newProposalRef.id);
-
-            const batch = writeBatch(firestore);
-
-            batch.set(newProposalRef, payload);
-            batch.set(newGlobalProposalRef, payload);
-
-            await batch.commit();
+            await addDocumentNonBlocking(globalProposalsCol, payload);
 
             toast({ title: 'Proposal Submitted!', description: 'Thank you for your contribution. It is now pending review.' });
             setStagedProposal(null);

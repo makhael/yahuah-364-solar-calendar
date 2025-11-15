@@ -167,12 +167,6 @@
       },
       "description": "Stores public profile information for each user."
     },
-    "/users/{userId}/glossaryProposals/{proposalId}": {
-      "schema": {
-        "$ref": "#/entities/GlossaryProposal"
-      },
-      "description": "User-specific collection of their glossary proposals."
-    },
     "/communityTopics/{topicId}": {
         "schema": {
             "$ref": "#/entities/CommunityTopic"
@@ -202,6 +196,12 @@
         "$ref": "#/entities/EmailTemplate"
       },
       "description": "Collection of email templates for the Trigger Email extension."
+    },
+    "/glossaryProposals/{proposalId}": {
+      "schema": {
+        "$ref": "#/entities/GlossaryProposal"
+      },
+      "description": "Global collection of all user glossary proposals."
     }
   }
 }

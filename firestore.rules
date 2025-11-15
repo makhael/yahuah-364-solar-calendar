@@ -12,6 +12,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      // Check for a custom claim 'admin' on the user's auth token.
+      // This is the correct and performant way to check for roles in list queries.
       return request.auth.token.admin == true;
     }
     
@@ -52,7 +54,7 @@ service cloud.firestore {
     }
 
     match /mail/{mailId} {
-      allow create: if isSignedIn(); 
+      allow create: if true; 
       allow read, list: if isSignedIn();
     }
 
@@ -67,10 +69,6 @@ service cloud.firestore {
       allow create: if true;
       allow update: if isOwner(userId) || isAdmin() || isUserAdmin();
       allow delete: if isAdmin() || isUserAdmin();
-
-      match /glossaryProposals/{proposalId} {
-        allow read, write: if isOwner(userId);
-      }
       
       match /notes/{noteId} {
         allow read, write: if isOwner(userId);
@@ -104,7 +102,6 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin() || isUserLeader());
-      allow list: if isSignedIn() && (isAdmin() || isUserAdmin() || isUserLeader());
     }
 
     match /podcast_series/{podcastSeriesId} {

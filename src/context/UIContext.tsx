@@ -1,6 +1,4 @@
 
-
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
@@ -22,6 +20,7 @@ export type ModalType =
   | 'dailyChat' 
   | 'fullGlossary' 
   | 'glossaryInfo'
+  | 'glossaryProposal'
   | 'search' 
   | 'instructions'
   | 'appointment'
@@ -37,6 +36,7 @@ export type ModalDataPayloads = {
   dailyChat: { dateId: string };
   fullGlossary: { targetTerm?: string };
   glossaryInfo: {};
+  glossaryProposal: { proposal?: any | null };
   appointment: { appointment: any | null, date?: string };
   editProfile: {};
 };
@@ -57,6 +57,7 @@ const initialModalState: ModalState = {
   dailyChat: { isOpen: false },
   fullGlossary: { isOpen: false },
   glossaryInfo: { isOpen: false },
+  glossaryProposal: { isOpen: false },
   search: { isOpen: false },
   instructions: { isOpen: false },
   appointment: { isOpen: false },
@@ -487,29 +488,13 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
     };
     
     try {
+        const proposalsCol = collection(firestore, 'glossaryProposals');
         if (id) {
-            const proposalRef = doc(firestore, 'users', user.uid, 'glossaryProposals', id);
+            const proposalRef = doc(proposalsCol, id);
             await updateDocumentNonBlocking(proposalRef, { ...payload, updatedAt: serverTimestamp() });
-            
-            const globalProposalRef = doc(firestore, 'glossaryProposals', id);
-            await updateDocumentNonBlocking(globalProposalRef, { ...payload, updatedAt: serverTimestamp() });
-
             toast({ title: 'Proposal Updated!', description: 'Your changes have been submitted for review.' });
         } else {
-            const userProposalsCol = collection(firestore, 'users', user.uid, 'glossaryProposals');
-            const newProposalRef = doc(userProposalsCol);
-            
-            const globalProposalsCol = collection(firestore, 'glossaryProposals');
-            const newGlobalProposalRef = doc(globalProposalsCol, newProposalRef.id);
-
-            const batch = writeBatch(firestore);
-            const dataWithTimestamp = { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-
-            batch.set(newProposalRef, dataWithTimestamp);
-            batch.set(newGlobalProposalRef, dataWithTimestamp);
-
-            await batch.commit();
-
+            await addDocumentNonBlocking(proposalsCol, { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
             toast({ title: 'Proposal Submitted!', description: 'Thank you for your contribution.' });
         }
         closeAllModals();
