@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
 import { LoaderCircle, BookText, Trash2, Edit, Search, Save, X, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -253,8 +253,8 @@ export const MyJournal = ({ userId }: { userId: string }) => {
         updateDocumentNonBlocking(docRef, { ...payload, updatedAt: new Date() });
         toast({ title: 'Note Updated!'});
     } else { // We are creating
-        const newDocRef = doc(collection(firestore, `users/${userId}/notes`));
-        addDocumentNonBlocking(newDocRef, { ...payload, id: newDocRef.id, createdAt: new Date() });
+        const colRef = collection(firestore, `users/${userId}/notes`);
+        addDocumentNonBlocking(colRef, { ...payload, createdAt: new Date() });
         toast({ title: 'Note Saved!'});
     }
     
@@ -291,10 +291,10 @@ export const MyJournal = ({ userId }: { userId: string }) => {
   return (
     <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left">
+             <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left">
                 <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
                     <BookText className="w-5 h-5"/>
-                    Pull All Journals
+                    My Journal
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">A private, searchable archive of all your personal studies and insights.</p>
             </div>
