@@ -148,13 +148,11 @@ export default function ScriptureManagement() {
     return doc(firestore, 'users', user.uid);
   }, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfileData>(userProfileRef);
-
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'leader';
   
   const scripturesQuery = useMemoFirebase(() => {
-      if (!firestore || !isAdmin) return null;
+      if (!firestore) return null;
       return query(collection(firestore, 'scriptureReadings'), orderBy('createdAt', 'desc'));
-  }, [firestore, isAdmin]);
+  }, [firestore]);
 
   const { data: allScriptures, isLoading } = useCollection<ScriptureReading>(scripturesQuery);
 
@@ -176,7 +174,7 @@ export default function ScriptureManagement() {
     toast({ title: 'Status Updated', description: `Submission marked as ${status}.` });
   };
 
-  const totalLoading = isUserLoading || isProfileLoading;
+  const totalLoading = isUserLoading || isProfileLoading || isLoading;
 
   if (totalLoading) {
     return (
@@ -197,24 +195,6 @@ export default function ScriptureManagement() {
         </div>
       </div>
     );
-  }
-
-  if (!isAdmin) {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-destructive">
-                    <Ban className="w-6 h-6"/> Access Denied
-                </CardTitle>
-                <CardDescription>
-                    You do not have the required permissions to view this page.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p className="text-sm text-muted-foreground">This section is restricted to administrators.</p>
-            </CardContent>
-        </Card>
-    )
   }
 
   const ScriptureList = ({ submissions }: { submissions: ScriptureReading[] | undefined }) => {

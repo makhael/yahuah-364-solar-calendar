@@ -108,6 +108,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin() || isUserLeader());
+      allow list: if isSignedIn() && (isAdmin() || isUserAdmin() || isUserLeader());
     }
 
     match /podcast_series/{podcastSeriesId} {
