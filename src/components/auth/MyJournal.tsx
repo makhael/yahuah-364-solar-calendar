@@ -16,7 +16,7 @@ import { deleteDocumentNonBlocking, updateDocumentNonBlocking, addDocumentNonBlo
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
-import { get364DateFromGregorian } from '@/lib/calendar-utils';
+import { get364DateFromGregorian, hebrewDays } from '@/lib/calendar-utils';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { z } from 'zod';
@@ -29,7 +29,7 @@ const noteEditorSchema = z.object({
     content: z.string().min(1, 'Note cannot be empty.'),
     isRevelation: z.boolean(),
     tags: z.string().optional(),
-    date: z.string(),
+    date: z.date(),
 });
 
 type NoteEditorFormData = z.infer<typeof noteEditorSchema>;
@@ -106,15 +106,38 @@ const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note)
 }
 
 const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave: (data: any, id?: string) => void, onCancel: () => void }) => {
-    const { handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<NoteEditorFormData>({
+    const { startDate: m1d1StartDate } = useUI();
+
+    const { handleSubmit, control, reset, watch, formState: { errors, isSubmitting } } = useForm<NoteEditorFormData>({
         resolver: zodResolver(noteEditorSchema),
         defaultValues: {
             content: '',
             isRevelation: false,
             tags: '',
-            date: new Date().toISOString().split('T')[0]
+            date: new Date()
         }
     });
+
+    const watchedDate = watch('date');
+    const yahuahDateDetails = useMemo(() => {
+        if (!watchedDate || !m1d1StartDate) return null;
+        
+        const yahuahDate = get364DateFromGregorian(watchedDate, m1d1StartDate);
+        if (!yahuahDate) return null;
+
+        const dayOfWeekIndex = (yahuahDate.day - 1) % 7;
+        const hebrewDay = hebrewDays[dayOfWeekIndex];
+        
+        const gregorianDayOfWeek = watchedDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+        const gregorianDateString = watchedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+
+
+        return {
+            yahuahString: `${hebrewDay}, M${yahuahDate.month} D${yahuahDate.day}`,
+            gregorianString: `${gregorianDayOfWeek}, ${gregorianDateString}`,
+        }
+
+    }, [watchedDate, m1d1StartDate]);
 
     useEffect(() => {
         if (note) {
@@ -122,14 +145,14 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
                 content: note.content,
                 isRevelation: note.isRevelation,
                 tags: note.tags?.join(', ') || '',
-                date: note.date,
+                date: new Date(note.date + 'T00:00:00'),
             });
         } else {
              reset({
                 content: '',
                 isRevelation: false,
                 tags: '',
-                date: new Date().toISOString().split('T')[0]
+                date: new Date()
             });
         }
     }, [note, reset]);
@@ -144,20 +167,24 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
              
              <div className="space-y-2">
                 <Label>Date</Label>
-                 <Controller
-                    name="date"
-                    control={control}
-                    render={({ field }) => (
-                         <DatePicker
-                          date={field.value ? new Date(field.value + 'T00:00:00') : undefined}
-                          setDate={(date) => {
-                            if (date) {
-                              field.onChange(date.toISOString().split('T')[0]);
-                            }
-                          }}
-                        />
+                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                     <Controller
+                        name="date"
+                        control={control}
+                        render={({ field }) => (
+                            <DatePicker
+                                date={field.value}
+                                setDate={(date) => date && field.onChange(date)}
+                            />
+                        )}
+                    />
+                    {yahuahDateDetails && (
+                        <div className="text-left">
+                            <p className="font-bold text-primary">{yahuahDateDetails.yahuahString}</p>
+                            <p className="text-xs text-muted-foreground">{yahuahDateDetails.gregorianString}</p>
+                        </div>
                     )}
-                />
+                 </div>
              </div>
 
             <div className="space-y-2">
@@ -244,6 +271,7 @@ export const MyJournal = ({ userId }: { userId: string }) => {
     
     const payload = {
         ...data,
+        date: data.date.toISOString().split('T')[0],
         userId: userId,
         tags: data.tags?.split(',').map((t:string) => t.trim()).filter(Boolean) || [],
     };
@@ -253,8 +281,9 @@ export const MyJournal = ({ userId }: { userId: string }) => {
         updateDocumentNonBlocking(docRef, { ...payload, updatedAt: new Date() });
         toast({ title: 'Note Updated!'});
     } else { // We are creating
-        const colRef = collection(firestore, `users/${userId}/notes`);
-        addDocumentNonBlocking(colRef, { ...payload, createdAt: new Date() });
+        const notesCollection = collection(firestore, `users/${userId}/notes`);
+        const newDocRef = doc(notesCollection);
+        setDocumentNonBlocking(newDocRef, { ...payload, createdAt: new Date() });
         toast({ title: 'Note Saved!'});
     }
     
