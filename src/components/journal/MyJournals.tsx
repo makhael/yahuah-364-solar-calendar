@@ -409,7 +409,7 @@ export const MyJournals = () => {
                     <BookMarked className="w-5 h-5"/>
                     My Journals
                 </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Pull all of your private journal entries and insights.</p>
             </div>
             {user && !user.isAnonymous && !isCreating && !editingNote && (
                 <Button onClick={() => setIsCreating(true)} className="w-full sm:w-auto">
