@@ -6,9 +6,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUser, useFirestore, useAuth } from '@/firebase';
-import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { updateProfile } from 'firebase/auth';
+import { doc, collection } from 'firebase/firestore';
+import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,6 @@ import { Separator } from '../ui/separator';
 const profileSchema = z.object({
   displayName: z.string().min(3, { message: "Display name must be at least 3 characters." }),
   photoURL: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  phoneNumber: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -41,7 +40,6 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
     defaultValues: {
       displayName: '',
       photoURL: '',
-      phoneNumber: '',
     }
   });
   
@@ -52,7 +50,6 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       reset({
         displayName: user.displayName || '',
         photoURL: user.photoURL || '',
-        phoneNumber: user.phoneNumber || '',
       });
     }
   }, [user, isUserLoading, reset]);
@@ -67,15 +64,12 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       await updateProfile(user, {
         displayName: data.displayName,
         photoURL: data.photoURL,
-        // The client-side updateProfile function cannot update phone number directly
-        // for security reasons. We only update it in our Firestore document.
       });
 
       const userDocRef = doc(firestore, 'users', user.uid);
       updateDocumentNonBlocking(userDocRef, {
         displayName: data.displayName,
         photoURL: data.photoURL,
-        phoneNumber: data.phoneNumber,
       });
 
       toast({ title: 'Profile Updated!', description: 'Your changes have been saved.' });
@@ -87,12 +81,20 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
   };
 
   const handlePasswordReset = async () => {
-    if (!user?.email) {
+    if (!user?.email || !firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'No email address associated with this account.' });
       return;
     }
+    
     try {
-      await sendPasswordResetEmail(auth, user.email);
+      const mailColRef = collection(firestore, "mail");
+      await addDocumentNonBlocking(mailColRef, {
+        to: [user.email],
+        template: {
+          name: 'password-reset'
+        }
+      });
+      
       toast({
         title: 'Password Reset Email Sent',
         description: `An email has been sent to ${user.email} with instructions to reset your password.`,
@@ -102,6 +104,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       toast({ variant: 'destructive', title: 'Error', description: 'Could not send password reset email. Please try again later.' });
     }
   };
+
 
   if (!isOpen || !user) return null;
 
@@ -130,7 +133,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
                     <Avatar className="h-24 w-24 border-4">
                         <AvatarImage src={watchedPhotoURL || user.photoURL || ''} alt={user.displayName || 'user'}/>
                         <AvatarFallback className="text-3xl">
-                            {user.displayName?.charAt(0).toUpperCase()}
+                            {(user.displayName || 'U').charAt(0).toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
                 </div>
@@ -147,11 +150,6 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
                 <Label htmlFor="photoURL">Photo URL</Label>
                 <Controller name="photoURL" control={control} render={({ field }) => <Input id="photoURL" {...field} className="bg-background/50" placeholder="https://example.com/image.png" />} />
                 {errors.photoURL && <p className="text-sm text-destructive">{errors.photoURL.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Controller name="phoneNumber" control={control} render={({ field }) => <Input id="phoneNumber" {...field} className="bg-background/50" placeholder="(123) 456-7890" />} />
-                  {errors.phoneNumber && <p className="text-sm text-destructive">{errors.phoneNumber.message}</p>}
                 </div>
                 <div className="pt-4 flex justify-end items-center gap-2">
                     <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
