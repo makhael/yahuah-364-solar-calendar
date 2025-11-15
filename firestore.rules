@@ -95,7 +95,8 @@ service cloud.firestore {
 
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
-        allow read, list, get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin());
+        allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin());
+        allow list: if isSignedIn() && (isAdmin() || isUserAdmin());
     }
     
     match /scriptureReadings/{readingId} {
