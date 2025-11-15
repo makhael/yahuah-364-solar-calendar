@@ -64,15 +64,10 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin() || isUserAdmin();
-      allow list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create: if true;
       allow update: if isOwner(userId) || isAdmin() || isUserAdmin();
       allow delete: if isAdmin() || isUserAdmin();
-
-      match /glossaryProposals/{proposalId} {
-        allow read, write: if isOwner(userId) || isAdmin() || isUserAdmin() || isUserLeader();
-      }
       
       match /notes/{noteId} {
         allow read, write: if isOwner(userId);
