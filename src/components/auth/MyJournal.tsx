@@ -34,6 +34,16 @@ interface Note {
   updatedAt?: { seconds: number };
 }
 
+const noteEditorSchema = z.object({
+    content: z.string().min(1, 'Note cannot be empty.'),
+    isRevelation: z.boolean(),
+    tags: z.string().optional(),
+    date: z.string(),
+});
+
+type NoteEditorFormData = z.infer<typeof noteEditorSchema>;
+
+
 const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note) => void, onDelete: (id: string) => void }) => {
     const { navigateToTarget, startDate } = useUI();
     
@@ -304,3 +314,4 @@ export const MyJournal = ({ userId }: { userId: string }) => {
     </div>
   );
 };
+
