@@ -64,7 +64,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin() || isUserAdmin();
+      allow get: if isSignedIn();
       allow list: if isSignedIn();
       allow create: if true;
       allow update: if isOwner(userId) || isAdmin() || isUserAdmin();
