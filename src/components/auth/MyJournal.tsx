@@ -19,6 +19,9 @@ import { Input } from '@/components/ui/input';
 import { get364DateFromGregorian } from '@/lib/calendar-utils';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
+import { z } from 'zod';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 interface Note {
   id: string;
@@ -139,11 +142,11 @@ export const MyJournal = ({ userId }: { userId: string }) => {
     
     if (noteId) { // We are updating
         const docRef = doc(firestore, `users/${userId}/notes`, noteId);
-        updateDocumentNonBlocking(docRef, payload);
+        updateDocumentNonBlocking(docRef, { ...payload, updatedAt: new Date() });
         toast({ title: 'Note Updated!'});
     } else { // We are creating
         const collectionRef = collection(firestore, `users/${userId}/notes`);
-        addDocumentNonBlocking(collectionRef, payload);
+        addDocumentNonBlocking(collectionRef, { ...payload, createdAt: new Date(), updatedAt: new Date() });
         toast({ title: 'Note Saved!'});
     }
     
