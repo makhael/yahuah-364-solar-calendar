@@ -350,7 +350,7 @@ export const MyJournals = () => {
                     <BookMarked className="w-5 h-5"/>
                     Pull All Journals
                 </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">A private, searchable archive of your personal studies and insights.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">A private, searchable archive of all your personal studies and insights.</p>
             </div>
             {user && !user.isAnonymous && !isCreating && !editingEntry && (
                 <Button onClick={handleOpenCreator} className="w-full sm:w-auto">
