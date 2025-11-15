@@ -13,16 +13,8 @@ service cloud.firestore {
 
     function isAdmin() {
       // Check for a custom claim 'admin' on the user's auth token.
-      // This is the correct and performant way to check for roles in list queries.
+      // This is the correct and performant way to check for roles.
       return request.auth.token.admin == true;
-    }
-    
-    function isUserAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    function isUserLeader() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'leader';
     }
 
     match /appointments/{appointmentId} {
@@ -60,15 +52,14 @@ service cloud.firestore {
 
     match /emailTemplates/{templateId} {
         allow read: if isSignedIn();
-        allow write: if isAdmin() || isUserAdmin();
+        allow write: if isAdmin();
     }
 
     match /users/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow read: if isSignedIn();
       allow create: if true;
-      allow update: if isOwner(userId) || isAdmin() || isUserAdmin();
-      allow delete: if isAdmin() || isUserAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
       
       match /notes/{noteId} {
         allow read, write: if isOwner(userId);
@@ -89,19 +80,19 @@ service cloud.firestore {
 
     match /glossaryTerms/{termId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin() || isUserAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
-        allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin() || isUserLeader());
-        allow list: if isSignedIn() && (isAdmin() || isUserAdmin() || isUserLeader());
+        allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+        allow list: if isSignedIn() && isAdmin();
     }
     
     match /scriptureReadings/{readingId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin() || isUserLeader());
+      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
     }
 
     match /podcast_series/{podcastSeriesId} {
