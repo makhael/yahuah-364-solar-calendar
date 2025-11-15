@@ -13,7 +13,6 @@ service cloud.firestore {
 
     function isAdmin() {
       // Check for a custom claim 'admin' on the user's auth token.
-      // This is the correct and performant way to check for roles.
       return request.auth.token.admin == true;
     }
 
