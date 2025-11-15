@@ -44,7 +44,7 @@ export const MyBookmarks = ({ userId }: { userId: string }) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8 h-96">
         <div className="relative flex h-24 w-24 items-center justify-center">
             <LoaderCircle className="absolute h-full w-full animate-spin text-primary/50" />
             {logo && (
@@ -65,7 +65,7 @@ export const MyBookmarks = ({ userId }: { userId: string }) => {
 
   if (!bookmarks || bookmarks.length === 0) {
     return (
-      <div className="text-center p-8 bg-secondary/30 rounded-lg">
+      <div className="text-center p-8 bg-secondary/30 rounded-lg h-96 flex flex-col items-center justify-center">
         <Bookmark className="mx-auto h-12 w-12 text-muted-foreground" />
         <h3 className="mt-4 font-semibold">No Bookmarks Yet</h3>
         <p className="mt-2 text-sm text-muted-foreground">
