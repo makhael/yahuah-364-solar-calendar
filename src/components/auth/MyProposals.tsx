@@ -115,8 +115,8 @@ export const MyProposals = ({ userId }: { userId: string }) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {}}
-                      disabled={true}
+                      onClick={() => openModal('glossaryProposal', { proposal })}
+                      disabled={proposal.status !== 'pending'}
                     >
                       <Edit className="w-3 h-3 mr-2" /> Edit
                     </Button>
