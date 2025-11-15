@@ -318,25 +318,26 @@ export const MyJournals = () => {
                 const monthName = firstNoteDate.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
 
                 const year = firstNoteDate.getFullYear();
-                const sacredMonth = get364DateFromGregorian(firstNoteDate, new Date(year, 0, 1))?.month;
+                const { startDate } = useUI();
+                const sacredMonth = get364DateFromGregorian(firstNoteDate, startDate)?.month;
                 
                 return (
                     <AccordionItem key={monthKey} value={monthKey}>
                         <AccordionTrigger className="hover:no-underline">
                             <div className="flex flex-wrap items-center justify-between w-full gap-x-4 gap-y-2">
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-4 flex-1 min-w-0">
                                     <div className="bg-muted p-3 rounded-lg text-center w-[80px] flex-shrink-0">
                                         <p className="font-bold text-lg text-primary">{monthName}</p>
                                         <p className="text-xs text-muted-foreground">{year}</p>
                                     </div>
-                                    <div>
-                                        <p className="font-semibold text-lg text-foreground text-left">{sacredMonth ? `Month ${sacredMonth}` : monthName}</p>
+                                    <div className="min-w-0">
+                                        <p className="font-semibold text-lg text-foreground text-left truncate">{sacredMonth ? `Month ${sacredMonth}` : monthName}</p>
                                         <p className="text-sm text-muted-foreground text-left">
                                             {`${lastNoteDate.getUTCDate()} ${monthName} - ${firstNoteDate.getUTCDate()} ${monthName}, ${year}`}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right flex-shrink-0">
                                     <p className="font-semibold text-lg text-foreground">{notesInMonth.length}</p>
                                     <p className="text-sm text-muted-foreground">Entries</p>
                                 </div>
