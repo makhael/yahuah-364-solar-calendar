@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, serverTimestamp, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { BookMarked, Trash2, BadgeCheck, LogIn, Edit, PlusCircle, X } from 'lucide-react';
 import { deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
@@ -26,115 +26,83 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { Card, CardContent } from '../ui/card';
 import { LoaderCircle } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 
-
-const noteSchema = z.object({
+const noteEntrySchema = z.object({
   content: z.string().min(1, 'Note cannot be empty.'),
   isRevelation: z.boolean(),
   tags: z.string().optional(),
-  date: z.date({ required_error: "A date is required."}),
 });
 
-type NoteFormData = z.infer<typeof noteSchema>;
+type NoteEntryFormData = z.infer<typeof noteEntrySchema>;
 
-
-interface Note {
-  id: string;
-  content: string;
-  isRevelation: boolean;
-  date: string; // YYYY-MM-DD
-  tags?: string[];
-  createdAt?: { seconds: number };
-  updatedAt?: { seconds: number };
+interface JournalEntry {
+    id: string; // unique id for the entry within the array
+    content: string;
+    isRevelation: boolean;
+    tags?: string[];
+    createdAt: any; // Firestore Timestamp
+    updatedAt: any;
 }
 
+interface DailyJournalDoc {
+  id: string; // YYYY-MM-DD
+  entries: JournalEntry[];
+  updatedAt: any;
+}
+
+
 const JournalForm = ({
-    noteToEdit,
     onSave,
     onCancel,
+    existingEntry,
+    date
 }: {
-    noteToEdit: Note | null;
-    onSave: (data: NoteFormData, noteId?: string) => void;
+    onSave: (data: NoteEntryFormData, entryId?: string) => void;
     onCancel: () => void;
+    existingEntry: JournalEntry | null;
+    date: Date;
 }) => {
-    const { handleSubmit, control, reset, watch, formState: { errors, isSubmitting } } = useForm<NoteFormData>({
-        resolver: zodResolver(noteSchema),
+    const { handleSubmit, control, reset, watch, formState: { errors, isSubmitting } } = useForm<NoteEntryFormData>({
+        resolver: zodResolver(noteEntrySchema),
         defaultValues: {
             content: '',
             isRevelation: false,
             tags: '',
-            date: new Date(),
         }
     });
 
     const { startDate } = useUI();
-    const watchedDate = watch('date');
-
-    const sacredDateInfo = useMemo(() => {
-        if (!watchedDate || !startDate) return null;
-        
-        const yahuahDate = get364DateFromGregorian(watchedDate, startDate);
-        if (!yahuahDate) return null;
-
-        const dayOfWeekIndex = (yahuahDate.day - 1) % 7;
-        const dayName = hebrewDays[dayOfWeekIndex];
-        
-        return {
-            yahuahDateString: `${dayName}, M${yahuahDate.month} D${yahuahDate.day}`,
-            gregorianDateString: watchedDate.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            })
-        };
-    }, [watchedDate, startDate]);
+    const yahuahDate = get364DateFromGregorian(date, startDate);
 
     useEffect(() => {
-        if (noteToEdit) {
+        if (existingEntry) {
             reset({
-                content: noteToEdit.content,
-                isRevelation: noteToEdit.isRevelation,
-                tags: noteToEdit.tags?.join(', ') || '',
-                date: new Date(noteToEdit.date + 'T00:00:00'),
+                content: existingEntry.content,
+                isRevelation: existingEntry.isRevelation,
+                tags: existingEntry.tags?.join(', ') || '',
             });
         } else {
              reset({
                 content: '',
                 isRevelation: false,
                 tags: '',
-                date: new Date(),
             });
         }
-    }, [noteToEdit, reset]);
+    }, [existingEntry, reset]);
     
-    const onSubmit = (data: NoteFormData) => {
-        onSave(data, noteToEdit?.id);
+    const onSubmit = (data: NoteEntryFormData) => {
+        onSave(data, existingEntry?.id);
     }
 
     return (
         <Card className="mt-4">
             <CardContent className="p-4">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <h4 className="font-semibold text-foreground">{noteToEdit ? 'Edit Journal Entry' : 'Create New Journal Entry'}</h4>
-                    <div>
-                        <Label>Date</Label>
-                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                            <Controller
-                                name="date"
-                                control={control}
-                                render={({ field }) => (
-                                    <DatePicker date={field.value} setDate={field.onChange} />
-                                )}
-                            />
-                             {sacredDateInfo && (
-                                <div className="pl-1 text-center sm:text-left">
-                                    <p className="font-bold text-primary">{sacredDateInfo.yahuahDateString}</p>
-                                    <p className="text-xs text-muted-foreground">{sacredDateInfo.gregorianDateString}</p>
-                                </div>
-                            )}
-                        </div>
-                        {errors.date && <p className="text-xs text-destructive mt-1">{errors.date.message}</p>}
+                    <h4 className="font-semibold text-foreground">{existingEntry ? 'Edit Entry' : 'Create New Entry'}</h4>
+                    <div className="pl-1 text-center sm:text-left">
+                        <p className="font-bold text-primary">{date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</p>
+                        {yahuahDate && <p className="text-xs text-muted-foreground">{getSacredMonthName(yahuahDate.month)} (Month {yahuahDate.month}), Day {yahuahDate.day}</p>}
                     </div>
 
                     <div>
@@ -188,44 +156,34 @@ export const MyJournals = () => {
   const { startDate, navigateToTarget } = useUI();
   const { toast } = useToast();
   const router = useRouter();
-  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [editingEntry, setEditingEntry] = useState<{ docId: string; entry: JournalEntry; } | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [creationDate, setCreationDate] = useState(new Date());
 
   const allNotesQuery = useMemoFirebase(() => {
     if (isUserLoading || !user || user.isAnonymous || !firestore) return null;
     return query(
       collection(firestore, 'users', user.uid, 'notes'),
-       orderBy('date', 'desc'),
        orderBy('updatedAt', 'desc')
     );
   }, [isUserLoading, user?.uid, firestore]);
 
-  const { data: allNotes, isLoading } = useCollection<Note>(allNotesQuery);
-  
-  const groupedNotes = useMemo(() => {
-    if (!allNotes) return {};
-    
-    return allNotes.reduce((acc, note) => {
-      const gregorianNoteDate = new Date(note.date + 'T00:00:00');
-      const date364 = get364DateFromGregorian(gregorianNoteDate, startDate);
-      if (!date364) return acc;
-      
-      const groupKey = `Month ${date364.month}: ${getSacredMonthName(date364.month)}`;
+  const { data: allJournalDocs, isLoading } = useCollection<DailyJournalDoc>(allNotesQuery);
 
-      if (!acc[groupKey]) {
-        acc[groupKey] = [];
-      }
-      acc[groupKey].push(note);
-      return acc;
-    }, {} as Record<string, Note[]>);
-  }, [allNotes, startDate]);
-
-
-  const handleDelete = (noteId: string) => {
+  const handleDelete = async (docId: string, entryId: string) => {
     if (!user || !firestore) return;
-    const noteRef = doc(firestore, 'users', user.uid, 'notes', noteId);
-    deleteDocumentNonBlocking(noteRef);
-    toast({ title: "Note Deleted", description: "The note has been removed from your journal." });
+    const docRef = doc(firestore, 'users', user.uid, 'notes', docId);
+    
+    // Find the entry to remove
+    const journalDoc = allJournalDocs?.find(d => d.id === docId);
+    const entryToRemove = journalDoc?.entries.find(e => e.id === entryId);
+
+    if (entryToRemove) {
+      await updateDoc(docRef, {
+        entries: arrayRemove(entryToRemove)
+      });
+      toast({ title: "Note Deleted", description: "The note has been removed from your journal." });
+    }
   };
   
   const handleGoToDate = (gregorianDateStr: string) => {
@@ -235,32 +193,45 @@ export const MyJournals = () => {
     }
   };
   
-  const handleSaveNote = async (data: NoteFormData, noteId?: string) => {
+  const handleSaveNote = async (data: NoteEntryFormData, entryId?: string) => {
     if (!user || !firestore) return;
     
-    const dateId = data.date.toISOString().split('T')[0];
+    const dateId = (editingEntry ? editingEntry.docId : creationDate.toISOString().split('T')[0]);
+    const docRef = doc(firestore, 'users', user.uid, 'notes', dateId);
+    
+    const journalDoc = allJournalDocs?.find(d => d.id === dateId);
     
     const payload = {
+        id: entryId || uuidv4(),
         content: data.content,
         isRevelation: data.isRevelation,
         tags: data.tags?.split(',').map(t => t.trim()).filter(Boolean) || [],
-        date: dateId,
         updatedAt: serverTimestamp(),
-        userId: user.uid,
+        createdAt: entryId ? (journalDoc?.entries.find(e => e.id === entryId)?.createdAt || serverTimestamp()) : serverTimestamp(),
     };
-    
-    if (noteId) {
-      const noteRef = doc(firestore, 'users', user.uid, 'notes', noteId);
-      await updateDoc(noteRef, payload);
-    } else {
-      const notesCol = collection(firestore, 'users', user.uid, 'notes');
-      await addDoc(notesCol, { ...payload, createdAt: serverTimestamp() });
+
+    if (journalDoc) { // Document for this day exists
+        const existingEntries = journalDoc.entries || [];
+        let newEntries;
+        if (entryId) { // Editing an existing entry
+            newEntries = existingEntries.map(e => e.id === entryId ? payload : e);
+        } else { // Adding a new entry
+            newEntries = [...existingEntries, payload];
+        }
+        await updateDoc(docRef, { entries: newEntries, updatedAt: serverTimestamp() });
+    } else { // No document for this day, create it
+        await setDocumentNonBlocking(docRef, { entries: [payload], updatedAt: serverTimestamp(), userId: user.uid }, { merge: true });
     }
     
     toast({ title: "Journal Saved", description: "Your entry has been saved." });
     setIsCreating(false);
-    setEditingNote(null);
+    setEditingEntry(null);
   };
+  
+  const handleOpenCreator = () => {
+    setIsCreating(true);
+    setCreationDate(new Date());
+  }
 
   const renderContent = () => {
     if (isUserLoading || isLoading) {
@@ -283,20 +254,14 @@ export const MyJournals = () => {
       );
     }
     
-    if (isCreating || editingNote) {
-        return (
-            <JournalForm
-                noteToEdit={editingNote}
-                onSave={handleSaveNote}
-                onCancel={() => {
-                    setIsCreating(false);
-                    setEditingNote(null);
-                }}
-            />
-        );
+    if (isCreating) {
+        return <JournalForm onSave={handleSaveNote} onCancel={() => setIsCreating(false)} existingEntry={null} date={creationDate} />;
+    }
+    if (editingEntry) {
+         return <JournalForm onSave={handleSaveNote} onCancel={() => setEditingEntry(null)} existingEntry={editingEntry.entry} date={new Date(editingEntry.docId + "T00:00:00")} />;
     }
     
-    if (!allNotes || allNotes.length === 0) {
+    if (!allJournalDocs || allJournalDocs.length === 0) {
       return (
         <div className="text-center p-6 bg-secondary/30 rounded-lg">
             <BookMarked className="w-8 h-8 text-muted-foreground mx-auto mb-3"/>
@@ -307,87 +272,62 @@ export const MyJournals = () => {
     }
 
     return (
-       <Accordion type="multiple" className="w-full" defaultValue={Object.keys(groupedNotes)}>
-        {Object.entries(groupedNotes).map(([monthLabel, notes]) => {
-            const monthNum = parseInt(monthLabel.split(' ')[1], 10);
-            const daysInMonth = TEKUFAH_MONTHS.includes(monthNum) ? 31 : 30;
-            const monthStartDate = getGregorianDate(startDate, monthNum, 1);
-            const monthEndDate = getGregorianDate(startDate, monthNum, daysInMonth);
-            const dateRangeStr = `${monthStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${monthEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+       <Accordion type="multiple" className="w-full" defaultValue={allJournalDocs.map(doc => doc.id)}>
+        {allJournalDocs.map((doc) => {
+            const gregorianNoteDate = new Date(doc.id + 'T00:00:00');
+            const date364 = get364DateFromGregorian(gregorianNoteDate, startDate);
+            if (!date364) return null;
+
+            const monthLabel = `Month ${date364.month}: ${getSacredMonthName(date364.month)}`;
 
             return (
-              <AccordionItem value={monthLabel} key={monthLabel}>
+              <AccordionItem value={doc.id} key={doc.id}>
                 <AccordionTrigger className="hover:no-underline">
                     <div className="flex justify-between items-center w-full pr-2">
-                         <div className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-1 text-left">
+                        <div className="bg-primary/10 border border-primary/20 rounded-lg px-3 py-1 text-left">
                             <div className="text-sm font-bold text-primary tracking-wide">{monthLabel.split(':')[0]}</div>
-                            <div className="text-xs font-semibold text-muted-foreground mt-0.5">{monthLabel.split(':')[1].trim()}</div>
-                            <div className="text-[10px] text-muted-foreground/70 mt-1">{dateRangeStr}</div>
+                            <div className="text-xs font-semibold text-muted-foreground mt-0.5">{date364.day}, {gregorianNoteDate.getFullYear()}</div>
+                            <div className="text-[10px] text-muted-foreground/70 mt-1">{gregorianNoteDate.toLocaleDateString('en-us', {weekday: 'long', month: 'long', day: 'numeric'})}</div>
                         </div>
-                        <span className="text-sm font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md">{notes.length} {notes.length === 1 ? 'Entry' : 'Entries'}</span>
+                        <span className="text-sm font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md">{doc.entries.length} {doc.entries.length === 1 ? 'Entry' : 'Entries'}</span>
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
                     <div className="relative pl-6 pt-4 space-y-8 z-0">
                         <div className="absolute left-[36px] top-0 bottom-0 w-0.5 bg-border -z-10"></div>
-                        {notes.map((note) => {
-                            const gregorianNoteDate = new Date(note.date + 'T00:00:00');
-                            const date364 = get364DateFromGregorian(gregorianNoteDate, startDate);
-                            let sacredDateString = '';
-                            if (date364) {
-                                sacredDateString = `${getSacredMonthName(date364.month)} (Month ${date364.month}), Day ${date364.day}`;
-                            }
-                             const timestamp = note.updatedAt || note.createdAt;
-
+                        {doc.entries.sort((a,b) => b.createdAt?.seconds - a.createdAt?.seconds).map((entry) => {
                             return (
-                                <div key={note.id} className="relative flex items-start gap-6">
+                                <div key={entry.id} className="relative flex items-start gap-6">
                                     <div className="relative z-10 flex h-full items-start pt-2">
                                         <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-6 h-6 bg-background rounded-full"></div>
-                                        <div className={cn("relative w-3 h-3 rounded-full border-2 border-background shadow-sm", note.isRevelation ? "bg-amber-600" : "bg-muted-foreground")}></div>
+                                        <div className={cn("relative w-3 h-3 rounded-full border-2 border-background shadow-sm", entry.isRevelation ? "bg-amber-600" : "bg-muted-foreground")}></div>
                                     </div>
 
                                     <div className="flex-1 -ml-2">
                                     <div className="flex justify-between items-start">
                                         <div className="bg-card pr-2 pt-1">
-                                        <p className="font-semibold text-muted-foreground text-sm">
-                                            {gregorianNoteDate.toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
-                                            timeZone: 'UTC'
-                                            })}
-                                            {timestamp && (
-                                                <span className="ml-2 font-normal text-xs">
-                                                    at {new Date(timestamp.seconds * 1000).toLocaleTimeString()}
-                                                </span>
-                                            )}
-                                        </p>
-                                        {sacredDateString && (
-                                            <p className={cn("font-medium text-xs", note.isRevelation ? "text-amber-500/80" : "text-muted-foreground/80")}>{sacredDateString}</p>
-                                        )}
+                                         {entry.createdAt && (
+                                            <p className="font-semibold text-muted-foreground text-sm">
+                                                {new Date(entry.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
+                                            </p>
+                                          )}
                                         </div>
                                          <div className="flex items-center">
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditingNote(note)} title="Edit Note"><Edit className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(note.id)} title="Delete this note" >
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditingEntry({docId: doc.id, entry})} title="Edit Note"><Edit className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(doc.id, entry.id)} title="Delete this note" >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                          </div>
                                     </div>
-                                    <div className={cn("mt-1 p-4 rounded-lg border shadow-inner", note.isRevelation ? "bg-amber-900/80 border-amber-500/50 revelation-bg-pattern" : "bg-muted/30")}>
-                                        {note.isRevelation && <Badge className="mb-2 bg-amber-500 text-white"><BadgeCheck className="w-3 h-3 mr-1.5"/>Revelation</Badge>}
-                                        <MarkdownRenderer content={note.content} className={cn(note.isRevelation ? "text-amber-100" : "text-foreground/80")} />
-                                        {note.tags && note.tags.length > 0 && (
+                                    <div className={cn("mt-1 p-4 rounded-lg border shadow-inner", entry.isRevelation ? "bg-amber-900/80 border-amber-500/50 revelation-bg-pattern" : "bg-muted/30")}>
+                                        {entry.isRevelation && <Badge className="mb-2 bg-amber-500 text-white"><BadgeCheck className="w-3 h-3 mr-1.5"/>Revelation</Badge>}
+                                        <MarkdownRenderer content={entry.content} className={cn(entry.isRevelation ? "text-amber-100" : "text-foreground/80")} />
+                                        {entry.tags && entry.tags.length > 0 && (
                                             <div className="mt-3 flex flex-wrap gap-2">
-                                                {note.tags.map(tag => <Badge key={tag} variant="secondary">#{tag}</Badge>)}
+                                                {entry.tags.map(tag => <Badge key={tag} variant="secondary">#{tag}</Badge>)}
                                             </div>
                                         )}
                                     </div>
-                                    <button
-                                        onClick={() => handleGoToDate(note.date)}
-                                        className="mt-3 text-xs font-semibold text-primary hover:underline"
-                                    >
-                                        Go to Date
-                                    </button>
                                     </div>
                                 </div>
                             );
@@ -407,12 +347,12 @@ export const MyJournals = () => {
             <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left">
                 <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
                     <BookMarked className="w-5 h-5"/>
-                    My Journals
+                    Pull All Journals
                 </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Pull all of your private journal entries and insights.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
             </div>
-            {user && !user.isAnonymous && !isCreating && !editingNote && (
-                <Button onClick={() => setIsCreating(true)} className="w-full sm:w-auto">
+            {user && !user.isAnonymous && !isCreating && !editingEntry && (
+                <Button onClick={handleOpenCreator} className="w-full sm:w-auto">
                     <PlusCircle className="w-4 h-4 mr-2" />
                     Create New Entry
                 </Button>
