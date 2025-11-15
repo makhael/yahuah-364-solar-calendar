@@ -98,7 +98,7 @@ export const MyJournal = ({ userId }: { userId: string }) => {
   const { toast } = useToast();
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isEditing, setIsEditing] = useState<Note | null>(null);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   const notesQuery = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
@@ -125,10 +125,7 @@ export const MyJournal = ({ userId }: { userId: string }) => {
   };
   
   const handleEdit = (note: Note) => {
-    setIsEditing(note);
-    // You would typically open a form/modal here populated with the note data
-    // For simplicity, we'll just log it for now.
-    console.log("Editing note:", note);
+    setEditingNote(note);
   }
 
   const handleSave = (data: any, noteId?: string) => {
@@ -146,99 +143,14 @@ export const MyJournal = ({ userId }: { userId: string }) => {
         toast({ title: 'Note Updated!'});
     } else { // We are creating
         const collectionRef = collection(firestore, `users/${userId}/notes`);
-        addDocumentNonBlocking(collectionRef, { ...payload, createdAt: new Date(), updatedAt: new Date() });
+        addDocumentNonBlocking(collectionRef, { ...payload, createdAt: new Date() });
         toast({ title: 'Note Saved!'});
     }
     
-    setIsEditing(null); // Close the form
+    setEditingNote(null); // Close the form
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8 h-96">
-        <div className="relative flex h-24 w-24 items-center justify-center">
-            <LoaderCircle className="absolute h-full w-full animate-spin text-primary/50" />
-            {logo && (
-                <Image
-                    src={logo.imageUrl}
-                    alt={logo.description}
-                    width={64}
-                    height={64}
-                    data-ai-hint={logo.imageHint}
-                    className="h-16 w-16 rounded-full object-cover"
-                    priority
-                />
-            )}
-        </div>
-      </div>
-    );
-  }
-
-  if (isEditing) {
-      return <JournalEditor note={isEditing} onSave={handleSave} onCancel={() => setIsEditing(null)} />;
-  }
-
-  if (!notes || notes.length === 0) {
-    return (
-        <div>
-            <JournalEditor onSave={handleSave} onCancel={() => {}} />
-            <div className="text-center p-8 bg-secondary/30 rounded-lg h-96 flex flex-col items-center justify-center mt-4">
-                <BookText className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 font-semibold">No Journal Entries Yet</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                Use the form above to add your first note.
-                </p>
-            </div>
-        </div>
-    );
-  }
-  
-  return (
-    <div className="space-y-4">
-        <JournalEditor onSave={handleSave} onCancel={() => {}} />
-
-        <div className="relative pt-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-              placeholder="Search your notes by content or #tag..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <ScrollArea className="h-96">
-            {filteredNotes.length > 0 ? (
-                <div className="space-y-4 pr-4">
-                    {filteredNotes.map(note => (
-                    <NoteCard key={note.id} note={note} onEdit={handleEdit} onDelete={handleDelete} />
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center p-8 bg-secondary/30 rounded-lg h-full flex flex-col justify-center items-center">
-                    <Search className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 font-semibold">No Notes Found</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        No entries match your search for "{searchTerm}".
-                    </p>
-                </div>
-            )}
-        </ScrollArea>
-    </div>
-  );
-};
-
-
-const noteEditorSchema = z.object({
-  content: z.string().min(1, 'Note cannot be empty.'),
-  isRevelation: z.boolean(),
-  tags: z.string().optional(),
-  date: z.string(),
-});
-type NoteEditorFormData = z.infer<typeof noteEditorSchema>;
-
-
-const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave: (data: any, id?: string) => void, onCancel: () => void }) => {
+  const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave: (data: any, id?: string) => void, onCancel: () => void }) => {
     const { handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<NoteEditorFormData>({
         resolver: zodResolver(noteEditorSchema),
         defaultValues: {
@@ -330,3 +242,65 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
 }
 
     
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8 h-96">
+        <div className="relative flex h-24 w-24 items-center justify-center">
+            <LoaderCircle className="absolute h-full w-full animate-spin text-primary/50" />
+            {logo && (
+                <Image
+                    src={logo.imageUrl}
+                    alt={logo.description}
+                    width={64}
+                    height={64}
+                    data-ai-hint={logo.imageHint}
+                    className="h-16 w-16 rounded-full object-cover"
+                    priority
+                />
+            )}
+        </div>
+      </div>
+    );
+  }
+
+  const editorToRender = editingNote 
+      ? <JournalEditor note={editingNote} onSave={handleSave} onCancel={() => setEditingNote(null)} />
+      : <JournalEditor onSave={handleSave} onCancel={() => {}} />;
+
+
+  return (
+    <div className="space-y-4">
+        {editorToRender}
+
+        <div className="relative pt-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+              placeholder="Search your notes by content or #tag..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <ScrollArea className="h-96">
+            {filteredNotes.length > 0 ? (
+                <div className="space-y-4 pr-4">
+                    {filteredNotes.map(note => (
+                    <NoteCard key={note.id} note={note} onEdit={handleEdit} onDelete={handleDelete} />
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center p-8 bg-secondary/30 rounded-lg h-full flex flex-col justify-center items-center">
+                    <Search className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-4 font-semibold">
+                        {searchTerm ? `No Notes Found for "${searchTerm}"` : "No Journal Entries Yet"}
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        {searchTerm ? "Try a different search." : "Use the form above to add your first note."}
+                    </p>
+                </div>
+            )}
+        </ScrollArea>
+    </div>
+  );
+};
