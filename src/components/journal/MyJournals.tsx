@@ -67,8 +67,8 @@ const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note)
                 "p-4 rounded-lg border",
                 note.isRevelation ? "bg-[#4a3a2a]/30" : "bg-background/50"
             )}>
-                 <div className="flex justify-between items-start mb-2">
-                    <div>
+                 <div className="flex justify-between items-start mb-2 gap-2">
+                    <div className="flex-grow">
                         <p className="text-sm font-semibold text-foreground">
                             {gregorianDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                         </p>
@@ -76,7 +76,7 @@ const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note)
                             {yahuahDate ? `${getSacredMonthName(yahuahDate.month)} (Month ${yahuahDate.month}), Day ${yahuahDate.day}` : ''}
                         </p>
                     </div>
-                     <div className="flex items-center gap-1">
+                     <div className="flex items-center gap-1 flex-shrink-0">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(note)}><Edit className="w-4 h-4" /></Button>
                          <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -316,7 +316,6 @@ export const MyJournals = () => {
                 const firstNoteDate = new Date(notesInMonth[0].date + 'T00:00:00');
                 const lastNoteDate = new Date(notesInMonth[notesInMonth.length - 1].date + 'T00:00:00');
                 const monthName = firstNoteDate.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
-                const monthNameShort = firstNoteDate.toLocaleString('default', { month: 'short', timeZone: 'UTC' });
 
                 const year = firstNoteDate.getFullYear();
                 const sacredMonth = get364DateFromGregorian(firstNoteDate, new Date(year, 0, 1))?.month;
@@ -324,20 +323,20 @@ export const MyJournals = () => {
                 return (
                     <AccordionItem key={monthKey} value={monthKey}>
                         <AccordionTrigger className="hover:no-underline">
-                            <div className="flex items-center justify-between w-full">
+                            <div className="flex flex-wrap items-center justify-between w-full gap-x-4 gap-y-2">
                                 <div className="flex items-center gap-4">
-                                    <div className="bg-muted p-3 rounded-lg text-center w-[80px]">
+                                    <div className="bg-muted p-3 rounded-lg text-center w-[80px] flex-shrink-0">
                                         <p className="font-bold text-lg text-primary">{monthName}</p>
                                         <p className="text-xs text-muted-foreground">{year}</p>
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-lg text-foreground">{sacredMonth ? `Month ${sacredMonth}` : monthName}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {`${monthNameShort} ${lastNoteDate.getUTCDate()} - ${monthNameShort} ${firstNoteDate.getUTCDate()}, ${year}`}
+                                        <p className="font-semibold text-lg text-foreground text-left">{sacredMonth ? `Month ${sacredMonth}` : monthName}</p>
+                                        <p className="text-sm text-muted-foreground text-left">
+                                            {`${lastNoteDate.getUTCDate()} ${monthName} - ${firstNoteDate.getUTCDate()} ${monthName}, ${year}`}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="text-right mr-4">
+                                <div className="text-right">
                                     <p className="font-semibold text-lg text-foreground">{notesInMonth.length}</p>
                                     <p className="text-sm text-muted-foreground">Entries</p>
                                 </div>
