@@ -168,7 +168,7 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
              
              <div className="space-y-2">
                 <Label>Date</Label>
-                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                 <div className="flex items-start gap-4">
                      <Controller
                         name="date"
                         control={control}
@@ -179,12 +179,14 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
                             />
                         )}
                     />
-                    {yahuahDateDetails && (
-                        <div className="text-left">
-                            <p className="font-bold text-primary">{yahuahDateDetails.yahuahString}</p>
-                            <p className="text-xs text-muted-foreground">{yahuahDateDetails.gregorianString}</p>
-                        </div>
-                    )}
+                    <div className="pt-1">
+                        {yahuahDateDetails && (
+                            <div className="text-left">
+                                <p className="font-bold text-primary">{yahuahDateDetails.yahuahString}</p>
+                                <p className="text-xs text-muted-foreground">{yahuahDateDetails.gregorianString}</p>
+                            </div>
+                        )}
+                    </div>
                  </div>
              </div>
 
