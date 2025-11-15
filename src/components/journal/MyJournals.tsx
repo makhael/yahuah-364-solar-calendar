@@ -13,7 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useUI } from '@/context/UIContext';
 import { useToast } from '@/hooks/use-toast';
 import { MarkdownRenderer } from '../common/MarkdownRenderer';
-import { TEKUFAH_MONTHS } from '@/lib/calendar-data';
+import { TEKUFAH_MONTHS, hebrewDays } from '@/lib/calendar-data';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
@@ -57,7 +57,7 @@ const JournalForm = ({
     onSave: (data: NoteFormData) => void;
     onCancel: () => void;
 }) => {
-    const { handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<NoteFormData>({
+    const { handleSubmit, control, reset, watch, formState: { errors, isSubmitting } } = useForm<NoteFormData>({
         resolver: zodResolver(noteSchema),
         defaultValues: {
             content: '',
@@ -66,6 +66,29 @@ const JournalForm = ({
             date: new Date(),
         }
     });
+
+    const { startDate } = useUI();
+    const watchedDate = watch('date');
+
+    const sacredDateInfo = useMemo(() => {
+        if (!watchedDate || !startDate) return null;
+        
+        const yahuahDate = get364DateFromGregorian(watchedDate, startDate);
+        if (!yahuahDate) return null;
+
+        const dayOfWeekIndex = (yahuahDate.day - 1) % 7;
+        const dayName = hebrewDays[dayOfWeekIndex];
+        
+        return {
+            yahuahDateString: `${dayName}, M${yahuahDate.month} D${yahuahDate.day}`,
+            gregorianDateString: watchedDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })
+        };
+    }, [watchedDate, startDate]);
 
     useEffect(() => {
         if (noteToEdit) {
@@ -90,39 +113,49 @@ const JournalForm = ({
             <CardContent className="p-4">
                 <form onSubmit={handleSubmit(onSave)} className="space-y-4">
                     <h4 className="font-semibold text-foreground">{noteToEdit ? 'Edit Journal Entry' : 'Create New Journal Entry'}</h4>
-                    <Controller
-                        name="date"
-                        control={control}
-                        render={({ field }) => (
-                            <div>
-                                <Label>Date</Label>
-                                <DatePicker date={field.value} setDate={field.onChange} />
-                                {errors.date && <p className="text-xs text-destructive mt-1">{errors.date.message}</p>}
-                            </div>
-                        )}
-                    />
-                    <Controller
-                        name="content"
-                        control={control}
-                        render={({ field }) => (
-                             <div>
-                                <Label>Content</Label>
-                                <Textarea {...field} placeholder="Record your thoughts and revelations..." rows={5} />
-                                <p className="text-xs text-muted-foreground mt-1">Format with: <strong>**bold**</strong>, <em>*italic*</em></p>
-                                {errors.content && <p className="text-xs text-destructive mt-1">{errors.content.message}</p>}
-                            </div>
-                        )}
-                    />
-                    <Controller
-                        name="tags"
-                        control={control}
-                        render={({ field }) => (
-                            <div>
-                                <Label>Tags (comma-separated)</Label>
-                                <Input {...field} placeholder="e.g. prophecy, torah, personal" />
-                            </div>
-                        )}
-                    />
+                    <div>
+                        <Label>Date</Label>
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                            <Controller
+                                name="date"
+                                control={control}
+                                render={({ field }) => (
+                                    <DatePicker date={field.value} setDate={field.onChange} />
+                                )}
+                            />
+                             {sacredDateInfo && (
+                                <div className="pl-1 text-center sm:text-left">
+                                    <p className="font-bold text-primary">{sacredDateInfo.yahuahDateString}</p>
+                                    <p className="text-xs text-muted-foreground">{sacredDateInfo.gregorianDateString}</p>
+                                </div>
+                            )}
+                        </div>
+                        {errors.date && <p className="text-xs text-destructive mt-1">{errors.date.message}</p>}
+                    </div>
+
+                    <div>
+                        <Label htmlFor="content">Content</Label>
+                        <Controller
+                            name="content"
+                            control={control}
+                            render={({ field }) => (
+                                <Textarea {...field} id="content" placeholder="Record your thoughts and revelations..." rows={5} />
+                            )}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Format with: <strong>**bold**</strong>, <em>*italic*</em></p>
+                        {errors.content && <p className="text-xs text-destructive mt-1">{errors.content.message}</p>}
+                    </div>
+
+                    <div>
+                        <Label htmlFor="tags">Tags (comma-separated)</Label>
+                        <Controller
+                            name="tags"
+                            control={control}
+                            render={({ field }) => (
+                                <Input {...field} id="tags" placeholder="e.g. prophecy, torah, personal" />
+                            )}
+                        />
+                    </div>
                     <div className="flex items-center space-x-2">
                         <Controller
                             name="isRevelation"
@@ -132,7 +165,7 @@ const JournalForm = ({
                         <Label htmlFor="isRevelation">Mark as Revelation</Label>
                     </div>
                     <div className="flex justify-end gap-2">
-                        <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
+                        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting ? <LoaderCircle className="w-4 h-4 mr-2 animate-spin" /> : null}
                             Save Entry
