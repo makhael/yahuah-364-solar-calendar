@@ -68,7 +68,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
       
       match /notes/{noteId} {
-        allow list, read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId);
+      }
+
+      match /notes {
+        allow list: if isOwner(userId);
       }
       
       match /calendarPresets/{presetId} {
