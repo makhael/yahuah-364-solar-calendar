@@ -86,19 +86,20 @@ service cloud.firestore {
 
     match /glossaryTerms/{termId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin() || isLeader();
     }
 
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
-        allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
+        allow get: if isSignedIn();
+        allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
         allow list: if isSignedIn();
     }
     
     match /scriptureReadings/{readingId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow list: if isSignedIn() && (isAdmin() || isLeader());
+      allow list: if isSignedIn();
       allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
     }
 
