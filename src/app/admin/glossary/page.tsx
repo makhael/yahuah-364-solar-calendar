@@ -5,7 +5,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, where, getDocs, deleteDoc, setDoc } from 'firebase/firestore';
-import { LoaderCircle, Check, X, Hourglass, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
+import { LoaderCircle, Check, X, Hourglass, ThumbsUp, ThumbsDown, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useUI } from '@/context/UIContext';
+import { GlossaryProposalModal } from '@/components/glossary/GlossaryProposalModal';
 
 interface Proposal {
     id: string;
@@ -31,7 +33,7 @@ interface Proposal {
     tags?: string[];
 }
 
-const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, onUpdate: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void }) => {
+const ProposalCard = ({ proposal, onUpdate, onDelete, onEdit }: { proposal: Proposal, onUpdate: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void, onEdit: (proposal: Proposal) => void }) => {
     
     const getStatusInfo = (status: Proposal['status']) => {
         switch (status) {
@@ -80,18 +82,18 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
                     <span>{statusInfo.text}</span>
                 </Badge>
                 <div className="w-full flex flex-col sm:flex-row sm:justify-end items-stretch gap-2">
-                    {proposal.status === 'pending' && (
-                        <>
-                            <Button variant="outline" size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
-                                <ThumbsDown className="w-4 h-4 mr-2" />
-                                Reject
-                            </Button>
-                            <Button variant="default" size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className="bg-green-600 hover:bg-green-700">
-                                <ThumbsUp className="w-4 h-4 mr-2" />
-                                Approve
-                            </Button>
-                        </>
-                    )}
+                    <Button variant={proposal.status === 'rejected' ? 'destructive' : 'outline'} size="sm" onClick={() => onUpdate(proposal.id, 'rejected')}>
+                        <ThumbsDown className="w-4 h-4 mr-2" />
+                        Reject
+                    </Button>
+                    <Button variant={proposal.status === 'approved' ? 'default' : 'outline'} size="sm" onClick={() => onUpdate(proposal.id, 'approved')} className={cn(proposal.status === 'approved' && 'bg-green-600 hover:bg-green-700')}>
+                        <ThumbsUp className="w-4 h-4 mr-2" />
+                        Approve
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => onEdit(proposal)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                    </Button>
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
                            <Button variant="destructive" size="sm">
@@ -118,14 +120,14 @@ const ProposalCard = ({ proposal, onUpdate, onDelete }: { proposal: Proposal, on
     );
 }
 
-const ProposalsList = ({ proposals, onUpdate, onDelete }: { proposals: Proposal[], onUpdate: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void }) => {
+const ProposalsList = ({ proposals, onUpdate, onDelete, onEdit }: { proposals: Proposal[], onUpdate: (proposalId: string, status: Proposal['status']) => void, onDelete: (proposalId: string) => void, onEdit: (proposal: Proposal) => void }) => {
     if (proposals.length === 0) {
         return <p className="text-center text-muted-foreground py-8">No proposals in this category.</p>;
     }
 
     return (
         <div className="space-y-4">
-            {proposals.map(p => <ProposalCard key={p.id} proposal={p} onUpdate={onUpdate} onDelete={onDelete} />)}
+            {proposals.map(p => <ProposalCard key={p.id} proposal={p} onUpdate={onUpdate} onDelete={onDelete} onEdit={onEdit} />)}
         </div>
     )
 }
@@ -134,6 +136,9 @@ export default function GlossaryManagement() {
     const firestore = useFirestore();
     const { toast } = useToast();
     const logo = PlaceHolderImages.find(p => p.id === 'logo');
+    const { openModal, closeModal } = useUI();
+    const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
+
 
     const proposalsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -193,6 +198,14 @@ export default function GlossaryManagement() {
             toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
         }
     };
+
+    const handleEdit = (proposal: Proposal) => {
+        setEditingProposal(proposal);
+    };
+
+    const handleCloseModal = () => {
+        setEditingProposal(null);
+    }
     
     const pendingProposals = useMemo(() => allProposals?.filter(p => p.status === 'pending') || [], [allProposals]);
     const approvedProposals = useMemo(() => allProposals?.filter(p => p.status === 'approved') || [], [allProposals]);
@@ -220,37 +233,44 @@ export default function GlossaryManagement() {
     }
 
     return (
-      <Card>
-          <CardHeader>
-              <CardTitle>Glossary Proposal Management</CardTitle>
-              <CardDescription>Review and moderate community submissions for the glossary.</CardDescription>
-          </CardHeader>
-          <CardContent>
-              <Tabs defaultValue="pending">
-                  <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="pending">
-                          Pending ({pendingProposals.length})
-                      </TabsTrigger>
-                      <TabsTrigger value="approved">
-                          Approved ({approvedProposals.length})
-                      </TabsTrigger>
-                      <TabsTrigger value="rejected">
-                          Rejected ({rejectedProposals.length})
-                      </TabsTrigger>
-                  </TabsList>
-                  <div className="pt-6">
-                      <TabsContent value="pending">
-                          <ProposalsList proposals={pendingProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
-                      </TabsContent>
-                      <TabsContent value="approved">
-                          <ProposalsList proposals={approvedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
-                      </TabsContent>
-                      <TabsContent value="rejected">
-                          <ProposalsList proposals={rejectedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
-                      </TabsContent>
-                  </div>
-              </Tabs>
-          </CardContent>
-      </Card>
+        <>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Glossary Proposal Management</CardTitle>
+                    <CardDescription>Review and moderate community submissions for the glossary.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Tabs defaultValue="pending">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="pending">
+                                Pending ({pendingProposals.length})
+                            </TabsTrigger>
+                            <TabsTrigger value="approved">
+                                Approved ({approvedProposals.length})
+                            </TabsTrigger>
+                            <TabsTrigger value="rejected">
+                                Rejected ({rejectedProposals.length})
+                            </TabsTrigger>
+                        </TabsList>
+                        <div className="pt-6">
+                            <TabsContent value="pending">
+                                <ProposalsList proposals={pendingProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} onEdit={handleEdit} />
+                            </TabsContent>
+                            <TabsContent value="approved">
+                                <ProposalsList proposals={approvedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} onEdit={handleEdit} />
+                            </TabsContent>
+                            <TabsContent value="rejected">
+                                <ProposalsList proposals={rejectedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} onEdit={handleEdit} />
+                            </TabsContent>
+                        </div>
+                    </Tabs>
+                </CardContent>
+            </Card>
+            <GlossaryProposalModal
+                isOpen={!!editingProposal}
+                onClose={handleCloseModal}
+                proposal={editingProposal}
+            />
+        </>
     );
 }
