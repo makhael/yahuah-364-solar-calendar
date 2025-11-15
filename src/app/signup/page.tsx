@@ -22,7 +22,9 @@ const signupSchema = z.object({
   displayName: z.string().min(3, { message: "Display name must be at least 3 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-  phoneNumber: z.string().optional(),
+  phoneNumber: z.string().optional().refine(val => !val || val.replace(/\D/g, '').length === 10, {
+    message: "Phone number must be 10 digits.",
+  }),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;

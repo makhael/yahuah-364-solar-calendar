@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -20,7 +21,9 @@ import { Separator } from '../ui/separator';
 const profileSchema = z.object({
   displayName: z.string().min(3, { message: "Display name must be at least 3 characters." }),
   photoURL: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  phoneNumber: z.string().optional(),
+  phoneNumber: z.string().optional().refine(val => !val || val.replace(/\D/g, '').length === 10, {
+    message: "Phone number must be 10 digits.",
+  }),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -67,8 +70,6 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       await updateProfile(user, {
         displayName: data.displayName,
         photoURL: data.photoURL,
-        // Firebase Auth's updateProfile doesn't directly support phoneNumber in the same way for all providers.
-        // We will save it to the user's Firestore document.
       });
 
       const userDocRef = doc(firestore, 'users', user.uid);
