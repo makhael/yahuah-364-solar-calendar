@@ -5,8 +5,8 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUser, useFirestore, useAuth } from '@/firebase';
-import { updateProfile } from 'firebase/auth';
+import { useUser, useFirestore } from '@/firebase';
+import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, collection } from 'firebase/firestore';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,6 @@ interface EditProfileModalProps {
 export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const auth = useAuth();
   const { toast } = useToast();
   
   const { control, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<ProfileFormData>({
@@ -90,8 +89,8 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       const mailColRef = collection(firestore, "mail");
       await addDocumentNonBlocking(mailColRef, {
         to: [user.email],
-        template: {
-          name: 'password-reset'
+        auth: {
+          type: "passwordReset"
         }
       });
       
