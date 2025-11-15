@@ -99,21 +99,23 @@ const JournalForm = ({
 
     return (
         <Card className="mt-4">
-            <CardContent className="p-4">
+            <CardContent className="p-6">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <h4 className="font-semibold text-foreground">{existingEntry ? 'Edit Entry' : 'Create New Entry'}</h4>
-                     <div className="pl-1 text-center sm:text-left">
-                        {setDate ? (
-                            <DatePicker date={date} setDate={(d) => d && setDate(d)} />
-                        ) : (
-                             <>
-                                <p className="font-bold text-primary">{date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</p>
-                                {yahuahDate && <p className="text-xs text-muted-foreground">{getSacredMonthName(yahuahDate.month)} (Month {yahuahDate.month}), Day {yahuahDate.day}</p>}
-                             </>
-                        )}
-                    </div>
+                    <h4 className="text-lg font-semibold text-foreground">{existingEntry ? 'Edit Entry' : 'Create New Journal Entry'}</h4>
+                     <div className="space-y-2">
+                        <Label>Date</Label>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                            <DatePicker date={date} setDate={(d) => d && setDate ? setDate(d) : null} />
+                            {yahuahDate && (
+                                <div className="text-left">
+                                    <p className="font-bold text-primary">{hebrewDays[(yahuahDate.day - 1) % 7]}, M{yahuahDate.month} D{yahuahDate.day}</p>
+                                    <p className="text-xs text-muted-foreground">{date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</p>
+                                </div>
+                            )}
+                        </div>
+                     </div>
 
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="content">Content</Label>
                         <Controller
                             name="content"
@@ -126,7 +128,7 @@ const JournalForm = ({
                         {errors.content && <p className="text-xs text-destructive mt-1">{errors.content.message}</p>}
                     </div>
 
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="tags">Tags (comma-separated)</Label>
                         <Controller
                             name="tags"
@@ -144,7 +146,7 @@ const JournalForm = ({
                         />
                         <Label htmlFor="isRevelation">Mark as Revelation</Label>
                     </div>
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting ? <LoaderCircle className="w-4 h-4 mr-2 animate-spin" /> : null}
@@ -280,7 +282,7 @@ export const MyJournals = () => {
     }
 
     return (
-       <Accordion type="multiple" className="w-full" defaultValue={allJournalDocs.map(doc => doc.id)}>
+       <Accordion type="multiple" className="w-full">
         {allJournalDocs.map((doc) => {
             const gregorianNoteDate = new Date(doc.id + 'T00:00:00');
             const date364 = get364DateFromGregorian(gregorianNoteDate, startDate);
@@ -372,5 +374,3 @@ export const MyJournals = () => {
     </div>
   );
 };
-
-    
