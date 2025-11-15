@@ -17,12 +17,15 @@ import { LoaderCircle, XCircle, User as UserIcon, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Separator } from '../ui/separator';
+import PhoneInputWithCountrySelect, { isValidPhoneNumber, isPossiblePhoneNumber } from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+
 
 const profileSchema = z.object({
   displayName: z.string().min(3, { message: "Display name must be at least 3 characters." }),
   photoURL: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
-  phoneNumber: z.string().optional().refine(val => !val || val.replace(/\D/g, '').length === 10, {
-    message: "Phone number must be 10 digits.",
+  phoneNumber: z.string().optional().refine(val => !val || isValidPhoneNumber(val), {
+    message: "Please enter a valid phone number.",
   }),
 });
 
@@ -153,7 +156,20 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="phoneNumber">Phone Number</Label>
-                    <Controller name="phoneNumber" control={control} render={({ field }) => <Input id="phoneNumber" {...field} className="bg-background/50" placeholder="(555) 555-5555" />} />
+                    <Controller
+                        name="phoneNumber"
+                        control={control}
+                        render={({ field }) => (
+                        <PhoneInputWithCountrySelect
+                            id="phoneNumber"
+                            international
+                            defaultCountry="US"
+                            className="PhoneInput"
+                            inputComponent={Input}
+                            {...field}
+                        />
+                        )}
+                    />
                     {errors.phoneNumber && <p className="text-sm text-destructive">{errors.phoneNumber.message}</p>}
                 </div>
                 <div className="pt-4 flex justify-end items-center gap-2">

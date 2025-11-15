@@ -45,7 +45,9 @@
     "genkit": "^1.0.0",
     "@genkit-ai/google-genai": "^1.0.0",
     "cmdk": "^1.0.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "react-phone-number-input": "^3.4.1",
+    "libphonenumber-js": "^1.11.3"
   },
   "devDependencies": {
     "typescript": "^5",

@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -17,13 +17,16 @@ import { Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { setDoc, doc, serverTimestamp, collection, writeBatch, getDoc } from 'firebase/firestore';
+import PhoneInputWithCountrySelect, { isValidPhoneNumber } from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+
 
 const signupSchema = z.object({
   displayName: z.string().min(3, { message: "Display name must be at least 3 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-  phoneNumber: z.string().optional().refine(val => !val || val.replace(/\D/g, '').length === 10, {
-    message: "Phone number must be 10 digits.",
+  phoneNumber: z.string().optional().refine(val => !val || isValidPhoneNumber(val), {
+    message: "Please enter a valid phone number.",
   }),
 });
 
@@ -47,7 +50,7 @@ export default function SignupPage() {
     },
   });
 
-  const { formState: { isSubmitting } } = form;
+  const { formState: { isSubmitting }, control } = form;
 
   const onSubmit = async (data: SignupFormValues) => {
     setError(null);
@@ -128,12 +131,18 @@ export default function SignupPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="displayName">Display Name</Label>
-              <Input
-                id="displayName"
-                type="text"
-                placeholder="Your Name"
-                {...form.register('displayName')}
-                disabled={isSubmitting}
+              <Controller
+                name="displayName"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    id="displayName"
+                    type="text"
+                    placeholder="Your Name"
+                    {...field}
+                    disabled={isSubmitting}
+                  />
+                )}
               />
               {form.formState.errors.displayName && (
                 <p className="text-xs text-destructive">{form.formState.errors.displayName.message}</p>
@@ -141,12 +150,18 @@ export default function SignupPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                {...form.register('email')}
-                disabled={isSubmitting}
+               <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                    <Input
+                        id="email"
+                        type="email"
+                        placeholder="m@example.com"
+                        {...field}
+                        disabled={isSubmitting}
+                    />
+                )}
               />
               {form.formState.errors.email && (
                 <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
@@ -154,12 +169,19 @@ export default function SignupPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
-              <Input
-                id="phoneNumber"
-                type="tel"
-                placeholder="(555) 555-5555"
-                {...form.register('phoneNumber')}
-                disabled={isSubmitting}
+               <Controller
+                name="phoneNumber"
+                control={control}
+                render={({ field }) => (
+                  <PhoneInputWithCountrySelect
+                    id="phoneNumber"
+                    international
+                    defaultCountry="US"
+                    className="PhoneInput"
+                    inputComponent={Input}
+                    {...field}
+                  />
+                )}
               />
               {form.formState.errors.phoneNumber && (
                 <p className="text-xs text-destructive">{form.formState.errors.phoneNumber.message}</p>
@@ -168,11 +190,17 @@ export default function SignupPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  {...form.register('password')}
-                  disabled={isSubmitting}
+                <Controller
+                    name="password"
+                    control={control}
+                    render={({ field }) => (
+                        <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        {...field}
+                        disabled={isSubmitting}
+                        />
+                    )}
                 />
                  <Button
                   type="button"
