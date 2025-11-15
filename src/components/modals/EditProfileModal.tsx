@@ -87,11 +87,35 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
     }
 
     try {
-        await sendPasswordResetEmail(auth, user.email);
-        toast({
-            title: 'Password Reset Email Sent',
-            description: `An email has been sent to ${user.email} with instructions. Please check your spam folder as well.`,
-        });
+        const mailColRef = collection(firestore, "mail");
+        const templateRef = doc(firestore, 'emailTemplates', 'password-reset');
+        const templateSnap = await getDoc(templateRef);
+
+        if (templateSnap.exists()) {
+            const template = templateSnap.data();
+            let subject = (template.subject || 'Password Reset Request');
+            subject = subject.replace(/\{\{\s*displayName\s*\}\}/g, user.displayName || 'user');
+            
+            let html = (template.html || 'Click the link to reset your password: {{passwordResetLink}}');
+            html = html.replace(/\{\{\s*displayName\s*\}\}/g, user.displayName || 'user');
+
+            await addDocumentNonBlocking(mailColRef, {
+                to: [user.email],
+                from: "support@yahuahscalendar.org",
+                message: {
+                    subject: subject,
+                    html: html,
+                },
+            });
+
+             toast({
+                title: 'Password Reset Email Sent',
+                description: `An email has been sent to ${user.email} with instructions.`,
+            });
+        } else {
+             throw new Error("Password reset template not found.");
+        }
+
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not send password reset email. Please try again later.' });
