@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, doc } from 'firebase/firestore';
-import { BookMarked, Trash2, BadgeCheck } from 'lucide-react';
+import { BookMarked, Trash2, BadgeCheck, LogIn } from 'lucide-react';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { get364DateFromGregorian, getGregorianDate } from '@/lib/calendar-utils';
@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MarkdownRenderer } from '../common/MarkdownRenderer';
 import { TEKUFAH_MONTHS } from '@/lib/calendar-data';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
 
 
 interface Note {
@@ -30,6 +31,7 @@ export const MyJournals = () => {
   const firestore = useFirestore();
   const { startDate, navigateToTarget } = useUI();
   const { toast } = useToast();
+  const router = useRouter();
 
   const allNotesQuery = useMemoFirebase(() => {
     if (isUserLoading || !user || user.isAnonymous || !firestore) return null;
@@ -83,73 +85,39 @@ export const MyJournals = () => {
     }
   };
 
-
-  if (isUserLoading) {
-    return (
-      <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
-        <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left mb-6">
-            <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
-              <BookMarked className="w-5 h-5"/>
-              My Journals
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
-        </div>
-        <div className="space-y-4">
-          <div className="h-16 bg-muted animate-pulse rounded-md"></div>
-        </div>
-      </div>
-    );
-  }
-  
-  if (!user || user.isAnonymous) {
-     return (
-      <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern" id="my-journals-section">
-         <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left mb-6">
-            <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
-              <BookMarked className="w-5 h-5"/>
-              My Journals
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
-        </div>
-        <p className="text-sm text-center text-muted-foreground p-4">Please sign in to create journals.</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
-        <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left mb-6">
-            <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
-              <BookMarked className="w-5 h-5"/>
-              My Journals
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
-        </div>
+  const renderContent = () => {
+    if (isUserLoading || isLoading) {
+      return (
         <div className="space-y-4">
           <div className="h-16 bg-muted animate-pulse rounded-md"></div>
           <div className="h-16 bg-muted animate-pulse rounded-md"></div>
-          <div className="h-16 bg-muted animate-pulse rounded-md"></div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (!allNotes || allNotes.length === 0) {
-    return null;
-  }
+    if (!user || user.isAnonymous) {
+      return (
+        <div className="text-center p-6 bg-secondary/30 rounded-lg flex flex-col items-center">
+            <LogIn className="w-8 h-8 text-muted-foreground mb-3"/>
+            <h3 className="font-semibold text-foreground">Sign In to Journal</h3>
+            <p className="text-sm text-muted-foreground mt-1 mb-3">Your personal journal is available when you are signed in.</p>
+            <Button onClick={() => router.push('/login')}>Sign In</Button>
+        </div>
+      );
+    }
+    
+    if (!allNotes || allNotes.length === 0) {
+      return (
+        <div className="text-center p-6 bg-secondary/30 rounded-lg">
+            <BookMarked className="w-8 h-8 text-muted-foreground mx-auto mb-3"/>
+            <h3 className="font-semibold text-foreground">No Journal Entries Yet</h3>
+            <p className="text-sm text-muted-foreground mt-1">Click on any day in the calendar to add your first note.</p>
+        </div>
+      );
+    }
 
-  return (
-    <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern" id="my-journals-section">
-       <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left mb-6">
-          <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
-            <BookMarked className="w-5 h-5"/>
-            My Journals
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
-      </div>
-      
-      <Accordion type="multiple" className="w-full" defaultValue={Object.keys(groupedNotes)}>
+    return (
+       <Accordion type="multiple" className="w-full" defaultValue={Object.keys(groupedNotes)}>
         {Object.entries(groupedNotes).map(([monthLabel, notes]) => {
             const monthNum = parseInt(monthLabel.split(' ')[1], 10);
             const daysInMonth = TEKUFAH_MONTHS.includes(monthNum) ? 31 : 30;
@@ -232,6 +200,19 @@ export const MyJournals = () => {
             )
         })}
       </Accordion>
+    )
+  }
+
+  return (
+    <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern" id="my-journals-section">
+       <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left mb-6">
+          <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
+            <BookMarked className="w-5 h-5"/>
+            My Journals
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
+      </div>
+      {renderContent()}
     </div>
   );
 };
