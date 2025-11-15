@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, doc, orderBy, deleteDoc, where, updateDoc } from 'firebase/firestore';
-import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User, ThumbsUp, ThumbsDown, Hourglass, Ban } from 'lucide-react';
+import { LoaderCircle, BookOpen, Trash2, Edit, Check, X, User, ThumbsUp, ThumbsDown, Hourglass, Ban, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -64,7 +64,6 @@ const ScriptureCard = ({ submission, onEdit, onDelete, onUpdateStatus }: { submi
     };
 
     const statusInfo = getStatusInfo(submission.status || 'pending');
-    const displayStatus = submission.status || 'pending';
     
     return (
         <div className={cn("p-4 border rounded-lg bg-background/50 flex flex-col sm:flex-row justify-between items-start gap-4", statusInfo.color)}>
@@ -74,63 +73,63 @@ const ScriptureCard = ({ submission, onEdit, onDelete, onUpdateStatus }: { submi
                 ) : (
                     <p className="font-normal text-base text-foreground">{submission.scripture}</p>
                 )}
-                <Badge variant="secondary" className="mt-2">
-                    <User className="w-3 h-3 mr-1.5" />
-                    {submission.userDisplayName || 'Unknown User'}
-                </Badge>
+                 <div className="flex flex-wrap gap-2 items-center mt-2">
+                    <Badge variant="secondary">
+                        <User className="w-3 h-3 mr-1.5" />
+                        {submission.userDisplayName || 'Unknown User'}
+                    </Badge>
+                     <Badge variant="outline" className={cn("flex items-center gap-2", statusInfo.color)}>
+                        {statusInfo.icon}
+                        <span>{statusInfo.text}</span>
+                    </Badge>
+                </div>
             </div>
             <div className="flex flex-col gap-2 items-stretch sm:items-end w-full sm:w-auto">
-                <div className="flex justify-between items-center w-full">
-                  <Badge variant="outline" className={cn("flex items-center gap-2", statusInfo.color)}>
-                      {statusInfo.icon}
-                      <span>{statusInfo.text}</span>
-                  </Badge>
-                  <div className="flex items-center">
-                    {editingId === submission.id ? (
-                          <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={() => handleSaveEdit(submission.id)}>
-                                  <Check className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setEditingId(null); setEditText(''); }}>
-                                  <X className="h-4 w-4" />
-                              </Button>
-                          </>
-                      ) : (
-                          <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => { setEditingId(submission.id); setEditText(submission.scripture); }}>
-                                  <Edit className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10">
-                                          <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                          <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
-                                          <AlertDialogDescription>Are you sure you want to delete the submission for "{submission.scripture}"?</AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => onDelete(submission.id)}>Yes, Delete</AlertDialogAction>
-                                      </AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialog>
-                          </>
-                      )}
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-2 mt-2 w-full sm:w-auto">
+                  <Button variant={submission.status === 'rejected' ? 'destructive' : 'outline'} size="sm" onClick={() => onUpdateStatus(submission.id, 'rejected')}>
+                      <ThumbsDown className="w-4 h-4 mr-2" /> Reject
+                  </Button>
+                   <Button variant={submission.status === 'pending' ? 'default' : 'outline'} size="sm" onClick={() => onUpdateStatus(submission.id, 'pending')} className={cn(submission.status === 'pending' && 'bg-amber-600 hover:bg-amber-700')}>
+                      <Hourglass className="w-4 h-4 mr-2" /> Pending
+                  </Button>
+                  <Button variant={submission.status === 'approved' ? 'default' : 'outline'} size="sm" onClick={() => onUpdateStatus(submission.id, 'approved')} className={cn(submission.status === 'approved' && 'bg-green-600 hover:bg-green-700')}>
+                      <ThumbsUp className="w-4 h-4 mr-2" /> Approve
+                  </Button>
+                  {editingId === submission.id ? (
+                      <>
+                          <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-green-600 hover:text-green-700" onClick={() => handleSaveEdit(submission.id)}>
+                              <Save className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground" onClick={() => { setEditingId(null); setEditText(''); }}>
+                              <X className="h-4 w-4" />
+                          </Button>
+                      </>
+                  ) : (
+                      <>
+                          <Button variant="outline" size="sm" onClick={() => { setEditingId(submission.id); setEditText(submission.scripture); }}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                          </Button>
+                          <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" size="sm">
+                                      <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                  </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Submission?</AlertDialogTitle>
+                                      <AlertDialogDescription>Are you sure you want to delete the submission for "{submission.scripture}"?</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => onDelete(submission.id)}>Yes, Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
+                      </>
+                  )}
                 </div>
-                {displayStatus === 'pending' && (
-                    <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                        <Button variant="outline" size="sm" onClick={() => onUpdateStatus(submission.id, 'rejected')}>
-                            <ThumbsDown className="w-4 h-4 mr-2" /> Reject
-                        </Button>
-                        <Button variant="default" size="sm" onClick={() => onUpdateStatus(submission.id, 'approved')} className="bg-green-600 hover:bg-green-700">
-                            <ThumbsUp className="w-4 h-4 mr-2" /> Approve
-                        </Button>
-                    </div>
-                )}
             </div>
         </div>
     );
