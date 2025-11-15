@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, doc, serverTimestamp, addDoc } from 'firebase/firestore';
 import { LoaderCircle, BookText, Trash2, Edit, Search, Save, X, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -281,9 +281,7 @@ export const MyJournal = ({ userId }: { userId: string }) => {
         updateDocumentNonBlocking(docRef, { ...payload, updatedAt: new Date() });
         toast({ title: 'Note Updated!'});
     } else { // We are creating
-        const notesCollection = collection(firestore, `users/${userId}/notes`);
-        const newDocRef = doc(notesCollection);
-        setDocumentNonBlocking(newDocRef, { ...payload, createdAt: new Date() });
+        addDocumentNonBlocking(collection(firestore, `users/${userId}/notes`), { ...payload, createdAt: new Date() });
         toast({ title: 'Note Saved!'});
     }
     
