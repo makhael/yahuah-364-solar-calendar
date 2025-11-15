@@ -35,12 +35,12 @@ export const MyProposals = ({ userId }: { userId: string }) => {
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
   const myProposalsQuery = useMemoFirebase(() => {
-    if (!firestore || !userId) return null;
+    if (!firestore) return null;
     return query(
       collection(firestore, `glossaryProposals`),
       orderBy('createdAt', 'desc')
     );
-  }, [firestore, userId]);
+  }, [firestore]);
 
   const { data: proposals, isLoading } = useCollection<Proposal>(myProposalsQuery);
 
@@ -115,7 +115,6 @@ export const MyProposals = ({ userId }: { userId: string }) => {
                       variant="outline"
                       size="sm"
                       onClick={() => openModal('glossaryProposal', { proposal })}
-                      disabled={proposal.status !== 'pending'}
                     >
                       <Edit className="w-3 h-3 mr-2" /> Edit
                     </Button>
