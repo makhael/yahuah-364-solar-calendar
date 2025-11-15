@@ -6,8 +6,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUser, useFirestore, useAuth } from '@/firebase';
-import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, collection, getDoc } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
+import { doc, collection, getDoc, writeBatch } from 'firebase/firestore';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +61,8 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
     }
 
     try {
+      // The phone number cannot be updated directly via client SDK's updateProfile
+      // It is a privileged operation that requires re-authentication.
       await updateProfile(user, {
         displayName: data.displayName,
         photoURL: data.photoURL,
@@ -81,17 +83,28 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
   };
   
   const handlePasswordReset = async () => {
-    if (!user?.email || !auth) {
+    if (!user?.email || !firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'No email address associated with this account.' });
       return;
     }
-  
+
     try {
-      await sendPasswordResetEmail(auth, user.email);
+      const mailColRef = collection(firestore, 'mail');
+      await addDocumentNonBlocking(mailColRef, {
+          to: [user.email],
+          template: {
+            name: 'password-reset',
+            data: {
+              displayName: user.displayName || 'Friend',
+            },
+          },
+      });
+
       toast({
         title: 'Password Reset Email Sent',
         description: `An email has been sent to ${user.email} with instructions. Please check your spam folder as well.`,
       });
+
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not send password reset email. Please try again later.' });
