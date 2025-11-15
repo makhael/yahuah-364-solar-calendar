@@ -150,6 +150,10 @@ const ProposalCard = ({ proposal, onUpdateStatus, onDelete }: { proposal: Propos
                                 <ThumbsDown className="w-4 h-4 mr-2" />
                                 Reject
                             </Button>
+                            <Button variant={proposal.status === 'pending' ? 'default' : 'outline'} size="sm" onClick={() => onUpdateStatus(proposal.id, 'pending')} className={cn(proposal.status === 'pending' && 'bg-amber-600 hover:bg-amber-700')}>
+                                <Hourglass className="w-4 h-4 mr-2" />
+                                Pending
+                            </Button>
                             <Button variant={proposal.status === 'approved' ? 'default' : 'outline'} size="sm" onClick={() => onUpdateStatus(proposal.id, 'approved')} className={cn(proposal.status === 'approved' && 'bg-green-600 hover:bg-green-700')}>
                                 <ThumbsUp className="w-4 h-4 mr-2" />
                                 Approve
@@ -238,7 +242,7 @@ export default function GlossaryManagement() {
             });
         } else {
              toast({
-                title: `Proposal ${status}`,
+                title: `Proposal ${status.charAt(0).toUpperCase() + status.slice(1)}`,
                 description: `The glossary proposal has been marked as ${status}.`
             });
         }
