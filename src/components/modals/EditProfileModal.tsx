@@ -2,11 +2,11 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUser, useAuth, useFirestore } from '@/firebase';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -17,7 +17,7 @@ import { LoaderCircle, XCircle, User as UserIcon, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Separator } from '../ui/separator';
-import PhoneInputWithCountrySelect, { isValidPhoneNumber, isPossiblePhoneNumber } from 'react-phone-number-input';
+import PhoneInputWithCountrySelect, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 
@@ -31,6 +31,10 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
+interface UserProfileData {
+    phoneNumber?: string;
+}
+
 interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -41,6 +45,13 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore]);
+  
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfileData>(userProfileRef);
   
   const { control, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -54,14 +65,20 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
   const watchedPhotoURL = watch('photoURL');
 
   React.useEffect(() => {
-    if (user && !isUserLoading) {
+    if (user && userProfile && !isUserLoading) {
       reset({
         displayName: user.displayName || '',
         photoURL: user.photoURL || '',
-        phoneNumber: user.phoneNumber || '',
+        phoneNumber: userProfile.phoneNumber || '',
       });
+    } else if (user && !isUserLoading) {
+        reset({
+            displayName: user.displayName || '',
+            photoURL: user.photoURL || '',
+            phoneNumber: '',
+        });
     }
-  }, [user, isUserLoading, reset]);
+  }, [user, userProfile, isUserLoading, reset]);
 
   const handleSave = async (data: ProfileFormData) => {
     if (!user || !firestore) {
@@ -70,11 +87,13 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
     }
 
     try {
+      // Update core Auth profile (only display name and photo)
       await updateProfile(user, {
         displayName: data.displayName,
         photoURL: data.photoURL,
       });
 
+      // Update the user document in Firestore with custom fields
       const userDocRef = doc(firestore, 'users', user.uid);
       updateDocumentNonBlocking(userDocRef, {
         displayName: data.displayName,
@@ -111,6 +130,8 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
 
   if (!isOpen || !user) return null;
 
+  const isLoading = isUserLoading || isProfileLoading;
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={onClose}>
       <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md relative border modal-bg-pattern flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
@@ -131,66 +152,74 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
           </div>
         </div>
         <div className="flex-grow overflow-y-auto p-6">
-            <form onSubmit={handleSubmit(handleSave)} className="space-y-4">
-                <div className="flex items-center justify-center">
-                    <Avatar className="h-24 w-24 border-4">
-                        <AvatarImage src={watchedPhotoURL || user.photoURL || ''} alt={user.displayName || 'user'}/>
-                        <AvatarFallback className="text-3xl">
-                            {(user.displayName || 'U').charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
+            {isLoading ? (
+                <div className="flex justify-center items-center h-full">
+                    <LoaderCircle className="animate-spin text-primary"/>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" value={user.email || 'No email associated'} readOnly disabled className="bg-muted/50" />
-                </div>
-                <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
-                <Controller name="displayName" control={control} render={({ field }) => <Input id="displayName" {...field} className="bg-background/50" />} />
-                {errors.displayName && <p className="text-sm text-destructive">{errors.displayName.message}</p>}
-                </div>
-                <div className="space-y-2">
-                <Label htmlFor="photoURL">Photo URL</Label>
-                <Controller name="photoURL" control={control} render={({ field }) => <Input id="photoURL" {...field} className="bg-background/50" placeholder="https://example.com/image.png" />} />
-                {errors.photoURL && <p className="text-sm text-destructive">{errors.photoURL.message}</p>}
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="phoneNumber">Phone Number</Label>
-                    <Controller
-                        name="phoneNumber"
-                        control={control}
-                        render={({ field }) => (
-                        <PhoneInputWithCountrySelect
-                            id="phoneNumber"
-                            international
-                            defaultCountry="US"
-                            className="PhoneInput"
-                            inputComponent={Input}
-                            {...field}
-                        />
-                        )}
-                    />
-                    {errors.phoneNumber && <p className="text-sm text-destructive">{errors.phoneNumber.message}</p>}
-                </div>
-                <div className="pt-4 flex justify-end items-center gap-2">
-                    <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <LoaderCircle className="animate-spin" /> : 'Save Changes'}
-                    </Button>
-                </div>
-            </form>
-            
-            <Separator className="my-6" />
+            ) : (
+                <>
+                    <form onSubmit={handleSubmit(handleSave)} className="space-y-4">
+                        <div className="flex items-center justify-center">
+                            <Avatar className="h-24 w-24 border-4">
+                                <AvatarImage src={watchedPhotoURL || user.photoURL || ''} alt={user.displayName || 'user'}/>
+                                <AvatarFallback className="text-3xl">
+                                    {(user.displayName || 'U').charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" value={user.email || 'No email associated'} readOnly disabled className="bg-muted/50" />
+                        </div>
+                        <div className="space-y-2">
+                        <Label htmlFor="displayName">Display Name</Label>
+                        <Controller name="displayName" control={control} render={({ field }) => <Input id="displayName" {...field} className="bg-background/50" />} />
+                        {errors.displayName && <p className="text-sm text-destructive">{errors.displayName.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                        <Label htmlFor="photoURL">Photo URL</Label>
+                        <Controller name="photoURL" control={control} render={({ field }) => <Input id="photoURL" {...field} className="bg-background/50" placeholder="https://example.com/image.png" />} />
+                        {errors.photoURL && <p className="text-sm text-destructive">{errors.photoURL.message}</p>}
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="phoneNumber">Phone Number</Label>
+                            <Controller
+                                name="phoneNumber"
+                                control={control}
+                                render={({ field }) => (
+                                <PhoneInputWithCountrySelect
+                                    id="phoneNumber"
+                                    international
+                                    defaultCountry="US"
+                                    className="PhoneInput"
+                                    inputComponent={Input}
+                                    {...field}
+                                />
+                                )}
+                            />
+                            {errors.phoneNumber && <p className="text-sm text-destructive">{errors.phoneNumber.message}</p>}
+                        </div>
+                        <div className="pt-4 flex justify-end items-center gap-2">
+                            <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? <LoaderCircle className="animate-spin" /> : 'Save Changes'}
+                            </Button>
+                        </div>
+                    </form>
+                    
+                    <Separator className="my-6" />
 
-            <div className="space-y-3">
-                <h3 className="font-semibold text-foreground">Security</h3>
-                <div className="flex flex-col sm:flex-row justify-between items-center p-4 border rounded-lg bg-background/30 gap-2">
-                    <p className="text-sm text-muted-foreground text-center sm:text-left">Change your current password.</p>
-                    <Button variant="secondary" onClick={handlePasswordReset}>
-                        <Send className="mr-2 h-4 w-4" /> Send Reset Email
-                    </Button>
-                </div>
-            </div>
+                    <div className="space-y-3">
+                        <h3 className="font-semibold text-foreground">Security</h3>
+                        <div className="flex flex-col sm:flex-row justify-between items-center p-4 border rounded-lg bg-background/30 gap-2">
+                            <p className="text-sm text-muted-foreground text-center sm:text-left">Change your current password.</p>
+                            <Button variant="secondary" onClick={handlePasswordReset}>
+                                <Send className="mr-2 h-4 w-4" /> Send Reset Email
+                            </Button>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
       </div>
     </div>

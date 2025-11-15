@@ -62,10 +62,12 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const user = userCredential.user;
       
+      // Update core auth profile (display name and photo only)
       await updateProfile(user, {
         displayName: data.displayName,
       });
 
+      // Now, save all data, including custom fields like phone number and role, to Firestore
       const userDocRef = doc(firestore, "users", user.uid);
       const mailColRef = collection(firestore, "mail");
       
@@ -74,7 +76,7 @@ export default function SignupPage() {
       batch.set(userDocRef, {
           displayName: data.displayName,
           email: data.email,
-          phoneNumber: data.phoneNumber || '',
+          phoneNumber: data.phoneNumber || '', // Save phone number here
           role: 'member',
           status: 'pending',
           createdAt: serverTimestamp(),
