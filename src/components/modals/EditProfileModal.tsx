@@ -78,20 +78,23 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
     }
   };
-
+  
   const handlePasswordReset = async () => {
     if (!user?.email || !firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'No email address associated with this account.' });
       return;
     }
-    
+
     try {
       const mailColRef = collection(firestore, "mail");
       await addDocumentNonBlocking(mailColRef, {
         to: [user.email],
-        auth: {
-          type: "passwordReset"
-        }
+        template: {
+          name: 'password-reset',
+          data: {
+            displayName: user.displayName || user.email,
+          },
+        },
       });
       
       toast({

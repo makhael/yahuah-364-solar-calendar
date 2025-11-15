@@ -19,6 +19,10 @@
             "type": "string",
             "enum": ["admin", "leader", "member", "contributor", "moderator"],
             "description": "The user's role in the application."
+        },
+        "phoneNumber": {
+            "type": "string",
+            "description": "The user's phone number."
         }
       }
     },

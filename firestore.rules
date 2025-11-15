@@ -56,7 +56,7 @@ service cloud.firestore {
     }
 
     match /mail/{mailId} {
-      allow create: if true; 
+      allow create: if isSignedIn(); 
       allow read, list: if isSignedIn();
     }
 
