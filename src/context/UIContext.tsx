@@ -435,7 +435,9 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
 
               if (templateSnap.exists()) {
                   const template = templateSnap.data();
-                  let subject = (template.subject || '').replace(/\{\{\s*eventName\s*\}\}/g, payload.title);
+                  let subject = (template.subject || '');
+                  subject = subject.replace(/\{\{\s*eventName\s*\}\}/g, payload.title);
+                  
                   let html = (template.html || '');
                   html = html.replace(/\{\{\s*inviterName\s*\}\}/g, user.displayName || 'A member');
                   html = html.replace(/\{\{\s*eventName\s*\}\}/g, payload.title);
@@ -443,7 +445,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
 
                   await addDocumentNonBlocking(mailRef, {
                       to: emails,
-                      from: "Yahuah's 364 Solar Calendar",
+                      from: "support@yahuahscalendar.org",
                       message: {
                         subject,
                         html,

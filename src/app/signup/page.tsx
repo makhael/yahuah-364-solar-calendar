@@ -72,7 +72,6 @@ export default function SignupPage() {
           createdAt: serverTimestamp(),
       });
       
-      // Manually render the email content
       const welcomeTemplateRef = doc(firestore, 'emailTemplates', 'welcome');
       const templateSnap = await getDoc(welcomeTemplateRef);
 
@@ -86,7 +85,7 @@ export default function SignupPage() {
 
         batch.set(doc(mailColRef), {
             to: [data.email],
-            from: "Yahuah's 364 Solar Calendar",
+            from: "support@yahuahscalendar.org",
             message: {
                 subject: subjectContent,
                 html: htmlContent,
