@@ -60,10 +60,9 @@ const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note)
     };
 
     return (
-        <div className="pl-8 relative">
-             <div className="absolute left-0 top-0 h-full w-px bg-border translate-x-[3.5px]" />
-             <div className="absolute left-0 top-4 h-4 w-4 rounded-full bg-primary/20 border-2 border-primary/30 translate-x-[-4.5px]" />
-             <div className="absolute left-0 top-4 h-1.5 w-1.5 rounded-full bg-primary/70 translate-x-[-0.5px] translate-y-[2.5px]" />
+        <div className="pl-4 relative">
+             <div className="absolute left-0 top-0 h-full w-px bg-border translate-x-[7px]" />
+             <div className="absolute left-0 top-4 h-2.5 w-2.5 rounded-full bg-primary/70 border-2 border-card translate-x-[2px]" />
             <div className={cn(
                 "p-4 rounded-lg border",
                 note.isRevelation ? "bg-[#4a3a2a]/30" : "bg-background/50"
@@ -315,20 +314,32 @@ export const MyJournals = () => {
             {sortedMonthKeys.map(monthKey => {
                 const notesInMonth = groupedNotes[monthKey];
                 const firstNoteDate = new Date(notesInMonth[0].date + 'T00:00:00');
+                const lastNoteDate = new Date(notesInMonth[notesInMonth.length - 1].date + 'T00:00:00');
                 const monthName = firstNoteDate.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
+                const monthNameShort = firstNoteDate.toLocaleString('default', { month: 'short', timeZone: 'UTC' });
+
                 const year = firstNoteDate.getFullYear();
+                const sacredMonth = get364DateFromGregorian(firstNoteDate, new Date(year, 0, 1))?.month;
                 
                 return (
                     <AccordionItem key={monthKey} value={monthKey}>
                         <AccordionTrigger className="hover:no-underline">
-                            <div className="flex items-center gap-4">
-                                <div className="bg-muted p-3 rounded-lg text-center">
-                                    <p className="font-bold text-lg text-primary">{monthName}</p>
-                                    <p className="text-xs text-muted-foreground">{year}</p>
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-muted p-3 rounded-lg text-center w-[80px]">
+                                        <p className="font-bold text-lg text-primary">{monthName}</p>
+                                        <p className="text-xs text-muted-foreground">{year}</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-lg text-foreground">{sacredMonth ? `Month ${sacredMonth}` : monthName}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {`${monthNameShort} ${lastNoteDate.getUTCDate()} - ${monthNameShort} ${firstNoteDate.getUTCDate()}, ${year}`}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="flex items-baseline gap-2">
-                                     <span className="font-semibold text-xl text-foreground">{notesInMonth.length}</span>
-                                     <span className="text-sm text-muted-foreground">Entries</span>
+                                <div className="text-right mr-4">
+                                    <p className="font-semibold text-lg text-foreground">{notesInMonth.length}</p>
+                                    <p className="text-sm text-muted-foreground">Entries</p>
                                 </div>
                             </div>
                         </AccordionTrigger>
