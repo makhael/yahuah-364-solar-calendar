@@ -12,13 +12,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Check for a custom claim 'admin' on the user's auth token.
       return request.auth.token.admin == true;
-    }
-    
-    function isLeader() {
-      // Check for a custom claim 'leader' on the user's auth token.
-      return request.auth.token.leader == true;
     }
 
     match /appointments/{appointmentId} {
@@ -89,15 +83,15 @@ service cloud.firestore {
 
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
-        allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
-        allow list: if isSignedIn() && (isAdmin() || isLeader());
+        allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+        allow list: if isAdmin();
     }
     
     match /scriptureReadings/{readingId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
-      allow list: if isSignedIn() && (isAdmin() || isLeader());
+      allow list: if isSignedIn() && isAdmin();
+      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
     }
 
     match /podcast_series/{podcastSeriesId} {
