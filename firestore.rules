@@ -93,7 +93,8 @@ service cloud.firestore {
         allow create: if isSignedIn();
         allow get: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
         allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
-        allow list: if isSignedIn() && (isAdmin() || isLeader() || request.query.where[0][0] == 'userId' && request.query.where[0][1] == '==' && request.query.where[0][2] == request.auth.uid);
+        allow list: if isSignedIn() && 
+                    (isAdmin() || isLeader() || (request.query.where[0][2] == request.auth.uid && request.query.limit <= 100));
     }
     
     match /scriptureReadings/{readingId} {
