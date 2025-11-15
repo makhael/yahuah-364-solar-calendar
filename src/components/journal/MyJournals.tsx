@@ -87,9 +87,13 @@ export const MyJournals = () => {
   if (isUserLoading) {
     return (
       <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
-        <h2 className="text-xl font-bold text-foreground mb-4 border-b pb-2">
-          My Journals
-        </h2>
+        <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left mb-6">
+            <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
+              <BookMarked className="w-5 h-5"/>
+              My Journals
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
+        </div>
         <div className="space-y-4">
           <div className="h-16 bg-muted animate-pulse rounded-md"></div>
         </div>
@@ -115,9 +119,13 @@ export const MyJournals = () => {
   if (isLoading) {
     return (
       <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
-        <h2 className="text-xl font-bold text-foreground mb-4 border-b pb-2">
-          My Journals
-        </h2>
+        <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left mb-6">
+            <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
+              <BookMarked className="w-5 h-5"/>
+              My Journals
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
+        </div>
         <div className="space-y-4">
           <div className="h-16 bg-muted animate-pulse rounded-md"></div>
           <div className="h-16 bg-muted animate-pulse rounded-md"></div>
@@ -162,7 +170,7 @@ export const MyJournals = () => {
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                    <div className="relative pl-6 pt-4 space-y-8">
+                    <div className="relative pl-6 pt-4 space-y-8 z-0">
                         <div className="absolute left-[36px] top-0 bottom-0 w-0.5 bg-border -z-10"></div>
                         {notes.map((note) => {
                             const gregorianNoteDate = new Date(note.date + 'T00:00:00');
