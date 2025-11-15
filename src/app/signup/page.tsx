@@ -22,6 +22,7 @@ const signupSchema = z.object({
   displayName: z.string().min(3, { message: "Display name must be at least 3 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  phoneNumber: z.string().optional(),
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -40,6 +41,7 @@ export default function SignupPage() {
       displayName: '',
       email: '',
       password: '',
+      phoneNumber: '',
     },
   });
 
@@ -67,6 +69,7 @@ export default function SignupPage() {
       batch.set(userDocRef, {
           displayName: data.displayName,
           email: data.email,
+          phoneNumber: data.phoneNumber || '',
           role: 'member',
           status: 'pending',
           createdAt: serverTimestamp(),
@@ -145,6 +148,19 @@ export default function SignupPage() {
               />
               {form.formState.errors.email && (
                 <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
+              <Input
+                id="phoneNumber"
+                type="tel"
+                placeholder="(555) 555-5555"
+                {...form.register('phoneNumber')}
+                disabled={isSubmitting}
+              />
+              {form.formState.errors.phoneNumber && (
+                <p className="text-xs text-destructive">{form.formState.errors.phoneNumber.message}</p>
               )}
             </div>
             <div className="space-y-2">

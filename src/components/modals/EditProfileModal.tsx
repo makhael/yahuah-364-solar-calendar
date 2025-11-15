@@ -20,6 +20,7 @@ import { Separator } from '../ui/separator';
 const profileSchema = z.object({
   displayName: z.string().min(3, { message: "Display name must be at least 3 characters." }),
   photoURL: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  phoneNumber: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -40,6 +41,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
     defaultValues: {
       displayName: '',
       photoURL: '',
+      phoneNumber: '',
     }
   });
   
@@ -50,6 +52,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       reset({
         displayName: user.displayName || '',
         photoURL: user.photoURL || '',
+        phoneNumber: user.phoneNumber || '',
       });
     }
   }, [user, isUserLoading, reset]);
@@ -64,12 +67,15 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       await updateProfile(user, {
         displayName: data.displayName,
         photoURL: data.photoURL,
+        // Firebase Auth's updateProfile doesn't directly support phoneNumber in the same way for all providers.
+        // We will save it to the user's Firestore document.
       });
 
       const userDocRef = doc(firestore, 'users', user.uid);
       updateDocumentNonBlocking(userDocRef, {
         displayName: data.displayName,
         photoURL: data.photoURL,
+        phoneNumber: data.phoneNumber,
       });
 
       toast({ title: 'Profile Updated!', description: 'Your changes have been saved.' });
@@ -143,6 +149,11 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
                 <Label htmlFor="photoURL">Photo URL</Label>
                 <Controller name="photoURL" control={control} render={({ field }) => <Input id="photoURL" {...field} className="bg-background/50" placeholder="https://example.com/image.png" />} />
                 {errors.photoURL && <p className="text-sm text-destructive">{errors.photoURL.message}</p>}
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="phoneNumber">Phone Number</Label>
+                    <Controller name="phoneNumber" control={control} render={({ field }) => <Input id="phoneNumber" {...field} className="bg-background/50" placeholder="(555) 555-5555" />} />
+                    {errors.phoneNumber && <p className="text-sm text-destructive">{errors.phoneNumber.message}</p>}
                 </div>
                 <div className="pt-4 flex justify-end items-center gap-2">
                     <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
