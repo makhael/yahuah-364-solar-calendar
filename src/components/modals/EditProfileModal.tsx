@@ -6,8 +6,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUser, useFirestore } from '@/firebase';
-import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, collection } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
+import { doc, collection, getDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,21 +86,34 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
     }
 
     try {
-      const mailColRef = collection(firestore, "mail");
-      await addDocumentNonBlocking(mailColRef, {
-        to: [user.email],
-        template: {
-          name: 'password-reset',
-          data: {
-            displayName: user.displayName || user.email,
-          },
-        },
-      });
-      
-      toast({
-        title: 'Password Reset Email Sent',
-        description: `An email has been sent to ${user.email} with instructions to reset your password.`,
-      });
+      const mailColRef = collection(firestore, 'mail');
+      const templateRef = doc(firestore, 'emailTemplates', 'password-reset');
+      const templateSnap = await getDoc(templateRef);
+
+      if (templateSnap.exists()) {
+          const template = templateSnap.data();
+          let subject = template.subject || 'Password Reset Request';
+          let html = template.html || '<p>Click the link below to reset your password:</p><p><a href="{{passwordResetLink}}">Reset Password</a></p>';
+          
+          // Pre-render the template on the client
+          html = html.replace(/\{\{\s*displayName\s*\}\}/g, user.displayName || 'user');
+
+          await addDocumentNonBlocking(mailColRef, {
+            to: [user.email],
+            from: "support@yahuahscalendar.org",
+            message: {
+              subject,
+              html,
+            },
+          });
+
+          toast({
+            title: 'Password Reset Email Sent',
+            description: `An email has been sent to ${user.email} with instructions. Please check your spam folder as well.`,
+          });
+      } else {
+          throw new Error("Password reset template not found.");
+      }
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not send password reset email. Please try again later.' });
