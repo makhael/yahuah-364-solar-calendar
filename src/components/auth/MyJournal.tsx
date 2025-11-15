@@ -119,6 +119,7 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
     });
 
     const watchedDate = watch('date');
+    
     const yahuahDateDetails = useMemo(() => {
         if (!watchedDate || !m1d1StartDate) return null;
         
