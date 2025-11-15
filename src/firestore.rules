@@ -92,7 +92,7 @@ service cloud.firestore {
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
         allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
-        allow list: if isAdmin() || isLeader() || request.query.where.userId == request.auth.uid;
+        allow list: if isSignedIn();
     }
     
     match /scriptureReadings/{readingId} {
