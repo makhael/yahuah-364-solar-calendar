@@ -3,16 +3,15 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
-import { BookMarked, Trash2, Edit, PlusCircle, Save, X, LoaderCircle, BadgeCheck } from 'lucide-react';
+import { collection, query, orderBy, doc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { BookMarked, Trash2, Edit, PlusCircle, Save, X, LoaderCircle, BadgeCheck, ArrowRight } from 'lucide-react';
 import { deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { get364DateFromGregorian } from '@/lib/calendar-utils';
+import { get364DateFromGregorian, getSacredMonthName } from '@/lib/calendar-utils';
 import { useUI } from '@/context/UIContext';
 import { useToast } from '@/hooks/use-toast';
 import { MarkdownRenderer } from '../common/MarkdownRenderer';
 import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,7 +20,11 @@ import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { Card, CardContent } from '../ui/card';
+import { Card, CardContent, CardHeader } from '../ui/card';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { cn } from '@/lib/utils';
+
 
 const noteEditorSchema = z.object({
     content: z.string().min(1, 'Note cannot be empty.'),
@@ -47,44 +50,68 @@ interface Note {
 const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note) => void, onDelete: (id: string) => void }) => {
     const { navigateToTarget, startDate } = useUI();
     
-    const handleGoToDate = (gregorianDateStr: string) => {
-        const yahuahDate = get364DateFromGregorian(new Date(gregorianDateStr + 'T00:00:00'), startDate);
+    const yahuahDate = useMemo(() => get364DateFromGregorian(new Date(note.date + 'T00:00:00'), startDate), [note.date, startDate]);
+    const gregorianDate = useMemo(() => new Date(note.date + 'T00:00:00'), [note.date]);
+    
+    const handleGoToDate = () => {
         if (yahuahDate) {
           navigateToTarget(`day-${yahuahDate.month}-${yahuahDate.day}`);
         }
     };
 
     return (
-        <div className="p-4 rounded-lg border bg-background/50 flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-                <div className="flex-1">
-                    <p className="text-sm font-semibold text-primary">
-                        {new Date(note.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
-                    </p>
-                    {note.isRevelation && <Badge className="mt-1 bg-amber-500 text-white"><BadgeCheck className="w-3 h-3 mr-1.5"/>Revelation</Badge>}
-                </div>
-                 <div className="flex flex-shrink-0 self-end sm:self-start gap-2">
-                    <Button variant="outline" size="sm" onClick={() => onEdit(note)}>
-                        <Edit className="w-3 h-3 mr-2" /> Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => onDelete(note.id)}>
-                        <Trash2 className="w-3 h-3 mr-2" /> Delete
-                    </Button>
-                </div>
-            </div>
-            
-            <div>
-                <MarkdownRenderer content={note.content} className="text-sm text-muted-foreground" />
+        <div className="pl-8 relative">
+             <div className="absolute left-0 top-0 h-full w-px bg-border -translate-x-[1px]" />
+             <div className="absolute left-0 top-4 h-2.5 w-2.5 rounded-full bg-primary/50 border-2 border-background -translate-x-[5px]" />
+            <div className={cn(
+                "p-4 rounded-lg border",
+                note.isRevelation ? "bg-[#4a3a2a]/30" : "bg-background/50"
+            )}>
+                 <div className="flex justify-between items-start mb-2">
+                    <div>
+                        <p className="text-sm font-semibold text-foreground">
+                            {gregorianDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                            {yahuahDate ? `${getSacredMonthName(yahuahDate.month)} (Month ${yahuahDate.month}), Day ${yahuahDate.day}` : ''}
+                        </p>
+                    </div>
+                     <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(note)}><Edit className="w-4 h-4" /></Button>
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                 <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Delete this note?</AlertDialogTitle>
+                                <AlertDialogDescription>This will permanently delete this journal entry. Are you sure?</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDelete(note.id)}>Yes, Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                 </div>
+
+                {note.isRevelation && <Badge className="mb-2 bg-amber-500 text-white"><BadgeCheck className="w-3 h-3 mr-1.5"/>Revelation</Badge>}
+                
+                <MarkdownRenderer content={note.content} className="text-sm text-foreground/80" />
+
                 {note.tags && note.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        {note.tags.map(tag => <Badge key={tag} variant="secondary">#{tag}</Badge>)}
+                    <div className="flex flex-wrap gap-2 mt-3">
+                        {note.tags.map(tag => <Badge key={tag} variant="secondary" className="bg-muted hover:bg-muted text-muted-foreground">#{tag}</Badge>)}
                     </div>
                 )}
+                
+                <div className="mt-4 pt-3 border-t border-border/50">
+                    <Button variant="link" className="p-0 h-auto text-xs" onClick={handleGoToDate}>
+                        Go to Date
+                    </Button>
+                </div>
             </div>
-            
-            <Button variant="link" className="p-0 h-auto text-xs self-start" onClick={() => handleGoToDate(note.date)}>
-                View Day on Calendar
-            </Button>
         </div>
     )
 }
@@ -191,7 +218,6 @@ export const MyJournals = () => {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const router = useRouter();
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -232,8 +258,7 @@ export const MyJournals = () => {
         await updateDocumentNonBlocking(docRef, { ...payload, updatedAt: serverTimestamp() });
         toast({ title: 'Note Updated!'});
     } else { // We are creating
-        const colRef = collection(firestore, `users/${user.uid}/notes`);
-        await addDocumentNonBlocking(colRef, payload);
+        await addDocumentNonBlocking(collection(firestore, `users/${user.uid}/notes`), payload);
         toast({ title: 'Note Saved!'});
     }
     
@@ -245,6 +270,21 @@ export const MyJournals = () => {
     setIsCreating(true);
     setEditingNote(null);
   }
+
+  const groupedNotes = useMemo(() => {
+    if (!allJournalDocs) return {};
+    
+    return allJournalDocs.reduce((acc, note) => {
+        const monthKey = note.date.substring(0, 7); // YYYY-MM
+        if (!acc[monthKey]) {
+            acc[monthKey] = [];
+        }
+        acc[monthKey].push(note);
+        return acc;
+    }, {} as Record<string, Note[]>);
+  }, [allJournalDocs]);
+
+  const sortedMonthKeys = useMemo(() => Object.keys(groupedNotes).sort().reverse(), [groupedNotes]);
 
   const renderContent = () => {
     if (isUserLoading || isLoading) {
@@ -270,11 +310,38 @@ export const MyJournals = () => {
     }
 
     return (
-        <div className="space-y-4">
-            {allJournalDocs.map(note => (
-                <NoteCard key={note.id} note={note} onEdit={handleEdit} onDelete={handleDelete} />
-            ))}
-        </div>
+        <Accordion type="single" collapsible defaultValue={sortedMonthKeys[0]} className="w-full">
+            {sortedMonthKeys.map(monthKey => {
+                const notesInMonth = groupedNotes[monthKey];
+                const firstNoteDate = new Date(notesInMonth[0].date + 'T00:00:00');
+                const monthName = firstNoteDate.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
+                const year = firstNoteDate.getFullYear();
+                
+                return (
+                    <AccordionItem key={monthKey} value={monthKey}>
+                        <AccordionTrigger className="hover:no-underline">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-muted p-3 rounded-lg text-center">
+                                    <p className="font-bold text-lg text-primary">{monthName}</p>
+                                    <p className="text-xs text-muted-foreground">{year}</p>
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                     <span className="font-semibold text-xl text-foreground">{notesInMonth.length}</span>
+                                     <span className="text-sm text-muted-foreground">Entries</span>
+                                </div>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-4 pb-0">
+                           <div className="space-y-6">
+                             {notesInMonth.map(note => (
+                                <NoteCard key={note.id} note={note} onEdit={handleEdit} onDelete={handleDelete} />
+                             ))}
+                           </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                )
+            })}
+        </Accordion>
     )
   }
 
@@ -284,7 +351,7 @@ export const MyJournals = () => {
             <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left">
                 <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
                     <BookMarked className="w-5 h-5"/>
-                    Pull All Journals
+                    My Journals
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">A private, searchable archive of all your personal studies and insights.</p>
             </div>
