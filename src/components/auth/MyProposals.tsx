@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, doc } from 'firebase/firestore';
 import { LoaderCircle, ScrollText, Edit, Trash2 } from 'lucide-react';
@@ -26,6 +26,7 @@ interface Proposal {
   tags?: string[];
   status: 'pending' | 'approved' | 'rejected';
   createdAt?: { seconds: number };
+  userId: string;
 }
 
 export const MyProposals = ({ userId }: { userId: string }) => {
@@ -35,15 +36,21 @@ export const MyProposals = ({ userId }: { userId: string }) => {
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
   const proposalsQuery = useMemoFirebase(() => {
-    if (!firestore || !userId) return null;
+    if (!firestore) return null;
+    // Query for all proposals and filter on the client.
     return query(
       collection(firestore, 'glossaryProposals'),
-      where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
-  }, [firestore, userId]);
+  }, [firestore]);
 
-  const { data: proposals, isLoading } = useCollection<Proposal>(proposalsQuery);
+  const { data: allProposals, isLoading } = useCollection<Proposal>(proposalsQuery);
+
+  const proposals = useMemo(() => {
+    if (!allProposals) return [];
+    return allProposals.filter(p => p.userId === userId);
+  }, [allProposals, userId]);
+
 
   const handleDelete = (id: string) => {
     if (!firestore || !userId) return;
