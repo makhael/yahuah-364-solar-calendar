@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LoaderCircle, PlusCircle, BookOpen, Send, Edit, Trash2 } from 'lucide-react';
+import { LoaderCircle, PlusCircle, BookOpen, Send, Edit, Trash2, BookUp } from 'lucide-react';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 
@@ -74,8 +74,14 @@ export const ScriptureSubmission = ({ dateId }: { dateId: string }) => {
     };
     
     return (
-        <div className="bg-secondary/50 p-4 rounded-lg border">
-            <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5"/> Submit Scripture for this Day</h3>
+        <div className="space-y-4">
+            <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left">
+                <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
+                    <BookUp className="w-5 h-5"/>
+                    Submit Scripture for this Day
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Share a relevant verse for the community.</p>
+            </div>
             
             {!stagedScripture && (
                 <>
