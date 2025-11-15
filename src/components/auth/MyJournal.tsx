@@ -121,7 +121,7 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
     const watchedDate = watch('date');
     
     const yahuahDateDetails = useMemo(() => {
-        if (!watchedDate || !m1d1StartDate) return null;
+        if (!watchedDate || !(watchedDate instanceof Date) || !m1d1StartDate) return null;
         
         const yahuahDate = get364DateFromGregorian(watchedDate, m1d1StartDate);
         if (!yahuahDate) return null;
