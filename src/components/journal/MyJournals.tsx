@@ -385,7 +385,7 @@ export const MyJournals = () => {
 
   return (
     <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern" id="my-journals-section">
-       <div className="flex justify-between items-center mb-6">
+       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
             <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left">
                 <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
                     <BookMarked className="w-5 h-5"/>
@@ -394,7 +394,7 @@ export const MyJournals = () => {
                 <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
             </div>
             {user && !user.isAnonymous && !isCreating && !editingNote && (
-                <Button onClick={() => setIsCreating(true)}>
+                <Button onClick={() => setIsCreating(true)} className="w-full sm:w-auto">
                     <PlusCircle className="w-4 h-4 mr-2" />
                     Create New Entry
                 </Button>
