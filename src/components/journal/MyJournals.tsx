@@ -4,7 +4,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { BookMarked, Trash2, Edit, PlusCircle, Save, X, LoaderCircle, BadgeCheck, ArrowRight } from 'lucide-react';
+import { BookMarked, Trash2, Edit, PlusCircle, Save, X, LoaderCircle, BadgeCheck, ArrowRight, ChevronDown } from 'lucide-react';
 import { deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { get364DateFromGregorian, getSacredMonthName } from '@/lib/calendar-utils';
@@ -62,14 +62,11 @@ const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note)
     return (
         <div className="pl-4 relative">
              <div className="absolute left-0 top-0 h-full w-px bg-border translate-x-[7px]" />
-             <div className="absolute left-0 top-4 h-2.5 w-2.5 rounded-full bg-primary/70 border-2 border-card translate-x-[2px]" />
-            <div className={cn(
-                "p-4 rounded-lg border",
-                note.isRevelation ? "bg-[#4a3a2a]/30" : "bg-background/50"
-            )}>
-                 <div className="flex justify-between items-start mb-2 gap-2">
-                    <div className="flex-grow">
-                        <p className="text-sm font-semibold text-foreground">
+             <div className="absolute left-0 top-4 h-4 w-4 rounded-full bg-primary/70 border-2 border-card" />
+            <div className="ml-8 space-y-3">
+                 <div className="flex justify-between items-start gap-2">
+                    <div>
+                        <p className="font-semibold text-foreground">
                             {gregorianDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -96,21 +93,21 @@ const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note)
                     </div>
                  </div>
 
-                {note.isRevelation && <Badge className="mb-2 bg-amber-500 text-white"><BadgeCheck className="w-3 h-3 mr-1.5"/>Revelation</Badge>}
-                
-                <MarkdownRenderer content={note.content} className="text-sm text-foreground/80" />
-
-                {note.tags && note.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                        {note.tags.map(tag => <Badge key={tag} variant="secondary" className="bg-muted hover:bg-muted text-muted-foreground">#{tag}</Badge>)}
-                    </div>
-                )}
-                
-                <div className="mt-4 pt-3 border-t border-border/50">
-                    <Button variant="link" className="p-0 h-auto text-xs" onClick={handleGoToDate}>
-                        Go to Date
-                    </Button>
+                <div className={cn("p-4 rounded-lg", note.isRevelation ? "bg-[#805d4a]/30 border border-[#805d4a]/50" : "bg-background/50 border")}>
+                    {note.isRevelation && (
+                        <Badge className="mb-2 bg-amber-500 text-white hover:bg-amber-600"><BadgeCheck className="w-3 h-3 mr-1.5"/>Revelation</Badge>
+                    )}
+                    <MarkdownRenderer content={note.content} className="text-sm text-foreground/90" />
+                    {note.tags && note.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                            {note.tags.map(tag => <Badge key={tag} variant="secondary" className="bg-muted hover:bg-muted text-muted-foreground">#{tag}</Badge>)}
+                        </div>
+                    )}
                 </div>
+
+                <Button variant="link" className="p-0 h-auto text-xs" onClick={handleGoToDate}>
+                    Go to Date
+                </Button>
             </div>
         </div>
     )
@@ -310,40 +307,28 @@ export const MyJournals = () => {
     }
 
     return (
-        <Accordion type="single" collapsible defaultValue={sortedMonthKeys[0]} className="w-full">
+        <Accordion type="single" collapsible defaultValue={sortedMonthKeys[0]} className="w-full space-y-4">
             {sortedMonthKeys.map(monthKey => {
                 const notesInMonth = groupedNotes[monthKey];
                 const firstNoteDate = new Date(notesInMonth[0].date + 'T00:00:00');
                 const lastNoteDate = new Date(notesInMonth[notesInMonth.length - 1].date + 'T00:00:00');
-                const monthName = firstNoteDate.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
-
-                const year = firstNoteDate.getFullYear();
                 const { startDate } = useUI();
                 const sacredMonth = get364DateFromGregorian(firstNoteDate, startDate)?.month;
                 
                 return (
-                    <AccordionItem key={monthKey} value={monthKey}>
-                        <AccordionTrigger className="hover:no-underline">
-                            <div className="flex flex-wrap items-center justify-between w-full gap-x-4 gap-y-2">
-                                <div className="flex items-center gap-4 flex-1 min-w-0">
-                                    <div className="bg-muted p-3 rounded-lg text-center w-[80px] flex-shrink-0">
-                                        <p className="font-bold text-lg text-primary">{monthName}</p>
-                                        <p className="text-xs text-muted-foreground">{year}</p>
-                                    </div>
-                                    <div className="flex flex-col text-left">
-                                        <p className="font-semibold text-lg text-foreground">{sacredMonth ? `Month ${sacredMonth}` : monthName}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {`${lastNoteDate.getUTCDate()} ${monthName} - ${firstNoteDate.getUTCDate()} ${monthName}, ${year}`}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="text-right flex-shrink-0">
-                                    <p className="font-semibold text-lg text-foreground">{notesInMonth.length}</p>
-                                    <p className="text-sm text-muted-foreground">Entries</p>
-                                </div>
+                    <AccordionItem key={monthKey} value={monthKey} className="border-b-0">
+                        <AccordionTrigger className="hover:no-underline p-0 w-full flex justify-between items-center">
+                            <div className="p-3 rounded-lg bg-muted text-left">
+                                <p className="font-bold text-lg text-primary">{sacredMonth ? `Month ${sacredMonth}` : ''}</p>
+                                <p className="font-semibold text-foreground">{getSacredMonthName(sacredMonth || 0)}</p>
+                                <p className="text-xs text-muted-foreground">{firstNoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC'})} - {lastNoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</p>
+                            </div>
+                            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                                <span className="font-semibold text-foreground">{notesInMonth.length} Entries</span>
+                                <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                             </div>
                         </AccordionTrigger>
-                        <AccordionContent className="pt-4 pb-0">
+                        <AccordionContent className="pt-4">
                            <div className="space-y-6">
                              {notesInMonth.map(note => (
                                 <NoteCard key={note.id} note={note} onEdit={handleEdit} onDelete={handleDelete} />
