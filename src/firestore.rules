@@ -71,7 +71,7 @@ service cloud.firestore {
       allow delete: if isAdmin() || isUserAdmin();
 
       match /glossaryProposals/{proposalId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) || isAdmin() || isUserAdmin() || isUserLeader();
       }
       
       match /notes/{noteId} {
