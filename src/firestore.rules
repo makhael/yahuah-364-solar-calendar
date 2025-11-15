@@ -90,11 +90,14 @@ service cloud.firestore {
     }
 
     match /glossaryProposals/{proposalId} {
+        // READ: Any signed-in user can read all proposals.
+        allow list, get: if isSignedIn();
+        
+        // CREATE: Any signed-in user can create a proposal for themselves.
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow get: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
+
+        // WRITE: Only the owner, an Admin, or a Leader can update or delete.
         allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isLeader());
-        allow list: if isSignedIn() && 
-                    (isAdmin() || isLeader() || request.query.where.hasAll(['userId', '==', request.auth.uid]));
     }
     
     match /scriptureReadings/{readingId} {
