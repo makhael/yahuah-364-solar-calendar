@@ -330,9 +330,9 @@ export const MyJournals = () => {
                                         <p className="font-bold text-lg text-primary">{monthName}</p>
                                         <p className="text-xs text-muted-foreground">{year}</p>
                                     </div>
-                                    <div className="min-w-0">
-                                        <p className="font-semibold text-lg text-foreground text-left truncate">{sacredMonth ? `Month ${sacredMonth}` : monthName}</p>
-                                        <p className="text-sm text-muted-foreground text-left">
+                                    <div className="flex flex-col text-left">
+                                        <p className="font-semibold text-lg text-foreground">{sacredMonth ? `Month ${sacredMonth}` : monthName}</p>
+                                        <p className="text-sm text-muted-foreground">
                                             {`${lastNoteDate.getUTCDate()} ${monthName} - ${firstNoteDate.getUTCDate()} ${monthName}, ${year}`}
                                         </p>
                                     </div>
