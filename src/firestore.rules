@@ -11,14 +11,16 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
+    function userHasRole(role) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    
     function isAdmin() {
-      // Check for a custom claim 'admin' on the user's auth token.
-      return request.auth.token.admin == true;
+      return userHasRole('admin');
     }
 
     function isLeader() {
-      // Check for a custom claim 'leader' on the user's auth token.
-      return request.auth.token.leader == true;
+        return userHasRole('leader');
     }
 
     match /appointments/{appointmentId} {
