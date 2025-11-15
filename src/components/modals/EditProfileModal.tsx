@@ -81,7 +81,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
   };
   
   const handlePasswordReset = async () => {
-    if (!user?.email || !auth) {
+    if (!user?.email || !auth || !firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'No email address associated with this account.' });
       return;
     }
@@ -101,7 +101,6 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
 
             await addDocumentNonBlocking(mailColRef, {
                 to: [user.email],
-                from: "support@yahuahscalendar.org",
                 message: {
                     subject: subject,
                     html: html,
