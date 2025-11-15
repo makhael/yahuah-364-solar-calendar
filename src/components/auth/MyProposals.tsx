@@ -17,7 +17,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useCollection, useMemoFirebase } from '@/firebase/firestore/use-collection';
+import { useCollection, useMemoFirebase } from '@/firebase';
 
 interface Proposal {
   id: string;
