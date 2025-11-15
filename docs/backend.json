@@ -14,6 +14,10 @@
           "format": "uri",
           "description": "URL of the user's profile picture."
         },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's phone number."
+        },
         "role": {
             "type": "string",
             "enum": ["admin", "leader", "member", "contributor", "moderator"],
