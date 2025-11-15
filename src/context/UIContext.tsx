@@ -204,13 +204,8 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
 
   const appointmentsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    if (user && !user.isAnonymous) {
-      // For signed-in users, we can fetch more, but logic inside component will filter
-      return collection(firestore, 'appointments');
-    }
-    // For guests, only fetch public appointments
-    return query(collection(firestore, 'appointments'), where('inviteScope', '==', 'all'));
-  }, [firestore, user]);
+    return collection(firestore, 'appointments');
+  }, [firestore]);
 
   const { data: allAppointments } = useCollection<Appointment>(appointmentsQuery);
 
