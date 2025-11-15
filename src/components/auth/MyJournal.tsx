@@ -231,7 +231,7 @@ export const MyJournal = ({ userId }: { userId: string }) => {
     setShowEditor(true);
   }
 
-  const handleSave = (data: any, noteId?: string) => {
+  const handleSave = (data: NoteEditorFormData, noteId?: string) => {
     if (!firestore || !userId) return;
     
     const payload = {
