@@ -22,6 +22,11 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    // Checks if the requesting user has the 'leader' role in their own user document.
+    function isUserLeader() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'leader';
+    }
+
     match /appointments/{appointmentId} {
       allow get: if true;
       allow list: if isSignedIn();
@@ -95,14 +100,14 @@ service cloud.firestore {
 
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
-        allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin());
-        allow list: if isSignedIn() && (isAdmin() || isUserAdmin());
+        allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin() || isUserLeader());
+        allow list: if isSignedIn() && (isAdmin() || isUserAdmin() || isUserLeader());
     }
     
     match /scriptureReadings/{readingId} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin());
+      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin() || isUserLeader());
     }
 
     match /podcast_series/{podcastSeriesId} {
