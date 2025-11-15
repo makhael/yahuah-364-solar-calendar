@@ -279,6 +279,7 @@ export const MyJournals = () => {
             if (!date364) return null;
 
             const monthLabel = `Month ${date364.month}: ${getSacredMonthName(date364.month)}`;
+            const entryCount = doc.entries?.length || 0;
 
             return (
               <AccordionItem value={doc.id} key={doc.id}>
@@ -289,13 +290,13 @@ export const MyJournals = () => {
                             <div className="text-xs font-semibold text-muted-foreground mt-0.5">{date364.day}, {gregorianNoteDate.getFullYear()}</div>
                             <div className="text-[10px] text-muted-foreground/70 mt-1">{gregorianNoteDate.toLocaleDateString('en-us', {weekday: 'long', month: 'long', day: 'numeric'})}</div>
                         </div>
-                        <span className="text-sm font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md">{doc.entries.length} {doc.entries.length === 1 ? 'Entry' : 'Entries'}</span>
+                        <span className="text-sm font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md">{entryCount} {entryCount === 1 ? 'Entry' : 'Entries'}</span>
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
                     <div className="relative pl-6 pt-4 space-y-8 z-0">
                         <div className="absolute left-[36px] top-0 bottom-0 w-0.5 bg-border -z-10"></div>
-                        {doc.entries.sort((a,b) => b.createdAt?.seconds - a.createdAt?.seconds).map((entry) => {
+                        {doc.entries?.sort((a,b) => b.createdAt?.seconds - a.createdAt?.seconds).map((entry) => {
                             return (
                                 <div key={entry.id} className="relative flex items-start gap-6">
                                     <div className="relative z-10 flex h-full items-start pt-2">
@@ -349,7 +350,7 @@ export const MyJournals = () => {
                     <BookMarked className="w-5 h-5"/>
                     Pull All Journals
                 </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">A private, searchable archive of your personal studies and insights.</p>
             </div>
             {user && !user.isAnonymous && !isCreating && !editingEntry && (
                 <Button onClick={handleOpenCreator} className="w-full sm:w-auto">
