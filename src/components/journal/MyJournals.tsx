@@ -56,12 +56,14 @@ const JournalForm = ({
     onSave,
     onCancel,
     existingEntry,
-    date
+    date,
+    setDate
 }: {
     onSave: (data: NoteEntryFormData, entryId?: string) => void;
     onCancel: () => void;
     existingEntry: JournalEntry | null;
     date: Date;
+    setDate?: (date: Date) => void;
 }) => {
     const { handleSubmit, control, reset, watch, formState: { errors, isSubmitting } } = useForm<NoteEntryFormData>({
         resolver: zodResolver(noteEntrySchema),
@@ -100,9 +102,15 @@ const JournalForm = ({
             <CardContent className="p-4">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <h4 className="font-semibold text-foreground">{existingEntry ? 'Edit Entry' : 'Create New Entry'}</h4>
-                    <div className="pl-1 text-center sm:text-left">
-                        <p className="font-bold text-primary">{date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</p>
-                        {yahuahDate && <p className="text-xs text-muted-foreground">{getSacredMonthName(yahuahDate.month)} (Month {yahuahDate.month}), Day {yahuahDate.day}</p>}
+                     <div className="pl-1 text-center sm:text-left">
+                        {setDate ? (
+                            <DatePicker date={date} setDate={(d) => d && setDate(d)} />
+                        ) : (
+                             <>
+                                <p className="font-bold text-primary">{date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</p>
+                                {yahuahDate && <p className="text-xs text-muted-foreground">{getSacredMonthName(yahuahDate.month)} (Month {yahuahDate.month}), Day {yahuahDate.day}</p>}
+                             </>
+                        )}
                     </div>
 
                     <div>
@@ -218,9 +226,9 @@ export const MyJournals = () => {
         } else { // Adding a new entry
             newEntries = [...existingEntries, payload];
         }
-        await updateDoc(docRef, { entries: newEntries, updatedAt: serverTimestamp() });
+        await updateDoc(docRef, { entries: newEntries, updatedAt: new Date() });
     } else { // No document for this day, create it
-        await setDocumentNonBlocking(docRef, { entries: [payload], updatedAt: serverTimestamp(), userId: user.uid }, { merge: true });
+        await setDocumentNonBlocking(docRef, { entries: [payload], updatedAt: new Date(), userId: user.uid }, { merge: true });
     }
     
     toast({ title: "Journal Saved", description: "Your entry has been saved." });
@@ -255,7 +263,7 @@ export const MyJournals = () => {
     }
     
     if (isCreating) {
-        return <JournalForm onSave={handleSaveNote} onCancel={() => setIsCreating(false)} existingEntry={null} date={creationDate} />;
+        return <JournalForm onSave={handleSaveNote} onCancel={() => setIsCreating(false)} existingEntry={null} date={creationDate} setDate={setCreationDate} />;
     }
     if (editingEntry) {
          return <JournalForm onSave={handleSaveNote} onCancel={() => setEditingEntry(null)} existingEntry={editingEntry.entry} date={new Date(editingEntry.docId + "T00:00:00")} />;
@@ -296,7 +304,7 @@ export const MyJournals = () => {
                 <AccordionContent>
                     <div className="relative pl-6 pt-4 space-y-8 z-0">
                         <div className="absolute left-[36px] top-0 bottom-0 w-0.5 bg-border -z-10"></div>
-                        {doc.entries?.sort((a,b) => b.createdAt?.seconds - a.createdAt?.seconds).map((entry) => {
+                        {doc.entries?.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).map((entry) => {
                             const createdAtDate = entry.createdAt?.toDate ? entry.createdAt.toDate() : (entry.createdAt ? new Date(entry.createdAt) : null);
                             return (
                                 <div key={entry.id} className="relative flex items-start gap-6">
@@ -364,3 +372,5 @@ export const MyJournals = () => {
     </div>
   );
 };
+
+    
