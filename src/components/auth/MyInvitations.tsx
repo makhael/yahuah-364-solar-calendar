@@ -36,8 +36,9 @@ interface Appointment {
   };
 }
 
-const InvitationCard = ({ invitation, onRsvp, userId }: { invitation: Appointment, onRsvp: (id: string, newStatus: 'going' | 'notGoing' | 'maybe', oldStatus: 'pending' | 'going' | 'notGoing' | 'maybe' | null) => void, userId: string }) => {
-    const { startDate, handleGoToDate } = useUI();
+const InvitationCard = ({ invitation, onRsvp, userId }: { invitation: Appointment, onRsvp: (id: string, newStatus: 'going' | 'notGoing' | 'maybe' | 'dismissed', oldStatus: 'pending' | 'going' | 'notGoing' | 'maybe' | null) => void, userId: string }) => {
+    const { startDate, navigateToTarget } = useUI();
+    const [isChanging, setIsChanging] = useState(false);
     
     const gregorianDate = new Date(invitation.startDate + 'T00:00:00');
     const date364 = get364DateFromGregorian(gregorianDate, startDate);
@@ -46,6 +47,12 @@ const InvitationCard = ({ invitation, onRsvp, userId }: { invitation: Appointmen
     if (date364) {
         sacredDateString = `${getSacredMonthName(date364.month)} (Month ${date364.month}), Day ${date364.day}`;
     }
+    
+    const handleGoToDate = () => {
+        if (date364) {
+            navigateToTarget(`day-${date364.month}-${date364.day}`);
+        }
+    };
 
     const userStatus = 
         (invitation.rsvps.going?.includes(userId) ? 'going' :
@@ -66,13 +73,18 @@ const InvitationCard = ({ invitation, onRsvp, userId }: { invitation: Appointmen
     const statusInfo = getStatusInfo();
     const isPending = userStatus === 'pending';
 
+    const handleRsvpClick = (newStatus: 'going' | 'notGoing' | 'maybe') => {
+        onRsvp(invitation.id, newStatus, userStatus);
+        setIsChanging(false);
+    }
+
     return (
         <div className="p-4 rounded-lg border bg-background/50 flex flex-col gap-4 relative">
              <div className="absolute top-2 right-2">
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onRsvp(invitation.id, 'notGoing', 'dismissed')}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onRsvp(invitation.id, 'dismissed', userStatus)}>
                                 <X className="w-4 h-4" />
                             </Button>
                         </TooltipTrigger>
@@ -84,7 +96,7 @@ const InvitationCard = ({ invitation, onRsvp, userId }: { invitation: Appointmen
             </div>
             <div className="flex flex-col sm:flex-row justify-between items-start gap-2 pr-8">
                 <h4 className="font-semibold text-lg text-primary">{invitation.title}</h4>
-                <Button variant="link" size="sm" onClick={() => handleGoToDate(invitation.startDate)} className="h-auto p-0 self-start sm:self-center">
+                <Button variant="link" size="sm" onClick={handleGoToDate} className="h-auto p-0 self-start sm:self-center">
                     View on Calendar
                 </Button>
             </div>
@@ -103,15 +115,15 @@ const InvitationCard = ({ invitation, onRsvp, userId }: { invitation: Appointmen
                 </div>
             )}
             
-            {isPending ? (
+            {(isPending || isChanging) ? (
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <Button size="sm" onClick={() => onRsvp(invitation.id, 'going', userStatus)} className="bg-green-600 hover:bg-green-700">
+                    <Button size="sm" onClick={() => handleRsvpClick('going')} className="bg-green-600 hover:bg-green-700">
                         <CheckCircle2 className="w-4 h-4 mr-2" /> Accept
                     </Button>
-                     <Button size="sm" variant="outline" onClick={() => onRsvp(invitation.id, 'maybe', userStatus)}>
+                     <Button size="sm" variant="outline" onClick={() => handleRsvpClick('maybe')}>
                         <HelpCircle className="w-4 h-4 mr-2" /> Maybe
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => onRsvp(invitation.id, 'notGoing', userStatus)}>
+                    <Button size="sm" variant="destructive" onClick={() => handleRsvpClick('notGoing')}>
                         <XCircle className="w-4 h-4 mr-2" /> Decline
                     </Button>
                 </div>
@@ -123,7 +135,7 @@ const InvitationCard = ({ invitation, onRsvp, userId }: { invitation: Appointmen
                             {statusInfo.text}
                         </div>
                     )}
-                     <Button variant="outline" size="sm" onClick={() => onRsvp(invitation.id, 'maybe', userStatus)}>
+                     <Button variant="outline" size="sm" onClick={() => setIsChanging(true)}>
                         <Undo2 className="w-4 h-4 mr-2" /> Change RSVP
                     </Button>
                 </div>
@@ -151,7 +163,7 @@ export const MyInvitations = ({ userId }: { userId: string }) => {
     return invitations?.filter(inv => !inv.rsvps.dismissed?.includes(userId)) || [];
   }, [invitations, userId]);
   
-  const handleRsvp = (appointmentId: string, newStatus: 'going' | 'notGoing' | 'maybe', oldStatus: 'pending' | 'going' | 'notGoing' | 'maybe' | 'dismissed' | null) => {
+  const handleRsvp = (appointmentId: string, newStatus: 'going' | 'notGoing' | 'maybe' | 'dismissed', oldStatus: 'pending' | 'going' | 'notGoing' | 'maybe' | null) => {
     if (!firestore || !userId) return;
 
     const docRef = doc(firestore, 'appointments', appointmentId);
@@ -160,20 +172,16 @@ export const MyInvitations = ({ userId }: { userId: string }) => {
 
     // Remove from all possible old statuses
     if (oldStatus) {
-        if (oldStatus === 'dismissed') {
-            updates['rsvps.dismissed'] = arrayRemove(userId);
-        } else {
-             const allStatuses: ('pending' | 'going' | 'notGoing' | 'maybe')[] = ['pending', 'going', 'notGoing', 'maybe'];
-             allStatuses.forEach(s => {
-                updates[`rsvps.${s}`] = arrayRemove(userId);
-             });
-        }
+        const allStatuses: ('pending' | 'going' | 'notGoing' | 'maybe')[] = ['pending', 'going', 'notGoing', 'maybe'];
+        allStatuses.forEach(s => {
+           updates[`rsvps.${s}`] = arrayRemove(userId);
+        });
     }
     
     // Add to the new status
-    if (oldStatus === 'dismissed') {
-        updates[`rsvps.pending`] = arrayUnion(userId);
-        toast({ title: 'Invitation Restored', description: 'You can now RSVP to this event.' });
+    if (newStatus === 'dismissed') {
+        updates[`rsvps.dismissed`] = arrayUnion(userId);
+        toast({ title: 'Invitation Dismissed', description: 'You can restore it later if needed.' });
     } else {
         updates[`rsvps.${newStatus}`] = arrayUnion(userId);
         toast({ title: 'RSVP Sent!', description: `You have responded to the invitation.` });
