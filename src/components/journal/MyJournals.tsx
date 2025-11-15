@@ -3,9 +3,9 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, doc, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
 import { BookMarked, Trash2, BadgeCheck, LogIn, Edit, PlusCircle, X } from 'lucide-react';
-import { deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { get364DateFromGregorian, getGregorianDate, getSacredMonthName } from '@/lib/calendar-utils';
 import { cn } from '@/lib/utils';
@@ -39,7 +39,7 @@ type NoteFormData = z.infer<typeof noteSchema>;
 
 
 interface Note {
-  id: string; // YYYY-MM-DD
+  id: string;
   content: string;
   isRevelation: boolean;
   date: string; // YYYY-MM-DD
@@ -54,7 +54,7 @@ const JournalForm = ({
     onCancel,
 }: {
     noteToEdit: Note | null;
-    onSave: (data: NoteFormData) => void;
+    onSave: (data: NoteFormData, noteId?: string) => void;
     onCancel: () => void;
 }) => {
     const { handleSubmit, control, reset, watch, formState: { errors, isSubmitting } } = useForm<NoteFormData>({
@@ -107,11 +107,15 @@ const JournalForm = ({
             });
         }
     }, [noteToEdit, reset]);
+    
+    const onSubmit = (data: NoteFormData) => {
+        onSave(data, noteToEdit?.id);
+    }
 
     return (
         <Card className="mt-4">
             <CardContent className="p-4">
-                <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <h4 className="font-semibold text-foreground">{noteToEdit ? 'Edit Journal Entry' : 'Create New Journal Entry'}</h4>
                     <div>
                         <Label>Date</Label>
@@ -191,7 +195,8 @@ export const MyJournals = () => {
     if (isUserLoading || !user || user.isAnonymous || !firestore) return null;
     return query(
       collection(firestore, 'users', user.uid, 'notes'),
-       orderBy('date', 'desc')
+       orderBy('date', 'desc'),
+       orderBy('updatedAt', 'desc')
     );
   }, [isUserLoading, user?.uid, firestore]);
 
@@ -230,11 +235,10 @@ export const MyJournals = () => {
     }
   };
   
-  const handleSaveNote = (data: NoteFormData) => {
+  const handleSaveNote = async (data: NoteFormData, noteId?: string) => {
     if (!user || !firestore) return;
     
     const dateId = data.date.toISOString().split('T')[0];
-    const noteRef = doc(firestore, 'users', user.uid, 'notes', dateId);
     
     const payload = {
         content: data.content,
@@ -242,9 +246,17 @@ export const MyJournals = () => {
         tags: data.tags?.split(',').map(t => t.trim()).filter(Boolean) || [],
         date: dateId,
         updatedAt: serverTimestamp(),
+        userId: user.uid,
     };
-
-    setDocumentNonBlocking(noteRef, payload, { merge: true });
+    
+    if (noteId) {
+      const noteRef = doc(firestore, 'users', user.uid, 'notes', noteId);
+      await updateDoc(noteRef, payload);
+    } else {
+      const notesCol = collection(firestore, 'users', user.uid, 'notes');
+      await addDoc(notesCol, { ...payload, createdAt: serverTimestamp() });
+    }
+    
     toast({ title: "Journal Saved", description: "Your entry has been saved." });
     setIsCreating(false);
     setEditingNote(null);
@@ -325,6 +337,7 @@ export const MyJournals = () => {
                             if (date364) {
                                 sacredDateString = `${getSacredMonthName(date364.month)} (Month ${date364.month}), Day ${date364.day}`;
                             }
+                             const timestamp = note.updatedAt || note.createdAt;
 
                             return (
                                 <div key={note.id} className="relative flex items-start gap-6">
@@ -343,6 +356,11 @@ export const MyJournals = () => {
                                             day: 'numeric',
                                             timeZone: 'UTC'
                                             })}
+                                            {timestamp && (
+                                                <span className="ml-2 font-normal text-xs">
+                                                    at {new Date(timestamp.seconds * 1000).toLocaleTimeString()}
+                                                </span>
+                                            )}
                                         </p>
                                         {sacredDateString && (
                                             <p className={cn("font-medium text-xs", note.isRevelation ? "text-amber-500/80" : "text-muted-foreground/80")}>{sacredDateString}</p>
