@@ -434,11 +434,11 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
 
               if (templateSnap.exists()) {
                   const template = templateSnap.data();
-                  const subject = (template.subject || '').replace(/{{eventName}}/g, payload.title);
+                  let subject = (template.subject || '').replaceAll('{{eventName}}', payload.title);
                   let html = (template.html || '');
-                  html = html.replace(/{{inviterName}}/g, user.displayName || 'A member');
-                  html = html.replace(/{{eventName}}/g, payload.title);
-                  html = html.replace(/{{eventDate}}/g, new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }));
+                  html = html.replaceAll('{{inviterName}}', user.displayName || 'A member');
+                  html = html.replaceAll('{{eventName}}', payload.title);
+                  html = html.replaceAll('{{eventDate}}', new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }));
 
                   await addDocumentNonBlocking(mailRef, {
                       to: emails,

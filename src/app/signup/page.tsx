@@ -80,8 +80,8 @@ export default function SignupPage() {
         let htmlContent = templateData.html || '';
         let subjectContent = templateData.subject || '';
 
-        htmlContent = htmlContent.replace(/{{displayName}}/g, data.displayName);
-        subjectContent = subjectContent.replace(/{{displayName}}/g, data.displayName);
+        htmlContent = htmlContent.replaceAll('{{displayName}}', data.displayName);
+        subjectContent = subjectContent.replaceAll('{{displayName}}', data.displayName);
 
         batch.set(doc(mailColRef), {
             to: [data.email],
