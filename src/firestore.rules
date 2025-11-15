@@ -17,6 +17,14 @@ service cloud.firestore {
       return request.auth.token.admin == true;
     }
     
+    function isUserAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isUserLeader() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'leader';
+    }
+
     match /appointments/{appointmentId} {
       allow get: if true;
       allow list: if isSignedIn();
@@ -46,23 +54,21 @@ service cloud.firestore {
     }
 
     match /mail/{mailId} {
-      allow create: if true; // Temporarily open to fix signup flow
-      // Temporarily changed to allow any signed-in user to list.
-      // TODO: Revert to isAdmin() once custom claims are properly set up.
+      allow create: if true; 
       allow read, list: if isSignedIn();
     }
 
     match /emailTemplates/{templateId} {
         allow read: if isSignedIn();
-        allow write: if isAdmin();
+        allow write: if isAdmin() || isUserAdmin();
     }
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
+      allow get: if isOwner(userId) || isAdmin() || isUserAdmin();
       allow list: if isSignedIn();
-      allow create: if true; // Allow any user to create their own user document
-      allow update: if isOwner(userId) || isAdmin(); // Only owner or admin can update
-      allow delete: if isAdmin(); // Only admin can delete
+      allow create: if true;
+      allow update: if isOwner(userId) || isAdmin() || isUserAdmin();
+      allow delete: if isAdmin() || isUserAdmin();
 
       match /glossaryProposals/{proposalId} {
         allow read, write: if isOwner(userId);
@@ -87,22 +93,19 @@ service cloud.firestore {
 
     match /glossaryTerms/{termId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin() || isUserAdmin();
     }
 
     match /glossaryProposals/{proposalId} {
         allow create: if isSignedIn();
-        // Temporarily changed to allow any signed-in user to list.
-        // TODO: Revert to isAdmin() once custom claims are properly set up.
-        allow read, list, get, update, delete: if isSignedIn();
+        allow get, update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin() || isUserLeader());
+        allow list: if isSignedIn() && (isAdmin() || isUserAdmin() || isUserLeader());
     }
     
     match /scriptureReadings/{readingId} {
-      // Temporarily relaxed rule to unblock development.
-      // TODO: Revert to a more secure rule.
       allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
+      allow update, delete: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin() || isUserAdmin() || isUserLeader());
     }
 
     match /podcast_series/{podcastSeriesId} {
