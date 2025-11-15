@@ -73,10 +73,10 @@ const MailLogItem = ({ log }: { log: MailLog }) => {
       <AccordionTrigger className="hover:no-underline p-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-2">
             <div className="flex-grow text-left">
-                <p className="font-semibold text-foreground truncate" title={subject}>{subject}</p>
-                <p className="text-xs text-muted-foreground">To: {log.to.join(', ')}</p>
+                <p className="font-semibold text-foreground" title={subject}>{subject}</p>
+                <p className="text-xs text-muted-foreground break-all">To: {log.to.join(', ')}</p>
             </div>
-             <Badge variant="outline" className={cn("flex-shrink-0 items-center gap-2 self-end sm:self-center", statusInfo.color)}>
+             <Badge variant="outline" className={cn("flex-shrink-0 items-center gap-2 self-start mt-2 sm:mt-0 sm:self-center", statusInfo.color)}>
                 {statusInfo.icon}
                 <span>{statusInfo.text}</span>
             </Badge>
