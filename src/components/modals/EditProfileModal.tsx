@@ -61,8 +61,6 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
     }
 
     try {
-      // The phone number cannot be updated directly via client SDK's updateProfile
-      // It is a privileged operation that requires re-authentication.
       await updateProfile(user, {
         displayName: data.displayName,
         photoURL: data.photoURL,
@@ -89,22 +87,31 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
     }
 
     try {
-      const mailColRef = collection(firestore, 'mail');
-      await addDocumentNonBlocking(mailColRef, {
-          to: [user.email],
-          template: {
-            name: 'password-reset',
-            data: {
-              displayName: user.displayName || 'Friend',
-            },
-          },
-      });
+        const mailColRef = collection(firestore, 'mail');
+        const templateRef = doc(firestore, 'emailTemplates', 'password-reset');
+        const templateSnap = await getDoc(templateRef);
 
-      toast({
-        title: 'Password Reset Email Sent',
-        description: `An email has been sent to ${user.email} with instructions. Please check your spam folder as well.`,
-      });
+        if (templateSnap.exists()) {
+            const template = templateSnap.data();
+            const html = (template.html || '').replace(/\{\{\s*displayName\s*\}\}/g, user.displayName || 'Friend');
+            const subject = (template.subject || '').replace(/\{\{\s*displayName\s*\}\}/g, user.displayName || 'Friend');
+            
+            await addDocumentNonBlocking(mailColRef, {
+                to: [user.email],
+                from: "support@yahuahscalendar.org",
+                message: {
+                    subject,
+                    html,
+                }
+            });
 
+            toast({
+                title: 'Password Reset Email Sent',
+                description: `An email has been sent to ${user.email} with instructions. Please check your spam folder as well.`,
+            });
+        } else {
+            throw new Error("Password reset template not found.");
+        }
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not send password reset email. Please try again later.' });
