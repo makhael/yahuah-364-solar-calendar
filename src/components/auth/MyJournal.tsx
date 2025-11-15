@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, doc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { LoaderCircle, BookText, Trash2, Edit, Search, Save, X, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,18 @@ import { Label } from '../ui/label';
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { DatePicker } from '../ui/date-picker';
+import { Checkbox } from '../ui/checkbox';
+
+const noteEditorSchema = z.object({
+    content: z.string().min(1, 'Note cannot be empty.'),
+    isRevelation: z.boolean(),
+    tags: z.string().optional(),
+    date: z.string(),
+});
+
+type NoteEditorFormData = z.infer<typeof noteEditorSchema>;
+
 
 interface Note {
   id: string;
@@ -33,16 +45,6 @@ interface Note {
   createdAt?: { seconds: number };
   updatedAt?: { seconds: number };
 }
-
-const noteEditorSchema = z.object({
-    content: z.string().min(1, 'Note cannot be empty.'),
-    isRevelation: z.boolean(),
-    tags: z.string().optional(),
-    date: z.string(),
-});
-
-type NoteEditorFormData = z.infer<typeof noteEditorSchema>;
-
 
 const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note) => void, onDelete: (id: string) => void }) => {
     const { navigateToTarget, startDate } = useUI();
@@ -148,7 +150,16 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
                  <Controller
                     name="date"
                     control={control}
-                    render={({ field }) => <Input type="date" {...field} className="bg-background" />}
+                    render={({ field }) => (
+                         <DatePicker
+                          date={field.value ? new Date(field.value + 'T00:00:00') : undefined}
+                          setDate={(date) => {
+                            if (date) {
+                              field.onChange(date.toISOString().split('T')[0]);
+                            }
+                          }}
+                        />
+                    )}
                 />
              </div>
 
@@ -176,15 +187,15 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
                 />
             </div>
             <div className="flex items-center space-x-2">
-                <Controller
+                 <Controller
                     name="isRevelation"
                     control={control}
-                    render={({ field }) => <input type="checkbox" id="isRevelation" checked={field.value} onChange={field.onChange} className="h-4 w-4 rounded border-primary text-primary focus:ring-primary" />}
+                    render={({ field }) => <Checkbox id="isRevelation" checked={field.value} onCheckedChange={field.onChange} />}
                 />
                 <Label htmlFor="isRevelation">Mark as Revelation</Label>
             </div>
             <div className="flex justify-end gap-2 pt-4">
-                {note && <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>}
+                <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
                 <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? <LoaderCircle className="w-4 h-4 mr-2 animate-spin" /> : null}
                     {note ? 'Save Changes' : 'Save Entry'}
@@ -231,7 +242,7 @@ export const MyJournal = ({ userId }: { userId: string }) => {
     setShowEditor(true);
   }
 
-  const handleSave = (data: NoteEditorFormData, noteId?: string) => {
+  const handleSave = async (data: NoteEditorFormData, noteId?: string) => {
     if (!firestore || !userId) return;
     
     const payload = {
@@ -242,8 +253,11 @@ export const MyJournal = ({ userId }: { userId: string }) => {
     
     if (noteId) { // We are updating
         const docRef = doc(firestore, `users/${userId}/notes`, noteId);
-        updateDocumentNonBlocking(docRef, { ...payload, updatedAt: new Date() });
-        toast({ title: 'Note Updated!'});
+        const existingDoc = await getDoc(docRef);
+        if (existingDoc.exists()) {
+             updateDocumentNonBlocking(docRef, { ...payload, updatedAt: new Date() });
+             toast({ title: 'Note Updated!'});
+        }
     } else { // We are creating
         const newDocRef = doc(collection(firestore, `users/${userId}/notes`));
         addDocumentNonBlocking(newDocRef, { ...payload, id: newDocRef.id, createdAt: new Date() });
