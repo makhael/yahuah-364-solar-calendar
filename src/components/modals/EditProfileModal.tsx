@@ -5,10 +5,10 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUser, useFirestore, useAuth } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, collection, getDoc, writeBatch } from 'firebase/firestore';
-import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,8 +30,7 @@ interface EditProfileModalProps {
 }
 
 export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
-  const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
+  const { user, isUserLoading, firestore } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
   
@@ -55,7 +54,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
   }, [user, isUserLoading, reset]);
 
   const handleSave = async (data: ProfileFormData) => {
-    if (!user) {
+    if (!user || !firestore) {
       toast({ variant: 'destructive', title: 'Not signed in.' });
       return;
     }
@@ -90,7 +89,7 @@ export const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => 
       await sendPasswordResetEmail(auth, user.email);
       toast({
         title: 'Password Reset Email Sent',
-        description: `An email has been sent to ${user.email} with instructions. Please check your spam folder.`,
+        description: `If an account exists for ${user.email}, a password reset email has been sent. Please check your spam folder.`,
       });
     } catch (error: any) {
       console.error('Password reset error:', error);
