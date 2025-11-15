@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -231,18 +231,10 @@ export default function GlossaryManagement() {
                 tags: proposal.tags || [],
                 style: 'custom'
             };
-            addDocumentNonBlocking(glossaryTermRef, newTermData).then(() => {
-                toast({
-                    title: 'Proposal Approved & Published',
-                    description: `The term "${proposal.term}" has been added to the main glossary.`
-                });
-            }).catch(error => {
-                console.error("Error publishing glossary term: ", error);
-                toast({
-                    variant: 'destructive',
-                    title: 'Publishing Failed',
-                    description: 'The proposal was approved but failed to publish to the main glossary.'
-                });
+            setDocumentNonBlocking(glossaryTermRef, newTermData, { merge: true });
+            toast({
+                title: 'Proposal Approved & Published',
+                description: `The term "${proposal.term}" has been added to the main glossary.`
             });
         } else {
              toast({
@@ -324,3 +316,5 @@ export default function GlossaryManagement() {
         </>
     );
 }
+
+    
