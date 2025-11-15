@@ -36,6 +36,7 @@ export const MyProposals = ({ userId }: { userId: string }) => {
 
   const myProposalsQuery = useMemoFirebase(() => {
     if (!firestore || !userId) return null;
+    // Corrected Query: Fetch only proposals where 'userId' matches the current user's ID.
     return query(
       collection(firestore, `glossaryProposals`),
       where('userId', '==', userId),
