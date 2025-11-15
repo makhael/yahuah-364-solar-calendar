@@ -175,9 +175,9 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <h4 className="text-lg font-semibold text-foreground">{note ? 'Edit Entry' : 'Create New Journal Entry'}</h4>
                     
-                    <div className="space-y-2">
+                     <div className="space-y-2">
                         <Label>Date</Label>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                              <Controller
                                 name="date"
                                 control={control}
@@ -189,8 +189,8 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
                                 )}
                             />
                             {yahuahDateDetails && (
-                                <div>
-                                    <p className="font-semibold text-primary">{yahuahDateDetails.yahuahString}</p>
+                                <div className="text-left sm:text-center">
+                                    <p className="font-bold text-primary">{yahuahDateDetails.yahuahString}</p>
                                     <p className="text-xs text-muted-foreground">{yahuahDateDetails.gregorianString}</p>
                                 </div>
                             )}
@@ -349,7 +349,7 @@ export const MyJournals = () => {
                 return (
                     <AccordionItem key={monthKey} value={monthKey} className="border-b-0">
                          <AccordionTrigger className="hover:no-underline p-0 w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
-                             <div className="p-3 rounded-lg bg-muted text-left flex-grow">
+                            <div className="p-3 rounded-lg bg-muted text-left flex-grow">
                                 <p className="font-bold text-lg text-primary">{sacredMonth ? getSacredMonthName(sacredMonth) : ''}</p>
                                 <div className="flex flex-wrap items-baseline gap-x-2">
                                      <p className="font-semibold text-foreground">{firstNoteDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC'})}</p>
