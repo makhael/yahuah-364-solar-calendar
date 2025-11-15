@@ -20,6 +20,7 @@ import { useUI } from '@/context/UIContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Proposal {
     id: string;
@@ -305,13 +306,19 @@ export default function GlossaryManagement() {
                         </TabsList>
                         <div className="pt-6">
                             <TabsContent value="pending">
-                                <ProposalsList proposals={pendingProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
+                                <ScrollArea className="h-[60vh] pr-4">
+                                    <ProposalsList proposals={pendingProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
+                                </ScrollArea>
                             </TabsContent>
                             <TabsContent value="approved">
-                                <ProposalsList proposals={approvedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
+                                <ScrollArea className="h-[60vh] pr-4">
+                                    <ProposalsList proposals={approvedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
+                                </ScrollArea>
                             </TabsContent>
                             <TabsContent value="rejected">
-                                <ProposalsList proposals={rejectedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
+                                <ScrollArea className="h-[60vh] pr-4">
+                                    <ProposalsList proposals={rejectedProposals} onUpdate={handleUpdateStatus} onDelete={handleDelete} />
+                                </ScrollArea>
                             </TabsContent>
                         </div>
                     </Tabs>

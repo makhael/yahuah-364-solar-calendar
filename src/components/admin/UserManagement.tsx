@@ -29,6 +29,7 @@ import { firebaseConfig } from '@/firebase/config';
 import { useRouter } from 'next/navigation';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Checkbox } from '../ui/checkbox';
+import { ScrollArea } from '../ui/scroll-area';
 
 
 interface User {
@@ -738,16 +739,18 @@ export function UserManagement() {
                 <TabsTrigger value="denied" className="py-2">Denied ({deniedUsers.length})</TabsTrigger>
               </TabsList>
             </CardHeader>
-            <CardContent className="p-2 sm:p-6 sm:pt-0">
-              <TabsContent value="approved" className="mt-0">
-                <UserTable users={approvedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} currentUserId={currentUser?.uid || null} />
-              </TabsContent>
-              <TabsContent value="pending" className="mt-0">
-                <UserTable users={pendingUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} currentUserId={currentUser?.uid || null} />
-              </TabsContent>
-              <TabsContent value="denied" className="mt-0">
-                <UserTable users={deniedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} currentUserId={currentUser?.uid || null} />
-              </TabsContent>
+            <CardContent className="p-0 sm:p-6 sm:pt-0">
+              <ScrollArea className="h-[60vh]">
+                <TabsContent value="approved" className="mt-0 pr-4">
+                  <UserTable users={approvedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} currentUserId={currentUser?.uid || null} />
+                </TabsContent>
+                <TabsContent value="pending" className="mt-0 pr-4">
+                  <UserTable users={pendingUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} currentUserId={currentUser?.uid || null} />
+                </TabsContent>
+                <TabsContent value="denied" className="mt-0 pr-4">
+                  <UserTable users={deniedUsers} onRoleChange={handleRoleChange} onStatusChange={handleStatusChange} onDelete={handleDelete} updatingUsers={updatingUsers} onSwitchUser={handleSwitchUser} currentUserId={currentUser?.uid || null} />
+                </TabsContent>
+              </ScrollArea>
             </CardContent>
           </Tabs>
         )}
