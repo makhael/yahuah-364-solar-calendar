@@ -121,17 +121,20 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
     const watchedDate = watch('date');
     
     const yahuahDateDetails = useMemo(() => {
-        if (!watchedDate || !(watchedDate instanceof Date) || !m1d1StartDate) return null;
+        if (!watchedDate || !(watchedDate instanceof Date) || !m1d1StartDate) {
+            return null;
+        }
         
         const yahuahDate = get364DateFromGregorian(watchedDate, m1d1StartDate);
-        if (!yahuahDate) return null;
+        if (!yahuahDate) {
+            return null;
+        }
 
         const dayOfWeekIndex = (yahuahDate.day - 1) % 7;
         const hebrewDay = hebrewDays[dayOfWeekIndex];
         
         const gregorianDayOfWeek = watchedDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
         const gregorianDateString = watchedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
-
 
         return {
             yahuahString: `${hebrewDay}, M${yahuahDate.month} D${yahuahDate.day}`,
