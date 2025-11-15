@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy, doc } from 'firebase/firestore';
-import { BookMarked, Trash2 } from 'lucide-react';
+import { BookMarked, Trash2, BadgeCheck } from 'lucide-react';
 import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { get364DateFromGregorian, getGregorianDate } from '@/lib/calendar-utils';
@@ -24,33 +24,22 @@ interface Note {
   createdAt?: { seconds: number };
 }
 
-export const InsightsTimeline = () => {
+export const MyJournals = () => {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { startDate, navigateToTarget } = useUI();
   const { toast } = useToast();
 
-  const revelationNotesQuery = useMemoFirebase(() => {
+  const allNotesQuery = useMemoFirebase(() => {
     if (isUserLoading || !user || user.isAnonymous || !firestore) return null;
     return query(
       collection(firestore, 'users', user.uid, 'notes'),
-      where('isRevelation', '==', true)
+       orderBy('date', 'desc')
     );
   }, [isUserLoading, user?.uid, firestore]);
 
-  const { data: revelationNotes, isLoading } = useCollection<Note>(revelationNotesQuery);
+  const { data: allNotes, isLoading } = useCollection<Note>(allNotesQuery);
   
-  const sortedRevelationNotes = useMemo(() => {
-    if (!revelationNotes) return [];
-    // Sort by date descending, falling back to createdAt if date is the same or missing
-    return [...revelationNotes].sort((a, b) => {
-      if (a.date && b.date && a.date !== b.date) {
-        return b.date.localeCompare(a.date);
-      }
-      return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
-    });
-  }, [revelationNotes]);
-
   const getSacredMonthName = (monthNum: number) => {
       const torahNamedMonths: Record<number, string> = { 1: 'Aviv', 2: 'Ziv', 7: 'Ethanim', 8: 'Bul' };
       if (torahNamedMonths[monthNum]) {
@@ -61,9 +50,9 @@ export const InsightsTimeline = () => {
   }
 
   const groupedNotes = useMemo(() => {
-    if (!sortedRevelationNotes) return {};
+    if (!allNotes) return {};
     
-    return sortedRevelationNotes.reduce((acc, note) => {
+    return allNotes.reduce((acc, note) => {
       const gregorianNoteDate = new Date(note.date + 'T00:00:00');
       const date364 = get364DateFromGregorian(gregorianNoteDate, startDate);
       if (!date364) return acc;
@@ -76,14 +65,14 @@ export const InsightsTimeline = () => {
       acc[groupKey].push(note);
       return acc;
     }, {} as Record<string, Note[]>);
-  }, [sortedRevelationNotes, startDate]);
+  }, [allNotes, startDate]);
 
 
   const handleDelete = (noteId: string) => {
     if (!user || !firestore) return;
     const noteRef = doc(firestore, 'users', user.uid, 'notes', noteId);
     deleteDocumentNonBlocking(noteRef);
-    toast({ title: "Note Deleted", description: "The revelation note has been removed from your journal." });
+    toast({ title: "Note Deleted", description: "The note has been removed from your journal." });
   };
   
   const handleGoToDate = (gregorianDateStr: string) => {
@@ -102,7 +91,7 @@ export const InsightsTimeline = () => {
     return (
       <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
         <h2 className="text-xl font-bold text-foreground mb-4 border-b pb-2">
-          My Revelation Timeline
+          My Journals
         </h2>
         <div className="space-y-4">
           <div className="h-16 bg-muted animate-pulse rounded-md"></div>
@@ -113,21 +102,21 @@ export const InsightsTimeline = () => {
     );
   }
 
-  if (sortedRevelationNotes.length === 0) {
+  if (!allNotes || allNotes.length === 0) {
     return null;
   }
 
   return (
-    <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern" id="insights-section">
+    <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern" id="my-journals-section">
        <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left mb-6">
           <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
             <BookMarked className="w-5 h-5"/>
-            My Revelation Timeline
+            My Journals
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
       </div>
       
-      <Accordion type="multiple" className="w-full">
+      <Accordion type="multiple" className="w-full" defaultValue={Object.keys(groupedNotes)}>
         {Object.entries(groupedNotes).map(([monthLabel, notes]) => {
             const monthNum = parseInt(monthLabel.split(' ')[1], 10);
             const daysInMonth = TEKUFAH_MONTHS.includes(monthNum) ? 31 : 30;
@@ -144,7 +133,7 @@ export const InsightsTimeline = () => {
                             <div className="text-xs font-semibold text-muted-foreground mt-0.5">{monthLabel.split(':')[1].trim()}</div>
                             <div className="text-[10px] text-muted-foreground/70 mt-1">{dateRangeStr}</div>
                         </div>
-                        <span className="text-sm font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md">{notes.length} {notes.length === 1 ? 'Revelation' : 'Revelations'}</span>
+                        <span className="text-sm font-medium text-muted-foreground bg-secondary px-2 py-1 rounded-md">{notes.length} {notes.length === 1 ? 'Entry' : 'Entries'}</span>
                     </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -162,7 +151,7 @@ export const InsightsTimeline = () => {
                                 <div key={note.id} className="relative flex items-start gap-6">
                                     <div className="relative z-10 flex h-full items-start pt-2">
                                         <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-6 h-6 bg-background rounded-full"></div>
-                                        <div className="relative w-3 h-3 bg-amber-600 rounded-full border-2 border-background shadow-sm"></div>
+                                        <div className={cn("relative w-3 h-3 rounded-full border-2 border-background shadow-sm", note.isRevelation ? "bg-amber-600" : "bg-muted-foreground")}></div>
                                     </div>
 
                                     <div className="flex-1 -ml-2">
@@ -177,7 +166,7 @@ export const InsightsTimeline = () => {
                                             })}
                                         </p>
                                         {sacredDateString && (
-                                            <p className="font-medium text-amber-500/80 text-xs">{sacredDateString}</p>
+                                            <p className={cn("font-medium text-xs", note.isRevelation ? "text-amber-500/80" : "text-muted-foreground/80")}>{sacredDateString}</p>
                                         )}
                                         </div>
                                         <Button
@@ -190,8 +179,9 @@ export const InsightsTimeline = () => {
                                         <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </div>
-                                    <div className={cn("mt-1 p-4 rounded-lg bg-amber-900/80 border border-amber-500/50 shadow-inner", "revelation-bg-pattern")}>
-                                        <MarkdownRenderer content={note.content} className="text-amber-100" />
+                                    <div className={cn("mt-1 p-4 rounded-lg border shadow-inner", note.isRevelation ? "bg-amber-900/80 border-amber-500/50 revelation-bg-pattern" : "bg-muted/30")}>
+                                        {note.isRevelation && <Badge className="mb-2 bg-amber-500 text-white"><BadgeCheck className="w-3 h-3 mr-1.5"/>Revelation</Badge>}
+                                        <MarkdownRenderer content={note.content} className={cn(note.isRevelation ? "text-amber-100" : "text-foreground/80")} />
                                     </div>
                                     <button
                                         onClick={() => handleGoToDate(note.date)}

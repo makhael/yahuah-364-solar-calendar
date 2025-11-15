@@ -1,5 +1,6 @@
 
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
@@ -63,7 +64,7 @@ const initialModalState: ModalState = {
 };
 
 type VisibleSections = {
-  insights: boolean;
+  myJournals: boolean;
   intro: boolean;
   podcast: boolean;
   calendar: boolean;
@@ -126,7 +127,7 @@ interface UIContextType {
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 const defaultVisibleSections: VisibleSections = {
-  insights: true,
+  myJournals: true,
   intro: true,
   podcast: true,
   calendar: true,

@@ -8,6 +8,7 @@
 
 
 
+
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -22,7 +23,7 @@ import { PodcastSection } from '@/components/podcast/PodcastSection';
 import { IntroSection } from '@/components/calendar/IntroSection';
 import { useUI } from '@/context/UIContext';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { InsightsTimeline } from '../insights/InsightsTimeline';
+import { MyJournals } from '../journal/MyJournals';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { add, getDay, isBefore, isEqual, startOfDay, isAfter } from 'date-fns';
 import { hebrewDays } from '@/lib/calendar-data';
@@ -119,10 +120,7 @@ export default function YahuahCalendar() {
                 <div className="space-y-8">
                     <Card className="border shadow-lg">
                         <CardContent className="p-4 sm:p-6 space-y-6">
-                            <FilterControls
-                                visibleSections={visibleSections}
-                                toggleSection={toggleSection}
-                            />
+                            <FilterControls />
                         </CardContent>
                     </Card>
                     
@@ -145,8 +143,8 @@ export default function YahuahCalendar() {
                         </Card>
                     )}
 
-                    {visibleSections.insights && (
-                        <InsightsTimeline />
+                    {visibleSections.myJournals && (
+                        <MyJournals />
                     )}
 
                     {visibleSections.scripture && (
