@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -482,10 +483,10 @@ function CreateUserDialog() {
 
             if (templateSnap.exists()) {
                 const template = templateSnap.data();
-                let html = (template.html || '').replaceAll('{{displayName}}', data.displayName);
-                 html = html.replaceAll('{{password}}', data.password);
-                 html = html.replaceAll('{{email}}', data.email);
-                const subject = (template.subject || '').replaceAll('{{displayName}}', data.displayName);
+                let html = (template.html || '').replace(/\{\{\s*displayName\s*\}\}/g, data.displayName);
+                 html = html.replace(/\{\{\s*password\s*\}\}/g, data.password);
+                 html = html.replace(/\{\{\s*email\s*\}\}/g, data.email);
+                const subject = (template.subject || '').replace(/\{\{\s*displayName\s*\}\}/g, data.displayName);
 
                 await addDocumentNonBlocking(mailColRef, {
                     to: [data.email],

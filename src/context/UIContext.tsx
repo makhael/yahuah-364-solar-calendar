@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
@@ -434,11 +435,11 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
 
               if (templateSnap.exists()) {
                   const template = templateSnap.data();
-                  let subject = (template.subject || '').replaceAll('{{eventName}}', payload.title);
+                  let subject = (template.subject || '').replace(/\{\{\s*eventName\s*\}\}/g, payload.title);
                   let html = (template.html || '');
-                  html = html.replaceAll('{{inviterName}}', user.displayName || 'A member');
-                  html = html.replaceAll('{{eventName}}', payload.title);
-                  html = html.replaceAll('{{eventDate}}', new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }));
+                  html = html.replace(/\{\{\s*inviterName\s*\}\}/g, user.displayName || 'A member');
+                  html = html.replace(/\{\{\s*eventName\s*\}\}/g, payload.title);
+                  html = html.replace(/\{\{\s*eventDate\s*\}\}/g, new Date(payload.startDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }));
 
                   await addDocumentNonBlocking(mailRef, {
                       to: emails,

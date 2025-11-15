@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState } from 'react';
@@ -80,8 +81,8 @@ export default function SignupPage() {
         let htmlContent = templateData.html || '';
         let subjectContent = templateData.subject || '';
 
-        htmlContent = htmlContent.replaceAll('{{displayName}}', data.displayName);
-        subjectContent = subjectContent.replaceAll('{{displayName}}', data.displayName);
+        htmlContent = htmlContent.replace(/\{\{\s*displayName\s*\}\}/g, data.displayName);
+        subjectContent = subjectContent.replace(/\{\{\s*displayName\s*\}\}/g, data.displayName);
 
         batch.set(doc(mailColRef), {
             to: [data.email],
