@@ -84,8 +84,32 @@ export const MyJournals = () => {
   };
 
 
-  if (isUserLoading || !user || user.isAnonymous) {
-    return null;
+  if (isUserLoading) {
+    return (
+      <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern">
+        <h2 className="text-xl font-bold text-foreground mb-4 border-b pb-2">
+          My Journals
+        </h2>
+        <div className="space-y-4">
+          <div className="h-16 bg-muted animate-pulse rounded-md"></div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!user || user.isAnonymous) {
+     return (
+      <div className="bg-card p-6 rounded-xl border shadow-2xl intro-bg-pattern" id="my-journals-section">
+         <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-3 text-left mb-6">
+            <h2 className="text-lg font-bold text-primary tracking-wide flex items-center gap-2">
+              <BookMarked className="w-5 h-5"/>
+              My Journals
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">A private journal of your personal studies and insights.</p>
+        </div>
+        <p className="text-sm text-center text-muted-foreground p-4">Please sign in to create journals.</p>
+      </div>
+    );
   }
 
   if (isLoading) {
