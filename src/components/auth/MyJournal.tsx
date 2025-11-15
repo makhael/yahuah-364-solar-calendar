@@ -136,9 +136,6 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
 
     const onSubmit = (data: NoteEditorFormData) => {
         onSave(data, note?.id);
-        if (!note) { // Only reset if it's a new entry
-            reset();
-        }
     }
 
     return (
@@ -253,11 +250,8 @@ export const MyJournal = ({ userId }: { userId: string }) => {
     
     if (noteId) { // We are updating
         const docRef = doc(firestore, `users/${userId}/notes`, noteId);
-        const existingDoc = await getDoc(docRef);
-        if (existingDoc.exists()) {
-             updateDocumentNonBlocking(docRef, { ...payload, updatedAt: new Date() });
-             toast({ title: 'Note Updated!'});
-        }
+        updateDocumentNonBlocking(docRef, { ...payload, updatedAt: new Date() });
+        toast({ title: 'Note Updated!'});
     } else { // We are creating
         const newDocRef = doc(collection(firestore, `users/${userId}/notes`));
         addDocumentNonBlocking(newDocRef, { ...payload, id: newDocRef.id, createdAt: new Date() });
