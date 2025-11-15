@@ -61,8 +61,9 @@ const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note)
 
     return (
         <div className="pl-8 relative">
-             <div className="absolute left-0 top-0 h-full w-px bg-border -translate-x-[1px]" />
-             <div className="absolute left-0 top-4 h-2.5 w-2.5 rounded-full bg-primary/50 border-2 border-background -translate-x-[5px]" />
+             <div className="absolute left-0 top-0 h-full w-px bg-border translate-x-[3.5px]" />
+             <div className="absolute left-0 top-4 h-4 w-4 rounded-full bg-primary/20 border-2 border-primary/30 translate-x-[-4.5px]" />
+             <div className="absolute left-0 top-4 h-1.5 w-1.5 rounded-full bg-primary/70 translate-x-[-0.5px] translate-y-[2.5px]" />
             <div className={cn(
                 "p-4 rounded-lg border",
                 note.isRevelation ? "bg-[#4a3a2a]/30" : "bg-background/50"
@@ -258,7 +259,7 @@ export const MyJournals = () => {
         await updateDocumentNonBlocking(docRef, { ...payload, updatedAt: serverTimestamp() });
         toast({ title: 'Note Updated!'});
     } else { // We are creating
-        await addDocumentNonBlocking(collection(firestore, `users/${user.uid}/notes`), payload);
+        await addDocumentNonBlocking(collection(firestore, `users/${user.uid}/notes`), { ...payload, createdAt: serverTimestamp() });
         toast({ title: 'Note Saved!'});
     }
     
