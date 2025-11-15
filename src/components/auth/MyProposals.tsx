@@ -1,8 +1,7 @@
-
 "use client";
 
 import React from 'react';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { collection, query, where, orderBy, doc } from 'firebase/firestore';
 import { LoaderCircle, ScrollText, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,16 +33,9 @@ export const MyProposals = ({ userId }: { userId: string }) => {
   const { openModal } = useUI();
   const logo = PlaceHolderImages.find(p => p.id === 'logo');
 
-  const myProposalsQuery = useMemoFirebase(() => {
-    if (!firestore || !userId) return null;
-    return query(
-      collection(firestore, `glossaryProposals`),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
-    );
-  }, [firestore, userId]);
-
-  const { data: proposals, isLoading } = useCollection<Proposal>(myProposalsQuery);
+  // The query has been removed for testing purposes as commanded.
+  const proposals = null;
+  const isLoading = false;
 
   const handleDelete = (id: string) => {
     if (!firestore || !userId) return;
