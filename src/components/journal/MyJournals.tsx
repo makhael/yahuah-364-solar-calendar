@@ -3,7 +3,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, doc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, doc, serverTimestamp, getDoc, addDoc } from 'firebase/firestore';
 import { BookMarked, Trash2, Edit, PlusCircle, Save, X, LoaderCircle, BadgeCheck, ArrowRight, ChevronDown } from 'lucide-react';
 import { deleteDocumentNonBlocking, setDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader } from '../ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { cn } from '@/lib/utils';
+import { hebrewDays } from '@/lib/calendar-data';
 
 
 const noteEditorSchema = z.object({
@@ -114,7 +115,9 @@ const NoteCard = ({ note, onEdit, onDelete }: { note: Note, onEdit: (note: Note)
 }
 
 const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave: (data: any, id?: string) => void, onCancel: () => void }) => {
-    const { handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<NoteEditorFormData>({
+    const { startDate: m1d1StartDate } = useUI();
+    
+    const { handleSubmit, control, reset, watch, formState: { errors, isSubmitting } } = useForm<NoteEditorFormData>({
         resolver: zodResolver(noteEditorSchema),
         defaultValues: {
             content: '',
@@ -123,6 +126,26 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
             date: new Date()
         }
     });
+    const watchedDate = watch('date');
+    const yahuahDateDetails = useMemo(() => {
+        if (!watchedDate || !m1d1StartDate) return null;
+        
+        const yahuahDate = get364DateFromGregorian(watchedDate, m1d1StartDate);
+        if (!yahuahDate) return null;
+
+        const dayOfWeekIndex = (yahuahDate.day - 1) % 7;
+        const hebrewDay = hebrewDays[dayOfWeekIndex];
+        
+        const gregorianDayOfWeek = watchedDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
+        const gregorianDateString = watchedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+
+
+        return {
+            yahuahString: `${hebrewDay}, M${yahuahDate.month} D${yahuahDate.day}`,
+            gregorianString: `${gregorianDayOfWeek}, ${gregorianDateString}`,
+        }
+
+    }, [watchedDate, m1d1StartDate]);
 
     useEffect(() => {
         if (note) {
@@ -154,16 +177,24 @@ const JournalEditor = ({ note, onSave, onCancel }: { note?: Note | null, onSave:
                     
                     <div className="space-y-2">
                         <Label>Date</Label>
-                        <Controller
-                            name="date"
-                            control={control}
-                            render={({ field }) => (
-                                <DatePicker
-                                date={field.value}
-                                setDate={(date) => date && field.onChange(date)}
-                                />
+                        <div className="flex items-center gap-4">
+                             <Controller
+                                name="date"
+                                control={control}
+                                render={({ field }) => (
+                                    <DatePicker
+                                    date={field.value}
+                                    setDate={(date) => date && field.onChange(date)}
+                                    />
+                                )}
+                            />
+                            {yahuahDateDetails && (
+                                <div>
+                                    <p className="font-semibold text-primary">{yahuahDateDetails.yahuahString}</p>
+                                    <p className="text-xs text-muted-foreground">{yahuahDateDetails.gregorianString}</p>
+                                </div>
                             )}
-                        />
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -317,13 +348,15 @@ export const MyJournals = () => {
                 
                 return (
                     <AccordionItem key={monthKey} value={monthKey} className="border-b-0">
-                        <AccordionTrigger className="hover:no-underline p-0 w-full flex justify-between items-center">
-                            <div className="p-3 rounded-lg bg-muted text-left">
-                                <p className="font-bold text-lg text-primary">{sacredMonth ? `Month ${sacredMonth}` : ''}</p>
-                                <p className="font-semibold text-foreground">{getSacredMonthName(sacredMonth || 0)}</p>
-                                <p className="text-xs text-muted-foreground">{firstNoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC'})} - {lastNoteDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</p>
+                         <AccordionTrigger className="hover:no-underline p-0 w-full flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
+                             <div className="p-3 rounded-lg bg-muted text-left flex-grow">
+                                <p className="font-bold text-lg text-primary">{sacredMonth ? getSacredMonthName(sacredMonth) : ''}</p>
+                                <div className="flex flex-wrap items-baseline gap-x-2">
+                                     <p className="font-semibold text-foreground">{firstNoteDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC'})}</p>
+                                     <p className="text-xs text-muted-foreground">{firstNoteDate.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' })} - {lastNoteDate.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' })}</p>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                            <div className="flex items-center justify-between sm:justify-center gap-2 p-3 rounded-lg bg-muted flex-shrink-0 w-full sm:w-auto">
                                 <span className="font-semibold text-foreground">{notesInMonth.length} Entries</span>
                                 <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
                             </div>
