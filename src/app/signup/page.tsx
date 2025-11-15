@@ -86,6 +86,7 @@ export default function SignupPage() {
 
         batch.set(doc(mailColRef), {
             to: [data.email],
+            from: "Yahuah's 364 Solar Calendar",
             message: {
                 subject: subjectContent,
                 html: htmlContent,

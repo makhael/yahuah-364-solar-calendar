@@ -490,6 +490,7 @@ function CreateUserDialog() {
 
                 await addDocumentNonBlocking(mailColRef, {
                     to: [data.email],
+                    from: "Yahuah's 364 Solar Calendar",
                     message: {
                         subject,
                         html,

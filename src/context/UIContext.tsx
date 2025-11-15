@@ -443,6 +443,7 @@ export const UIProvider = ({ children }: { children: ReactNode; }) => {
 
                   await addDocumentNonBlocking(mailRef, {
                       to: emails,
+                      from: "Yahuah's 364 Solar Calendar",
                       message: {
                         subject,
                         html,
